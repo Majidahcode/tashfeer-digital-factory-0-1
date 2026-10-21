@@ -1,0 +1,1947 @@
+{
+ "repo_assets": [
+  {
+   "file": "01-reference/card-style-reference-01-02-03.jpg",
+   "bytes": 69945,
+   "sha256_12": "2ab9531edaf3",
+   "real_format": "JPEG",
+   "extension": ".jpg",
+   "extension_matches_format": true,
+   "size": [
+    736,
+    1308
+   ],
+   "mode": "RGB",
+   "has_alpha_channel": false,
+   "pct_fully_transparent": 0.0,
+   "pct_fully_opaque": 100.0,
+   "pct_semi": 0.0,
+   "content_bbox": [
+    0,
+    0,
+    735,
+    1307
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 100.0,
+    "h": 100.0,
+    "top_margin_pct": 0.0,
+    "bottom_margin_pct": 0.0
+   },
+   "touches_edge": {
+    "top": true,
+    "bottom": true,
+    "left": true,
+    "right": true
+   },
+   "corner_rgba": [
+    [
+     48,
+     63,
+     56,
+     255
+    ],
+    [
+     41,
+     47,
+     47,
+     255
+    ],
+    [
+     44,
+     63,
+     70,
+     255
+    ],
+    [
+     48,
+     61,
+     54,
+     255
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 8.3,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 0.5,
+    "yellow/lime (45-90)": 29.5,
+    "green (90-160)": 37.2,
+    "cyan (160-200)": 23.3,
+    "blue (200-260)": 9.6,
+    "violet/magenta (260-340)": 0.0
+   }
+  },
+  {
+   "file": "01-reference/card-style-reference-01-02-04.jpg",
+   "bytes": 53195,
+   "sha256_12": "c222bc3dc933",
+   "real_format": "JPEG",
+   "extension": ".jpg",
+   "extension_matches_format": true,
+   "size": [
+    735,
+    919
+   ],
+   "mode": "RGB",
+   "has_alpha_channel": false,
+   "pct_fully_transparent": 0.0,
+   "pct_fully_opaque": 100.0,
+   "pct_semi": 0.0,
+   "content_bbox": [
+    0,
+    0,
+    734,
+    918
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 100.0,
+    "h": 100.0,
+    "top_margin_pct": 0.0,
+    "bottom_margin_pct": 0.0
+   },
+   "touches_edge": {
+    "top": true,
+    "bottom": true,
+    "left": true,
+    "right": true
+   },
+   "corner_rgba": [
+    [
+     50,
+     73,
+     63,
+     255
+    ],
+    [
+     43,
+     54,
+     48,
+     255
+    ],
+    [
+     46,
+     66,
+     67,
+     255
+    ],
+    [
+     44,
+     59,
+     52,
+     255
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 12.2,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 0.5,
+    "yellow/lime (45-90)": 50.2,
+    "green (90-160)": 37.8,
+    "cyan (160-200)": 10.7,
+    "blue (200-260)": 0.8,
+    "violet/magenta (260-340)": 0.0
+   }
+  },
+  {
+   "file": "02-assets/agents/backen-agent.png",
+   "bytes": 766185,
+   "sha256_12": "ba6daaa235a6",
+   "real_format": "PNG",
+   "extension": ".png",
+   "extension_matches_format": true,
+   "size": [
+    843,
+    1264
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 62.22,
+   "pct_fully_opaque": 35.19,
+   "pct_semi": 2.59,
+   "content_bbox": [
+    116,
+    6,
+    766,
+    1259
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 77.2,
+    "h": 99.2,
+    "top_margin_pct": 0.5,
+    "bottom_margin_pct": 0.3
+   },
+   "touches_edge": {
+    "top": false,
+    "bottom": false,
+    "left": false,
+    "right": false
+   },
+   "corner_rgba": [
+    [
+     145,
+     143,
+     144,
+     0
+    ],
+    [
+     145,
+     145,
+     145,
+     0
+    ],
+    [
+     144,
+     144,
+     144,
+     0
+    ],
+    [
+     145,
+     145,
+     145,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 5.7,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 100.0,
+    "yellow/lime (45-90)": 0.0,
+    "green (90-160)": 0.0,
+    "cyan (160-200)": 0.0,
+    "blue (200-260)": 0.0,
+    "violet/magenta (260-340)": 0.0
+   }
+  },
+  {
+   "file": "02-assets/agents/database-agent (2).webp",
+   "bytes": 1011257,
+   "sha256_12": "d021b1806b3f",
+   "real_format": "PNG",
+   "extension": ".webp",
+   "extension_matches_format": false,
+   "size": [
+    1024,
+    1536
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 59.53,
+   "pct_fully_opaque": 0.0,
+   "pct_semi": 40.47,
+   "content_bbox": [
+    89,
+    5,
+    956,
+    1530
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 84.8,
+    "h": 99.3,
+    "top_margin_pct": 0.3,
+    "bottom_margin_pct": 0.3
+   },
+   "touches_edge": {
+    "top": false,
+    "bottom": false,
+    "left": false,
+    "right": false
+   },
+   "corner_rgba": [
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 3.3,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 0.0,
+    "yellow/lime (45-90)": 0.2,
+    "green (90-160)": 97.6,
+    "cyan (160-200)": 0.4,
+    "blue (200-260)": 0.3,
+    "violet/magenta (260-340)": 1.5
+   }
+  },
+  {
+   "file": "02-assets/agents/dev-ops-agent.png",
+   "bytes": 1112330,
+   "sha256_12": "4929b1d0f9e5",
+   "real_format": "PNG",
+   "extension": ".png",
+   "extension_matches_format": true,
+   "size": [
+    1024,
+    1536
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 56.13,
+   "pct_fully_opaque": 0.0,
+   "pct_semi": 43.87,
+   "content_bbox": [
+    98,
+    7,
+    953,
+    1531
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 83.6,
+    "h": 99.3,
+    "top_margin_pct": 0.5,
+    "bottom_margin_pct": 0.3
+   },
+   "touches_edge": {
+    "top": false,
+    "bottom": false,
+    "left": false,
+    "right": false
+   },
+   "corner_rgba": [
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 0.0,
+   "vivid_hue_families_pct": {}
+  },
+  {
+   "file": "02-assets/agents/frontend-agent (2).webp",
+   "bytes": 819168,
+   "sha256_12": "e7c487ef68dc",
+   "real_format": "PNG",
+   "extension": ".webp",
+   "extension_matches_format": false,
+   "size": [
+    1024,
+    1536
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 63.51,
+   "pct_fully_opaque": 0.0,
+   "pct_semi": 36.49,
+   "content_bbox": [
+    118,
+    6,
+    946,
+    1526
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 81.0,
+    "h": 99.0,
+    "top_margin_pct": 0.4,
+    "bottom_margin_pct": 0.6
+   },
+   "touches_edge": {
+    "top": false,
+    "bottom": false,
+    "left": false,
+    "right": false
+   },
+   "corner_rgba": [
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 5.4,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 0.2,
+    "yellow/lime (45-90)": 18.5,
+    "green (90-160)": 67.1,
+    "cyan (160-200)": 14.2,
+    "blue (200-260)": 0.0,
+    "violet/magenta (260-340)": 0.0
+   }
+  },
+  {
+   "file": "02-assets/agents/qa-agent (2).webp",
+   "bytes": 1233513,
+   "sha256_12": "849cf85103d9",
+   "real_format": "PNG",
+   "extension": ".webp",
+   "extension_matches_format": false,
+   "size": [
+    1024,
+    1536
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 57.86,
+   "pct_fully_opaque": 0.0,
+   "pct_semi": 42.14,
+   "content_bbox": [
+    90,
+    0,
+    964,
+    1535
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 85.4,
+    "h": 100.0,
+    "top_margin_pct": 0.0,
+    "bottom_margin_pct": 0.0
+   },
+   "touches_edge": {
+    "top": true,
+    "bottom": true,
+    "left": false,
+    "right": false
+   },
+   "corner_rgba": [
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 14.7,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 0.0,
+    "yellow/lime (45-90)": 0.0,
+    "green (90-160)": 0.0,
+    "cyan (160-200)": 23.6,
+    "blue (200-260)": 76.4,
+    "violet/magenta (260-340)": 0.0
+   }
+  },
+  {
+   "file": "02-assets/agents/research-agent (2).webp",
+   "bytes": 1214784,
+   "sha256_12": "6fc605902131",
+   "real_format": "PNG",
+   "extension": ".webp",
+   "extension_matches_format": false,
+   "size": [
+    1024,
+    1536
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 53.08,
+   "pct_fully_opaque": 0.0,
+   "pct_semi": 46.92,
+   "content_bbox": [
+    23,
+    13,
+    1005,
+    1529
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 96.0,
+    "h": 98.8,
+    "top_margin_pct": 0.8,
+    "bottom_margin_pct": 0.4
+   },
+   "touches_edge": {
+    "top": false,
+    "bottom": false,
+    "left": false,
+    "right": false
+   },
+   "corner_rgba": [
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 9.9,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 0.0,
+    "yellow/lime (45-90)": 13.8,
+    "green (90-160)": 77.7,
+    "cyan (160-200)": 8.5,
+    "blue (200-260)": 0.0,
+    "violet/magenta (260-340)": 0.0
+   }
+  },
+  {
+   "file": "02-assets/agents/software-architect-agent (2).webp",
+   "bytes": 832865,
+   "sha256_12": "745c8a9ca131",
+   "real_format": "PNG",
+   "extension": ".webp",
+   "extension_matches_format": false,
+   "size": [
+    1024,
+    1536
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 66.93,
+   "pct_fully_opaque": 0.0,
+   "pct_semi": 33.07,
+   "content_bbox": [
+    188,
+    5,
+    886,
+    1528
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 68.3,
+    "h": 99.2,
+    "top_margin_pct": 0.3,
+    "bottom_margin_pct": 0.5
+   },
+   "touches_edge": {
+    "top": false,
+    "bottom": false,
+    "left": false,
+    "right": false
+   },
+   "corner_rgba": [
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 5.5,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 62.6,
+    "yellow/lime (45-90)": 11.4,
+    "green (90-160)": 0.0,
+    "cyan (160-200)": 0.0,
+    "blue (200-260)": 0.9,
+    "violet/magenta (260-340)": 25.1
+   }
+  },
+  {
+   "file": "02-assets/agents/syber-security-agent.png",
+   "bytes": 1304471,
+   "sha256_12": "078b3eb1afcd",
+   "real_format": "PNG",
+   "extension": ".png",
+   "extension_matches_format": true,
+   "size": [
+    1024,
+    1536
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 47.28,
+   "pct_fully_opaque": 0.0,
+   "pct_semi": 52.72,
+   "content_bbox": [
+    32,
+    6,
+    992,
+    1526
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 93.8,
+    "h": 99.0,
+    "top_margin_pct": 0.4,
+    "bottom_margin_pct": 0.6
+   },
+   "touches_edge": {
+    "top": false,
+    "bottom": false,
+    "left": false,
+    "right": false
+   },
+   "corner_rgba": [
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 3.3,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 0.0,
+    "yellow/lime (45-90)": 0.0,
+    "green (90-160)": 0.0,
+    "cyan (160-200)": 0.0,
+    "blue (200-260)": 0.0,
+    "violet/magenta (260-340)": 100.0
+   }
+  },
+  {
+   "file": "02-assets/agents/ux-ui-agent (2).webp",
+   "bytes": 759345,
+   "sha256_12": "a18bc1322fee",
+   "real_format": "PNG",
+   "extension": ".webp",
+   "extension_matches_format": false,
+   "size": [
+    1024,
+    1536
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 68.23,
+   "pct_fully_opaque": 0.0,
+   "pct_semi": 31.77,
+   "content_bbox": [
+    164,
+    3,
+    884,
+    1531
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 70.4,
+    "h": 99.5,
+    "top_margin_pct": 0.2,
+    "bottom_margin_pct": 0.3
+   },
+   "touches_edge": {
+    "top": false,
+    "bottom": false,
+    "left": false,
+    "right": false
+   },
+   "corner_rgba": [
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 7.0,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 0.0,
+    "yellow/lime (45-90)": 0.0,
+    "green (90-160)": 0.0,
+    "cyan (160-200)": 100.0,
+    "blue (200-260)": 0.0,
+    "violet/magenta (260-340)": 0.0
+   }
+  },
+  {
+   "file": "02-assets/brand/tashfeer-brand-mark.png",
+   "bytes": 239556,
+   "sha256_12": "8cd23f6e7cea",
+   "real_format": "PNG",
+   "extension": ".png",
+   "extension_matches_format": true,
+   "size": [
+    620,
+    620
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 52.41,
+   "pct_fully_opaque": 45.79,
+   "pct_semi": 1.8,
+   "content_bbox": [
+    30,
+    44,
+    589,
+    578
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 90.3,
+    "h": 86.3,
+    "top_margin_pct": 7.1,
+    "bottom_margin_pct": 6.6
+   },
+   "touches_edge": {
+    "top": false,
+    "bottom": false,
+    "left": false,
+    "right": false
+   },
+   "corner_rgba": [
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 5.6,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 99.9,
+    "yellow/lime (45-90)": 0.1,
+    "green (90-160)": 0.0,
+    "cyan (160-200)": 0.0,
+    "blue (200-260)": 0.0,
+    "violet/magenta (260-340)": 0.0
+   }
+  },
+  {
+   "file": "02-assets/characters/seated-customer-original.webp",
+   "bytes": 23336,
+   "sha256_12": "8bcf6f25bcae",
+   "real_format": "WEBP",
+   "extension": ".webp",
+   "extension_matches_format": true,
+   "size": [
+    625,
+    437
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 43.5,
+   "pct_fully_opaque": 49.83,
+   "pct_semi": 6.68,
+   "content_bbox": [
+    12,
+    10,
+    619,
+    436
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 97.3,
+    "h": 97.7,
+    "top_margin_pct": 2.3,
+    "bottom_margin_pct": 0.0
+   },
+   "touches_edge": {
+    "top": false,
+    "bottom": true,
+    "left": false,
+    "right": false
+   },
+   "corner_rgba": [
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 2.5,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 35.3,
+    "yellow/lime (45-90)": 64.4,
+    "green (90-160)": 0.3,
+    "cyan (160-200)": 0.0,
+    "blue (200-260)": 0.0,
+    "violet/magenta (260-340)": 0.0
+   }
+  },
+  {
+   "file": "02-assets/characters/tashfeer-robot-original.png",
+   "bytes": 241795,
+   "sha256_12": "43cefe853f95",
+   "real_format": "PNG",
+   "extension": ".png",
+   "extension_matches_format": true,
+   "size": [
+    346,
+    900
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 52.64,
+   "pct_fully_opaque": 44.28,
+   "pct_semi": 3.09,
+   "content_bbox": [
+    0,
+    1,
+    345,
+    899
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 100.0,
+    "h": 99.9,
+    "top_margin_pct": 0.1,
+    "bottom_margin_pct": 0.0
+   },
+   "touches_edge": {
+    "top": false,
+    "bottom": true,
+    "left": true,
+    "right": true
+   },
+   "corner_rgba": [
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 7.1,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 99.0,
+    "yellow/lime (45-90)": 1.0,
+    "green (90-160)": 0.0,
+    "cyan (160-200)": 0.0,
+    "blue (200-260)": 0.0,
+    "violet/magenta (260-340)": 0.0
+   }
+  },
+  {
+   "file": "02-assets/portal/luminous-portal-ring-original.jpg",
+   "bytes": 690524,
+   "sha256_12": "9f98acea97a6",
+   "real_format": "JPEG",
+   "extension": ".jpg",
+   "extension_matches_format": true,
+   "size": [
+    1264,
+    842
+   ],
+   "mode": "RGB",
+   "has_alpha_channel": false,
+   "pct_fully_transparent": 0.0,
+   "pct_fully_opaque": 100.0,
+   "pct_semi": 0.0,
+   "content_bbox": [
+    0,
+    0,
+    1263,
+    841
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 100.0,
+    "h": 100.0,
+    "top_margin_pct": 0.0,
+    "bottom_margin_pct": 0.0
+   },
+   "touches_edge": {
+    "top": true,
+    "bottom": true,
+    "left": true,
+    "right": true
+   },
+   "corner_rgba": [
+    [
+     197,
+     197,
+     197,
+     255
+    ],
+    [
+     195,
+     195,
+     195,
+     255
+    ],
+    [
+     193,
+     193,
+     193,
+     255
+    ],
+    [
+     194,
+     194,
+     194,
+     255
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 8.8,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 0.0,
+    "yellow/lime (45-90)": 58.5,
+    "green (90-160)": 41.5,
+    "cyan (160-200)": 0.0,
+    "blue (200-260)": 0.0,
+    "violet/magenta (260-340)": 0.0
+   }
+  }
+ ],
+ "embedded_unique_images": [
+  {
+   "file": "uri_000.png",
+   "bytes": 7985,
+   "sha256_12": "70aa8bcded4d",
+   "real_format": "PNG",
+   "extension": ".png",
+   "extension_matches_format": true,
+   "size": [
+    242,
+    396
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 12.3,
+   "pct_fully_opaque": 75.72,
+   "pct_semi": 11.97,
+   "content_bbox": [
+    0,
+    0,
+    241,
+    395
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 100.0,
+    "h": 100.0,
+    "top_margin_pct": 0.0,
+    "bottom_margin_pct": 0.0
+   },
+   "touches_edge": {
+    "top": true,
+    "bottom": true,
+    "left": true,
+    "right": true
+   },
+   "corner_rgba": [
+    [
+     255,
+     255,
+     255,
+     0
+    ],
+    [
+     255,
+     255,
+     255,
+     0
+    ],
+    [
+     255,
+     255,
+     255,
+     0
+    ],
+    [
+     255,
+     255,
+     255,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 0.0,
+   "vivid_hue_families_pct": {},
+   "role": "css mask (ght:554.4px;z-index:3;-webkit-mask:url(')"
+  },
+  {
+   "file": "uri_002.png",
+   "bytes": 7960,
+   "sha256_12": "73f02e21d445",
+   "real_format": "PNG",
+   "extension": ".png",
+   "extension_matches_format": true,
+   "size": [
+    242,
+    396
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 25.42,
+   "pct_fully_opaque": 62.41,
+   "pct_semi": 12.17,
+   "content_bbox": [
+    11,
+    11,
+    230,
+    384
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 90.9,
+    "h": 94.4,
+    "top_margin_pct": 2.8,
+    "bottom_margin_pct": 2.8
+   },
+   "touches_edge": {
+    "top": false,
+    "bottom": false,
+    "left": false,
+    "right": false
+   },
+   "corner_rgba": [
+    [
+     255,
+     255,
+     255,
+     0
+    ],
+    [
+     255,
+     255,
+     255,
+     0
+    ],
+    [
+     255,
+     255,
+     255,
+     0
+    ],
+    [
+     255,
+     255,
+     255,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 0.0,
+   "vivid_hue_families_pct": {},
+   "role": "css mask (1;pointer-events:none;-webkit-mask:url(')"
+  },
+  {
+   "file": "uri_004.webp",
+   "bytes": 23336,
+   "sha256_12": "8bcf6f25bcae",
+   "real_format": "WEBP",
+   "extension": ".webp",
+   "extension_matches_format": true,
+   "size": [
+    625,
+    437
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 43.5,
+   "pct_fully_opaque": 49.83,
+   "pct_semi": 6.68,
+   "content_bbox": [
+    12,
+    10,
+    619,
+    436
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 97.3,
+    "h": 97.7,
+    "top_margin_pct": 2.3,
+    "bottom_margin_pct": 0.0
+   },
+   "touches_edge": {
+    "top": false,
+    "bottom": true,
+    "left": false,
+    "right": false
+   },
+   "corner_rgba": [
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 2.5,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 35.3,
+    "yellow/lime (45-90)": 64.4,
+    "green (90-160)": 0.3,
+    "cyan (160-200)": 0.0,
+    "blue (200-260)": 0.0,
+    "violet/magenta (260-340)": 0.0
+   },
+   "role_context": "lass=\"fl\"></div>  <img class=\"cust\" alt=\"العميل جالس على الكرسي\" src=\"",
+   "closest_repo_asset": {
+    "file": "02-assets/characters/seated-customer-original.webp",
+    "hash_distance_of_256": 0,
+    "aspect_embedded": 1.43,
+    "aspect_repo": 1.43
+   }
+  },
+  {
+   "file": "uri_005.webp",
+   "bytes": 48234,
+   "sha256_12": "758527656f07",
+   "real_format": "WEBP",
+   "extension": ".webp",
+   "extension_matches_format": true,
+   "size": [
+    346,
+    900
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 49.63,
+   "pct_fully_opaque": 44.31,
+   "pct_semi": 6.06,
+   "content_bbox": [
+    0,
+    0,
+    345,
+    899
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 100.0,
+    "h": 100.0,
+    "top_margin_pct": 0.0,
+    "bottom_margin_pct": 0.0
+   },
+   "touches_edge": {
+    "top": true,
+    "bottom": true,
+    "left": true,
+    "right": true
+   },
+   "corner_rgba": [
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     1,
+     1,
+     1,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 7.1,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 99.0,
+    "yellow/lime (45-90)": 1.0,
+    "green (90-160)": 0.0,
+    "cyan (160-200)": 0.0,
+    "blue (200-260)": 0.0,
+    "violet/magenta (260-340)": 0.0
+   },
+   "role_context": "\"pin\" id=\"pin\"></div>  <img class=\"robot\" id=\"robot\" alt=\"تشفير\" src=\"",
+   "closest_repo_asset": {
+    "file": "02-assets/characters/tashfeer-robot-original.png",
+    "hash_distance_of_256": 10,
+    "aspect_embedded": 0.384,
+    "aspect_repo": 0.384
+   }
+  },
+  {
+   "file": "uri_006.webp",
+   "bytes": 20978,
+   "sha256_12": "455ab0f23699",
+   "real_format": "WEBP",
+   "extension": ".webp",
+   "extension_matches_format": true,
+   "size": [
+    350,
+    511
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 55.98,
+   "pct_fully_opaque": 36.81,
+   "pct_semi": 7.21,
+   "content_bbox": [
+    0,
+    0,
+    348,
+    510
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 99.7,
+    "h": 100.0,
+    "top_margin_pct": 0.0,
+    "bottom_margin_pct": 0.0
+   },
+   "touches_edge": {
+    "top": true,
+    "bottom": true,
+    "left": true,
+    "right": false
+   },
+   "corner_rgba": [
+    [
+     43,
+     43,
+     45,
+     0
+    ],
+    [
+     45,
+     45,
+     49,
+     0
+    ],
+    [
+     51,
+     47,
+     55,
+     0
+    ],
+    [
+     49,
+     43,
+     49,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 94.6,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 0.0,
+    "yellow/lime (45-90)": 97.9,
+    "green (90-160)": 2.1,
+    "cyan (160-200)": 0.0,
+    "blue (200-260)": 0.0,
+    "violet/magenta (260-340)": 0.0
+   },
+   "role_context": "</div>  <img class=\"ringimg\" id=\"ring\" alt=\"\" aria-hidden=\"true\" src=\"",
+   "closest_repo_asset": {
+    "file": "02-assets/portal/luminous-portal-ring-original.jpg",
+    "hash_distance_of_256": 102,
+    "aspect_embedded": 0.685,
+    "aspect_repo": 1.501
+   }
+  },
+  {
+   "file": "uri_011.webp",
+   "bytes": 66096,
+   "sha256_12": "149ac0c7cbd0",
+   "real_format": "WEBP",
+   "extension": ".webp",
+   "extension_matches_format": true,
+   "size": [
+    365,
+    640
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 51.71,
+   "pct_fully_opaque": 0.42,
+   "pct_semi": 47.86,
+   "content_bbox": [
+    0,
+    0,
+    364,
+    639
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 100.0,
+    "h": 100.0,
+    "top_margin_pct": 0.0,
+    "bottom_margin_pct": 0.0
+   },
+   "touches_edge": {
+    "top": true,
+    "bottom": true,
+    "left": true,
+    "right": true
+   },
+   "corner_rgba": [
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     2,
+     0,
+     0,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 32.3,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 0.0,
+    "yellow/lime (45-90)": 0.0,
+    "green (90-160)": 0.0,
+    "cyan (160-200)": 6.7,
+    "blue (200-260)": 93.3,
+    "violet/magenta (260-340)": 0.0
+   },
+   "role_context": "r:null}; let busy=false,cur=1,PULL=0,PT=null; const IMG={\"qa-agent\": \"",
+   "closest_repo_asset": {
+    "file": "02-assets/agents/qa-agent (2).webp",
+    "hash_distance_of_256": 39,
+    "aspect_embedded": 0.57,
+    "aspect_repo": 0.667
+   }
+  },
+  {
+   "file": "uri_012.webp",
+   "bytes": 62886,
+   "sha256_12": "23a0b61c192e",
+   "real_format": "WEBP",
+   "extension": ".webp",
+   "extension_matches_format": true,
+   "size": [
+    364,
+    640
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 52.96,
+   "pct_fully_opaque": 0.42,
+   "pct_semi": 46.62,
+   "content_bbox": [
+    0,
+    0,
+    363,
+    639
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 100.0,
+    "h": 100.0,
+    "top_margin_pct": 0.0,
+    "bottom_margin_pct": 0.0
+   },
+   "touches_edge": {
+    "top": true,
+    "bottom": true,
+    "left": true,
+    "right": true
+   },
+   "corner_rgba": [
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 15.0,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 0.0,
+    "yellow/lime (45-90)": 0.0,
+    "green (90-160)": 100.0,
+    "cyan (160-200)": 0.0,
+    "blue (200-260)": 0.0,
+    "violet/magenta (260-340)": 0.0
+   },
+   "role_context": "jEtJArpZOx5JkxyctY90dBZdOlCTxVDJl6ApwpS3dCa7BcAA\", \"database-agent\": \"",
+   "closest_repo_asset": {
+    "file": "02-assets/agents/dev-ops-agent.png",
+    "hash_distance_of_256": 29,
+    "aspect_embedded": 0.569,
+    "aspect_repo": 0.667
+   }
+  },
+  {
+   "file": "uri_013.webp",
+   "bytes": 62578,
+   "sha256_12": "4358512c03da",
+   "real_format": "WEBP",
+   "extension": ".webp",
+   "extension_matches_format": true,
+   "size": [
+    332,
+    640
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 49.88,
+   "pct_fully_opaque": 0.48,
+   "pct_semi": 49.64,
+   "content_bbox": [
+    0,
+    0,
+    331,
+    639
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 100.0,
+    "h": 100.0,
+    "top_margin_pct": 0.0,
+    "bottom_margin_pct": 0.0
+   },
+   "touches_edge": {
+    "top": true,
+    "bottom": true,
+    "left": true,
+    "right": true
+   },
+   "corner_rgba": [
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     2,
+     0,
+     2,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 23.8,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 99.7,
+    "yellow/lime (45-90)": 0.0,
+    "green (90-160)": 0.0,
+    "cyan (160-200)": 0.0,
+    "blue (200-260)": 0.1,
+    "violet/magenta (260-340)": 0.1
+   },
+   "role_context": "d2PQAJKqhf5Ua9BdVaewBaJb7KNcm91RvPzV1YuPAAAMBwAAA\", \"backend-agent\": \"",
+   "closest_repo_asset": {
+    "file": "02-assets/agents/dev-ops-agent.png",
+    "hash_distance_of_256": 50,
+    "aspect_embedded": 0.519,
+    "aspect_repo": 0.667
+   }
+  },
+  {
+   "file": "uri_014.webp",
+   "bytes": 53928,
+   "sha256_12": "80ba10220e73",
+   "real_format": "WEBP",
+   "extension": ".webp",
+   "extension_matches_format": true,
+   "size": [
+    294,
+    640
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 52.18,
+   "pct_fully_opaque": 0.28,
+   "pct_semi": 47.54,
+   "content_bbox": [
+    0,
+    0,
+    293,
+    639
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 100.0,
+    "h": 100.0,
+    "top_margin_pct": 0.0,
+    "bottom_margin_pct": 0.0
+   },
+   "touches_edge": {
+    "top": true,
+    "bottom": true,
+    "left": true,
+    "right": true
+   },
+   "corner_rgba": [
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     36,
+     25,
+     35,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 20.1,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 40.7,
+    "yellow/lime (45-90)": 0.9,
+    "green (90-160)": 0.0,
+    "cyan (160-200)": 0.0,
+    "blue (200-260)": 2.4,
+    "violet/magenta (260-340)": 56.0
+   },
+   "role_context": "uaIV6k6xmiCm1SQNnnYuFZetCuwTM6b8D1oRVDAAAA==\", \"software-architect\": \"",
+   "closest_repo_asset": {
+    "file": "02-assets/characters/tashfeer-robot-original.png",
+    "hash_distance_of_256": 52,
+    "aspect_embedded": 0.459,
+    "aspect_repo": 0.384
+   }
+  },
+  {
+   "file": "uri_015.webp",
+   "bytes": 89350,
+   "sha256_12": "e3687020bade",
+   "real_format": "WEBP",
+   "extension": ".webp",
+   "extension_matches_format": true,
+   "size": [
+    415,
+    640
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 51.44,
+   "pct_fully_opaque": 0.38,
+   "pct_semi": 48.18,
+   "content_bbox": [
+    0,
+    0,
+    414,
+    639
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 100.0,
+    "h": 100.0,
+    "top_margin_pct": 0.0,
+    "bottom_margin_pct": 0.0
+   },
+   "touches_edge": {
+    "top": true,
+    "bottom": true,
+    "left": true,
+    "right": true
+   },
+   "corner_rgba": [
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     2,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 34.5,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 0.0,
+    "yellow/lime (45-90)": 0.0,
+    "green (90-160)": 0.0,
+    "cyan (160-200)": 35.1,
+    "blue (200-260)": 64.9,
+    "violet/magenta (260-340)": 0.0
+   },
+   "role_context": "G8VuFAIeI9ThjdqiW7ZGsYycEnBHnMNLvgDukuYBqf24AAAA\", \"research-agent\": \"",
+   "closest_repo_asset": {
+    "file": "02-assets/agents/research-agent (2).webp",
+    "hash_distance_of_256": 17,
+    "aspect_embedded": 0.648,
+    "aspect_repo": 0.667
+   }
+  },
+  {
+   "file": "uri_016.webp",
+   "bytes": 51888,
+   "sha256_12": "a031b9d8bff5",
+   "real_format": "WEBP",
+   "extension": ".webp",
+   "extension_matches_format": true,
+   "size": [
+    302,
+    640
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 55.88,
+   "pct_fully_opaque": 0.51,
+   "pct_semi": 43.61,
+   "content_bbox": [
+    0,
+    0,
+    301,
+    639
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 100.0,
+    "h": 100.0,
+    "top_margin_pct": 0.0,
+    "bottom_margin_pct": 0.0
+   },
+   "touches_edge": {
+    "top": true,
+    "bottom": true,
+    "left": true,
+    "right": true
+   },
+   "corner_rgba": [
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 17.1,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 0.0,
+    "yellow/lime (45-90)": 0.0,
+    "green (90-160)": 0.0,
+    "cyan (160-200)": 100.0,
+    "blue (200-260)": 0.0,
+    "violet/magenta (260-340)": 0.0
+   },
+   "role_context": "YfUDJgGhOFz/eq7pzXCnTh0FFUtaVf2GAAevChbeunAAAAAAA==\", \"ux-ui-agent\": \"",
+   "closest_repo_asset": {
+    "file": "02-assets/characters/tashfeer-robot-original.png",
+    "hash_distance_of_256": 54,
+    "aspect_embedded": 0.472,
+    "aspect_repo": 0.384
+   }
+  },
+  {
+   "file": "uri_017.webp",
+   "bytes": 59666,
+   "sha256_12": "81c1da331712",
+   "real_format": "WEBP",
+   "extension": ".webp",
+   "extension_matches_format": true,
+   "size": [
+    349,
+    640
+   ],
+   "mode": "RGBA",
+   "has_alpha_channel": true,
+   "pct_fully_transparent": 55.58,
+   "pct_fully_opaque": 0.45,
+   "pct_semi": 43.97,
+   "content_bbox": [
+    0,
+    0,
+    348,
+    639
+   ],
+   "content_bbox_pct_of_canvas": {
+    "w": 100.0,
+    "h": 100.0,
+    "top_margin_pct": 0.0,
+    "bottom_margin_pct": 0.0
+   },
+   "touches_edge": {
+    "top": true,
+    "bottom": true,
+    "left": true,
+    "right": true
+   },
+   "corner_rgba": [
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     2,
+     0
+    ]
+   ],
+   "vivid_pixel_pct_of_opaque": 31.9,
+   "vivid_hue_families_pct": {
+    "red/orange (0-45)": 0.0,
+    "yellow/lime (45-90)": 0.0,
+    "green (90-160)": 0.0,
+    "cyan (160-200)": 10.6,
+    "blue (200-260)": 89.4,
+    "violet/magenta (260-340)": 0.0
+   },
+   "role_context": "MsB/s5twyRZA5G9ZZkWQy/XteTQ1yD65cRgAC7Fo7qTOsgAA\", \"frontend-agent\": \"",
+   "closest_repo_asset": {
+    "file": "02-assets/agents/qa-agent (2).webp",
+    "hash_distance_of_256": 43,
+    "aspect_embedded": 0.545,
+    "aspect_repo": 0.667
+   }
+  }
+ ]
+}
