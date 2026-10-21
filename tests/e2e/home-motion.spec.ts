@@ -1,31 +1,44 @@
 import { expect, test, type Page } from "@playwright/test";
 import { advance, autoIndex, isFullDesktop, openHome, openHomeFrozen, phraseStates } from "./support";
 
-const STEP = 100;
+const STEP = 50;
+const TOLERANCE = 500;
 
-/** Step the frozen clock and return the times (ms since mount) at which the automatic phrase changed. */
-async function recordChanges(page: Page, untilMs: number, from = 0) {
-  const changes: Array<{ at: number; index: number }> = [];
-  let prev = await autoIndex(page);
-  for (let t = from + STEP; t <= untilMs; t += STEP) {
+/**
+ * With the clock frozen since before load, the cycle's timers start at t = 0. From `now`, jump to
+ * `expected − 0.5 s` and assert no change yet, then step 50 ms until the automatic phrase changes; it must by
+ * `expected + 0.5 s`. Returns the time (ms since mount) the change was observed — exact to one step.
+ * (Crawling the whole timeline in fine steps cost ~50 ms per step and timed out under parallel workers.)
+ */
+async function nextChange(page: Page, now: number, expected: number) {
+  const before = await autoIndex(page);
+  let t = expected - TOLERANCE;
+  await advance(page, t - now);
+  expect(await autoIndex(page), `no change before ${t} ms`).toBe(before);
+  while (t < expected + TOLERANCE && (await autoIndex(page)) === before) {
     await advance(page, STEP);
-    const cur = await autoIndex(page);
-    if (cur !== prev) changes.push({ at: t, index: cur });
-    prev = cur;
+    t += STEP;
   }
-  return changes;
+  expect(await autoIndex(page), `changed by ${expected + TOLERANCE} ms`).not.toBe(before);
+  return t;
 }
 
 test("P1-10 five phrases; with no pointer input the phrase changes every 5 s ± 0.5 s for ≥ 3 cycles", async ({ page }) => {
+  test.setTimeout(60_000);
   await openHomeFrozen(page);
   await expect(page.locator("[data-phrase-index]")).toHaveCount(5);
   expect(await autoIndex(page)).toBe(0);
   expect((await phraseStates(page))[0]).toBe("revealed:auto");
 
-  const changes = await recordChanges(page, 20_400);
-  expect(changes.map((c) => c.index)).toEqual([1, 2, 3, 4]);
-  const intervals = changes.map((c, i) => c.at - (i === 0 ? 0 : changes[i - 1]!.at));
-  for (const ms of intervals) expect(Math.abs(ms - 5000)).toBeLessThanOrEqual(500);
+  let now = 0;
+  const changes: number[] = [];
+  for (let k = 1; k <= 4; k++) {
+    now = await nextChange(page, now, k * 5000);
+    changes.push(now);
+    expect(await autoIndex(page)).toBe(k);
+  }
+  const intervals = changes.map((at, i) => at - (i === 0 ? 0 : changes[i - 1]!));
+  for (const ms of intervals) expect(Math.abs(ms - 5000)).toBeLessThanOrEqual(TOLERANCE);
 
   // the newly active phrase is the only revealed one; it fades back to a ghost before the next change
   const states = await phraseStates(page);
@@ -37,9 +50,11 @@ test("P1-10 five phrases; with no pointer input the phrase changes every 5 s ± 
 
 test("P1-11 pointer over a phrase reveals it within 400 ms without shifting the automatic schedule", async ({ page }, info) => {
   test.skip(!isFullDesktop(info), "pointer + distinct phrase slots exist on ≥1280 only");
+  test.setTimeout(60_000);
   await openHomeFrozen(page);
-  const first = await recordChanges(page, 5_200);
-  expect(first).toEqual([{ at: 5000, index: 1 }]);
+  let now = await nextChange(page, 0, 5_000);
+  expect(Math.abs(now - 5_000)).toBeLessThanOrEqual(STEP);
+  expect(await autoIndex(page)).toBe(1);
 
   // hover phrase 3 (neither the active one nor the next one)
   const target = page.locator('[data-phrase-index="3"]');
@@ -55,6 +70,7 @@ test("P1-11 pointer over a phrase reveals it within 400 ms without shifting the 
   }
   expect(revealedAfter).toBeGreaterThan(0);
   expect(revealedAfter).toBeLessThanOrEqual(400);
+  now += revealedAfter;
   await expect(target).toHaveAttribute("data-state", "revealed");
   // the visible fade starts at that moment (CSS transitions run on the compositor clock, not the fake one)
   const fades = await target.evaluate((el) =>
@@ -66,10 +82,9 @@ test("P1-11 pointer over a phrase reveals it within 400 ms without shifting the 
   expect(fades).toContain("opacity 900");
 
   // the next automatic change still lands on the original 5 s grid (10 s), while the pointer stays put
-  const next = await recordChanges(page, 10_300, 5_200 + revealedAfter);
-  expect(next.length).toBe(1);
-  expect(next[0]!.index).toBe(2);
-  expect(Math.abs(next[0]!.at - 10_000)).toBeLessThanOrEqual(STEP);
+  now = await nextChange(page, now, 10_000);
+  expect(Math.abs(now - 10_000)).toBeLessThanOrEqual(STEP);
+  expect(await autoIndex(page)).toBe(2);
   await expect(target).toHaveAttribute("data-reveal-source", "pointer");
 
   // leaving: the phrase is held briefly, then fades back to a ghost
@@ -88,7 +103,8 @@ test("P1-12 pointer movement shifts only the parallax layers, by at most 12 px f
       [...document.querySelectorAll("body *")].map((el) => {
         if (el.closest("[data-phrase-index]")) return null; // phrases fade on their own clock; their layer is measured
         const r = el.getBoundingClientRect();
-        return r.width || r.height ? { key: `${el.tagName}.${el.className}`, x: r.left, y: r.top } : null;
+        const layer = Boolean(el.closest("[data-parallax-layer]"));
+        return r.width || r.height ? { key: `${el.tagName}.${el.className}`, x: r.left, y: r.top, layer } : null;
       }),
     );
   const vp = page.viewportSize()!;
@@ -113,6 +129,12 @@ test("P1-12 pointer movement shifts only the parallax layers, by at most 12 px f
       { d: 0, key: "" },
     );
     expect(worst.d, worst.key).toBeLessThanOrEqual(12);
+    // everything outside the two parallax layers (glow, phrases) stays exactly where it was
+    const contentMoved = now.filter((s, i) => {
+      const r = rest[i];
+      return s && r && !s.layer && Math.max(Math.abs(s.x - r.x), Math.abs(s.y - r.y)) > 0.5;
+    });
+    expect(contentMoved.map((s) => s!.key)).toEqual([]);
     const glowIdx = await page.evaluate(() =>
       [...document.querySelectorAll("body *")].indexOf(document.querySelector('[data-parallax-layer="glow"]')!),
     );

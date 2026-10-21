@@ -2,14 +2,11 @@
 
 import { useEffect, useRef } from "react";
 import {
-  ALPHA_LEVELS,
   LINK_DISTANCE,
   PARTICLE_PARALLAX_PX,
   type Particle,
-  alphaLevel,
   createParticles,
   dotAlpha,
-  levelAlpha,
   linkAlpha,
   parallaxOffset,
   particleCount,
@@ -19,8 +16,6 @@ import { currentParallax, subscribeParallax } from "@/lib/pointer-parallax";
 import styles from "./AmbientBackground.module.css";
 
 const GLOW_PARALLAX_PX = 8;
-const LINK_MAX = linkAlpha(0, 1, 1);
-const DOT_MAX = dotAlpha(1);
 
 /** Fixed, decorative background: light glows + particle network. Pointer = parallax only. */
 export function AmbientBackground() {
@@ -42,9 +37,6 @@ export function AmbientBackground() {
     let particles: Particle[] = [];
     let raf = 0;
     let last = 0;
-    // reused every frame: flat [x1, y1, x2, y2, …] segments and [x, y, r, …] dots per opacity level
-    const lines = Array.from({ length: ALPHA_LEVELS }, () => [] as number[]);
-    const dots = Array.from({ length: ALPHA_LEVELS }, () => [] as number[]);
 
     const resize = () => {
       const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -63,8 +55,6 @@ export function AmbientBackground() {
       ctx.fillStyle = color;
       ctx.strokeStyle = color;
       ctx.lineWidth = 1;
-      for (const bucket of lines) bucket.length = 0;
-      for (const bucket of dots) bucket.length = 0;
       const pos = particles.map((p) => {
         const o = parallaxOffset(pointer, p.depth, PARTICLE_PARALLAX_PX);
         return { x: p.x + o.x, y: p.y + o.y, p };
@@ -76,33 +66,20 @@ export function AmbientBackground() {
           const dx = a.x - b.x;
           const dy = a.y - b.y;
           if (Math.abs(dx) > LINK_DISTANCE || Math.abs(dy) > LINK_DISTANCE) continue;
-          const level = alphaLevel(linkAlpha(Math.hypot(dx, dy), a.p.depth, b.p.depth), LINK_MAX);
-          if (level >= 0) lines[level]!.push(a.x, a.y, b.x, b.y);
-        }
-        const level = alphaLevel(dotAlpha(a.p.depth), DOT_MAX);
-        if (level >= 0) dots[level]!.push(a.x, a.y, a.p.r);
-      }
-      for (let level = 0; level < ALPHA_LEVELS; level++) {
-        const segs = lines[level]!;
-        if (segs.length) {
-          ctx.globalAlpha = levelAlpha(level, LINK_MAX);
+          const alpha = linkAlpha(Math.hypot(dx, dy), a.p.depth, b.p.depth);
+          if (alpha <= 0) continue;
+          ctx.globalAlpha = alpha;
           ctx.beginPath();
-          for (let k = 0; k < segs.length; k += 4) {
-            ctx.moveTo(segs[k]!, segs[k + 1]!);
-            ctx.lineTo(segs[k + 2]!, segs[k + 3]!);
-          }
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
           ctx.stroke();
         }
-        const pts = dots[level]!;
-        if (pts.length) {
-          ctx.globalAlpha = levelAlpha(level, DOT_MAX);
-          ctx.beginPath();
-          for (let k = 0; k < pts.length; k += 3) {
-            ctx.moveTo(pts[k]! + pts[k + 2]!, pts[k + 1]!);
-            ctx.arc(pts[k]!, pts[k + 1]!, pts[k + 2]!, 0, Math.PI * 2);
-          }
-          ctx.fill();
-        }
+      }
+      for (const { x, y, p } of pos) {
+        ctx.globalAlpha = dotAlpha(p.depth);
+        ctx.beginPath();
+        ctx.arc(x, y, p.r, 0, Math.PI * 2);
+        ctx.fill();
       }
       ctx.globalAlpha = 1;
     };

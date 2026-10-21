@@ -1,11 +1,8 @@
 import { expect, test } from "@playwright/test";
 import {
-  ALPHA_LEVELS,
   LINK_DISTANCE,
-  alphaLevel,
   createParticles,
   dotAlpha,
-  levelAlpha,
   linkAlpha,
   parallaxOffset,
   particleCount,
@@ -53,18 +50,6 @@ test("particles stay inside the canvas and bounce at the edges", () => {
     expect(p.x).toBeLessThanOrEqual(800);
     expect(p.y).toBeGreaterThanOrEqual(0);
     expect(p.y).toBeLessThanOrEqual(600);
-  }
-});
-
-test("batched drawing: opacity levels cover (0, max] and stay within half a step of the exact value", () => {
-  const max = linkAlpha(0, 1, 1);
-  expect(alphaLevel(0, max)).toBe(-1);
-  expect(alphaLevel(max, max)).toBe(ALPHA_LEVELS - 1);
-  for (let a = 0.001; a <= max; a += max / 97) {
-    const level = alphaLevel(a, max);
-    expect(level).toBeGreaterThanOrEqual(0);
-    expect(level).toBeLessThan(ALPHA_LEVELS);
-    expect(Math.abs(levelAlpha(level, max) - a)).toBeLessThanOrEqual(max / ALPHA_LEVELS / 2 + 1e-9);
   }
 });
 

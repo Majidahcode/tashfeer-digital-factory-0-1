@@ -4,6 +4,23 @@ const PORT = Number(process.env.E2E_PORT ?? 3100);
 const baseURL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${PORT}`;
 const chromium = devices["Desktop Chrome"];
 
+/**
+ * Firefox and WebKit (ACCEPTANCE_TESTS.md §2: required in phases 1, 3 and 4). Opt-in with E2E_ENGINES=all because
+ * the development container ships Chromium only; CI installs both engines and runs these projects.
+ */
+const crossEngine =
+  process.env.E2E_ENGINES === "all"
+    ? [
+        { name: "firefox-1440", use: { ...devices["Desktop Firefox"], viewport: { width: 1440, height: 900 } } },
+        {
+          name: "firefox-390",
+          use: { ...devices["Desktop Firefox"], viewport: { width: 390, height: 844 }, hasTouch: true },
+        },
+        { name: "webkit-1440", use: { ...devices["Desktop Safari"], viewport: { width: 1440, height: 900 } } },
+        { name: "webkit-390", use: { ...devices["iPhone 13"], viewport: { width: 390, height: 844 } } },
+      ]
+    : [];
+
 /** End-to-end tests against the production build (`npm run build` first). Viewports from docs/ACCEPTANCE_TESTS.md §2. */
 export default defineConfig({
   testDir: "tests/e2e",
@@ -35,5 +52,6 @@ export default defineConfig({
     { name: "tablet-768", use: { ...chromium, viewport: { width: 768, height: 1024 }, hasTouch: true } },
     { name: "wide-1920", use: { ...chromium, viewport: { width: 1920, height: 1080 } } },
     { name: "ultrawide-2560", use: { ...chromium, viewport: { width: 2560, height: 1080 } } },
+    ...crossEngine,
   ],
 });

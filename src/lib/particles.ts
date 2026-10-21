@@ -77,20 +77,3 @@ export function linkAlpha(distance: number, depthA: number, depthB: number): num
 export function dotAlpha(depth: number): number {
   return 0.18 + 0.4 * depth;
 }
-
-/**
- * Opacity is quantised to a few levels so the canvas strokes/fills one batched path per level instead of one
- * per line or dot (≈250 draw calls → ≤12 per frame). The step is invisible at these low opacities.
- */
-export const ALPHA_LEVELS = 6;
-
-/** Level index of `alpha` in (0, max]; -1 when nothing should be drawn. */
-export function alphaLevel(alpha: number, max: number, levels = ALPHA_LEVELS): number {
-  if (!(alpha > 0) || !(max > 0)) return -1;
-  return Math.min(levels - 1, Math.floor((alpha / max) * levels));
-}
-
-/** Representative opacity of a level: the midpoint of its range, so quantising adds no systematic bias. */
-export function levelAlpha(level: number, max: number, levels = ALPHA_LEVELS): number {
-  return ((level + 0.5) / levels) * max;
-}

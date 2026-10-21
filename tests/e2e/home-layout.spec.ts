@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { FEATURES, openHome } from "./support";
+import { FEATURES, isWide, openHome } from "./support";
 
 test.beforeEach(async ({ page }) => {
   await openHome(page);
@@ -152,7 +152,7 @@ test("P1-07 no horizontal overflow: document, sections, and every element inside
 });
 
 test("P1-08 on wide screens the scene spans ≥ 80% of the window, without empty side bands", async ({ page }, info) => {
-  test.skip(!["wide-1920", "ultrawide-2560"].includes(info.project.name), "wide screens only (1920, 2560)");
+  test.skip(!isWide(info), "wide screens only (1920, 2560)");
   const { left, right, vw } = await page.evaluate(() => {
     const rs = [...document.querySelectorAll("[data-scene-part]")]
       .map((el) => el.getBoundingClientRect())

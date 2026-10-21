@@ -1,11 +1,14 @@
 import type { Page, TestInfo } from "@playwright/test";
 
-/** Projects that render the full ≥1280 scene (five distinct phrase slots, pointer input). */
-export const FULL_DESKTOP = new Set(["desktop-1440", "desktop-1280", "wide-1920", "ultrawide-2560"]);
-
 export const FEATURES = ["فهم احتياجاتك", "تحليل المشروع", "بحث وتدقيق", "بناء النماذج الأولية", "الإنتاج الفعلي"];
 
-export const isFullDesktop = (info: TestInfo) => FULL_DESKTOP.has(info.project.name);
+const width = (info: TestInfo) => info.project.use.viewport?.width ?? 0;
+
+/** The full ≥1280 scene (five distinct phrase slots) driven by a mouse — decided by capability, not project name. */
+export const isFullDesktop = (info: TestInfo) => width(info) >= 1280 && !info.project.use.hasTouch;
+
+/** Wide screens for the empty-margin criterion P1-08 (1920 and 2560). */
+export const isWide = (info: TestInfo) => width(info) >= 1920;
 
 /** Load the homepage and wait until client effects have run (the background stamps data-ambient-motion). */
 export async function openHome(page: Page) {

@@ -93,6 +93,9 @@ test("the intake is an honest design preview: nothing pretends to send, upload o
   await expect(chat).toContainText("معاينة تصميم — غير مفعّل");
 
   const box = chat.getByLabel("وصف المشروع");
+  // a real click: fails if the ring art drawn over the chat intercepts the pointer
+  await box.click();
+  await expect(box).toBeFocused();
   await box.fill("أبي موقع لمطعمي");
   await box.press("Enter");
   await expect(chat.getByRole("status")).toHaveText("معاينة تصميم: الإرسال والمرفقات والصوت غير مفعّلة بعد.");

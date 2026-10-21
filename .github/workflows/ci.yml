@@ -61,3 +61,42 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 7
+
+  # Firefox + WebKit (ACCEPTANCE_TESTS.md §2). Separate job so an engine-specific failure is visible on its own.
+  cross-engine:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      NEXT_TELEMETRY_DISABLED: 1
+      E2E_ENGINES: all
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Install Firefox and WebKit for Playwright
+        run: npx playwright install --with-deps firefox webkit
+
+      - name: Production build
+        run: npm run build
+
+      - name: End-to-end tests (Firefox and WebKit)
+        run: >-
+          npx playwright test -c playwright.config.ts
+          --project=firefox-1440 --project=firefox-390 --project=webkit-1440 --project=webkit-390
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-cross-engine
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
