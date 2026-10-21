@@ -1,0 +1,142 @@
+{
+  "source_html": "01-reference/current-tashfeer-prototype.html",
+  "style_reference": "01-reference/card-style-reference-01-02-03.png",
+  "assets_extracted": [
+    {
+      "file": "02-assets/characters/seated-customer-original.webp",
+      "mime_subtype": "webp",
+      "bytes": 23336,
+      "dimensions": [
+        625,
+        437
+      ],
+      "mode": "RGBA",
+      "has_alpha_channel": true,
+      "format": "WEBP"
+    },
+    {
+      "file": "02-assets/characters/tashfeer-robot-original.webp",
+      "mime_subtype": "webp",
+      "bytes": 48234,
+      "dimensions": [
+        346,
+        900
+      ],
+      "mode": "RGBA",
+      "has_alpha_channel": true,
+      "format": "WEBP"
+    },
+    {
+      "file": "02-assets/portal/luminous-portal-ring-original.webp",
+      "mime_subtype": "webp",
+      "bytes": 20978,
+      "dimensions": [
+        350,
+        511
+      ],
+      "mode": "RGBA",
+      "has_alpha_channel": true,
+      "format": "WEBP"
+    },
+    {
+      "file": "02-assets/agents/qa-agent.webp",
+      "mime_subtype": "webp",
+      "bytes": 66096,
+      "dimensions": [
+        365,
+        640
+      ],
+      "mode": "RGBA",
+      "has_alpha_channel": true,
+      "format": "WEBP"
+    },
+    {
+      "file": "02-assets/agents/database-agent.webp",
+      "mime_subtype": "webp",
+      "bytes": 62886,
+      "dimensions": [
+        364,
+        640
+      ],
+      "mode": "RGBA",
+      "has_alpha_channel": true,
+      "format": "WEBP"
+    },
+    {
+      "file": "02-assets/agents/backend-agent.webp",
+      "mime_subtype": "webp",
+      "bytes": 62578,
+      "dimensions": [
+        332,
+        640
+      ],
+      "mode": "RGBA",
+      "has_alpha_channel": true,
+      "format": "WEBP"
+    },
+    {
+      "file": "02-assets/agents/software-architect.webp",
+      "mime_subtype": "webp",
+      "bytes": 53928,
+      "dimensions": [
+        294,
+        640
+      ],
+      "mode": "RGBA",
+      "has_alpha_channel": true,
+      "format": "WEBP"
+    },
+    {
+      "file": "02-assets/agents/research-agent.webp",
+      "mime_subtype": "webp",
+      "bytes": 89350,
+      "dimensions": [
+        415,
+        640
+      ],
+      "mode": "RGBA",
+      "has_alpha_channel": true,
+      "format": "WEBP"
+    },
+    {
+      "file": "02-assets/agents/ux-ui-agent.webp",
+      "mime_subtype": "webp",
+      "bytes": 51888,
+      "dimensions": [
+        302,
+        640
+      ],
+      "mode": "RGBA",
+      "has_alpha_channel": true,
+      "format": "WEBP"
+    },
+    {
+      "file": "02-assets/agents/frontend-agent.webp",
+      "mime_subtype": "webp",
+      "bytes": 59666,
+      "dimensions": [
+        349,
+        640
+      ],
+      "mode": "RGBA",
+      "has_alpha_channel": true,
+      "format": "WEBP"
+    }
+  ],
+  "embedded_agent_keys": [
+    "qa-agent",
+    "database-agent",
+    "backend-agent",
+    "software-architect",
+    "research-agent",
+    "ux-ui-agent",
+    "frontend-agent"
+  ],
+  "missing_agent_keys": [
+    "product-manager",
+    "requirements-analyst",
+    "cybersecurity-agent",
+    "performance-agent",
+    "devops-agent"
+  ]
+}
