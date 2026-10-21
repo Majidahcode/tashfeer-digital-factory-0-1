@@ -1,0 +1,92 @@
+/*
+ * Tashfeer design tokens — the ONLY place colour literals are allowed (enforced by scripts/check-tokens.mjs).
+ *
+ * Palette sampled from 01-reference/card-style-reference-01-02-03.jpg, card region only
+ * (x150–736, y570–900; 0% blue/cyan pixels). Method and contrast ratios: docs/ASSET_INVENTORY.md §9.
+ * Owner decision DEC-02 (2026-10-21): use the reference values; review the side-by-side in Phase 1.
+ */
+:root {
+  /* ── Palette (sampled) ───────────────────────────────────────────── */
+  --brand-bg: #031007; /* darkest 15% median */
+  --brand-bg-forest: #162916; /* green around the cards */
+  --brand-glass-base: #10150f; /* card fill */
+  --brand-emerald: #357f22; /* saturated green median — large text / light only */
+  --brand-emerald-bright: #53c32c; /* emerald peak */
+  --brand-lime: #a1d520; /* acid-lime peak — main light */
+  --brand-lime-soft: #8acc3f; /* lime median */
+  --brand-highlight: #e8f8bc; /* brightest rim reflection — replaces pure white */
+  --brand-text-silver: #d6e4d6; /* primary text (14.7:1 on --brand-bg) */
+  --brand-muted: #acc788; /* secondary text (10.4:1) */
+  --brand-decor: #6a7f5a; /* decorative / disabled only (4.4:1) */
+  --brand-digit-top: #9baf32; /* numeral gradient, measured on card 01 */
+  --brand-digit-mid: #3b7018;
+  --brand-digit-low: #215725;
+  --brand-digit-fade: #0e2f10;
+
+  /* ── Semantic states (outside the reference, approved with DEC-02) ── */
+  --state-danger: #e8836f;
+  --state-warning: #e9be55;
+  --state-success: var(--brand-lime);
+
+  /* ── Derived, alpha variants (always from the palette above) ─────── */
+  --brand-glass: color-mix(in srgb, var(--brand-glass-base) 58%, transparent);
+  --brand-glass-strong: color-mix(in srgb, var(--brand-glass-base) 78%, transparent);
+  --brand-glass-edge: color-mix(in srgb, var(--brand-highlight) 10%, transparent);
+  --brand-glass-sheen: color-mix(in srgb, var(--brand-highlight) 7%, transparent);
+  --brand-glass-inner: color-mix(in srgb, var(--brand-highlight) 9%, transparent);
+  --brand-glow: color-mix(in srgb, var(--brand-lime) 35%, transparent);
+  --brand-glow-soft: color-mix(in srgb, var(--brand-lime) 16%, transparent);
+  --brand-glow-emerald: color-mix(in srgb, var(--brand-emerald) 42%, transparent);
+  --brand-shadow: color-mix(in srgb, var(--brand-bg) 70%, transparent);
+  --brand-shadow-deep: color-mix(in srgb, var(--brand-bg) 88%, transparent);
+  --brand-scrim: color-mix(in srgb, var(--brand-bg) 72%, transparent);
+  --brand-particle: var(--brand-lime);
+
+  /* ── Gradients ───────────────────────────────────────────────────── */
+  /* Every stop is ≥ 3:1 on --brand-bg (large text). */
+  --gradient-heading: linear-gradient(
+    180deg,
+    var(--brand-highlight) 0%,
+    var(--brand-text-silver) 34%,
+    var(--brand-lime) 72%,
+    var(--brand-emerald-bright) 100%
+  );
+  --gradient-wordmark: linear-gradient(
+    180deg,
+    var(--brand-highlight) 0%,
+    var(--brand-text-silver) 45%,
+    var(--brand-lime) 100%
+  );
+  --gradient-digits: linear-gradient(
+    180deg,
+    var(--brand-lime) 0%,
+    var(--brand-digit-top) 30%,
+    var(--brand-digit-mid) 68%,
+    var(--brand-digit-low) 100%
+  );
+  --gradient-sheen: linear-gradient(
+    100deg,
+    transparent 42%,
+    color-mix(in srgb, var(--brand-highlight) 55%, transparent) 50%,
+    transparent 58%
+  );
+
+  /* ── Type ────────────────────────────────────────────────────────── */
+  --font-sans: "Cairo", system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+
+  /* ── Shape, depth, motion ────────────────────────────────────────── */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-squircle: 28%;
+  --header-h: 64px;
+  --dur-fast: 180ms;
+  --dur-base: 320ms;
+  --dur-phrase: 900ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --parallax-max: 12px;
+
+  --z-background: 0;
+  --z-content: 1;
+  --z-header: 10;
+}

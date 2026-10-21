@@ -1,0 +1,26 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# generated from the reference package by scripts/sync-assets.mjs
+public/assets/
+
+# tests
+test-results/
+playwright-report/
+blob-report/
+coverage/
+
+# env & secrets — never commit real values
+.env
+.env.*
+!.env.example
+
+# os / editors
+.DS_Store
+*.log

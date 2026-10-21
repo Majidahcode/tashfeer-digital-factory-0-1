@@ -1,0 +1,472 @@
+/*
+ * Responsive scene. Geometry ratios come from the approved prototype (ring 490×716, chat 338.8×554.4 inside it,
+ * robot 580 tall beside it) but sizes are computed from the viewport instead of scaling a fixed canvas:
+ *   --portal-h = min(height available, width left after the copy and card columns / 1.02)
+ * The stage (robot 0.311·H + gap 0.012·H + ring 0.685·H = 1.008·H) gets exactly its own width, so the cards
+ * never slide over the ring; text keeps real, readable sizes at every width.
+ */
+.scene {
+  --pad-x: clamp(16px, 2vw, 56px);
+  --gap-x: clamp(12px, 1.2vw, 28px);
+  --copy-min: clamp(365px, 30vw, 520px);
+  --cards-min: 216px; /* tile 64 + gap 14 + label ≤ 9em (135) — keep in sync with NumberedCard */
+  --portal-h: min(
+    clamp(460px, calc(100svh - var(--header-h) - 56px), 960px),
+    calc((100vw - 2 * var(--pad-x) - 2 * var(--gap-x) - var(--copy-min) - var(--cards-min)) / 1.02)
+  );
+
+  position: relative;
+  z-index: var(--z-content);
+  isolation: isolate;
+  direction: ltr; /* the composition is visual: customer & copy left, portal right — as approved */
+  display: grid;
+  grid-template-columns: minmax(var(--copy-min), 680px) auto minmax(var(--cards-min), 300px);
+  justify-content: space-between;
+  align-items: center;
+  column-gap: var(--gap-x);
+  min-block-size: calc(100svh - var(--header-h));
+  padding: clamp(10px, 2vh, 24px) var(--pad-x) clamp(12px, 2.2vh, 30px);
+}
+
+/* ── Copy column (copy at the top, seated customer at the bottom) ───────────── */
+/* rows: copy text, then the customer anchored to the bottom. The customer may rise 40px into the copy area
+   (its top is transparent), which keeps common laptop screens free of scroll without covering any text. */
+.copy {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: stretch;
+  direction: rtl;
+  min-inline-size: 0;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  position: relative;
+  z-index: 2;
+}
+
+.copyText {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.6vh, 18px);
+  padding-top: clamp(4px, 2.4vh, 32px);
+  position: relative;
+  z-index: 1;
+}
+
+.badge {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--brand-text-silver);
+}
+
+.dot {
+  inline-size: 10px;
+  block-size: 10px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--brand-lime);
+  box-shadow: 0 0 10px var(--brand-glow);
+}
+
+.headline {
+  position: relative;
+  margin: 0;
+  font-weight: 800;
+  line-height: 1.18;
+  text-align: end;
+}
+
+.headline > span {
+  display: block;
+}
+
+/* first line: [curve↘][line][أنا][dash] in RTL order = «— أنا ——↘» visually, on the start (right) half */
+.headline > .l1Row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  inline-size: 58%;
+}
+
+.l1 {
+  flex: none;
+  font-size: clamp(36px, 3vw, 58px);
+}
+
+.line,
+.dash {
+  block-size: 2px;
+  border-radius: 2px;
+  background: var(--brand-text-silver);
+  opacity: 0.85;
+}
+
+.line {
+  flex: 1;
+  min-inline-size: 24px;
+  margin-inline-start: -10px;
+}
+
+.dash {
+  flex: none;
+  inline-size: 28px;
+}
+
+.curve {
+  flex: none;
+  inline-size: 30px;
+  block-size: 33px;
+  align-self: flex-start;
+  margin-top: calc(0.5em - 9px);
+  fill: none;
+  stroke: var(--brand-text-silver);
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+.l2 {
+  font-size: clamp(23px, 1.9vw, 38px);
+  margin-top: 2px;
+}
+.l3 {
+  font-size: clamp(19px, 1.45vw, 28px);
+  margin-top: 4px;
+}
+.l4 {
+  font-size: clamp(32px, 2.75vw, 54px);
+}
+
+.lede {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-inline-size: 48ch;
+}
+
+.lede p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--brand-text-silver);
+}
+
+.customer {
+  position: relative;
+  margin: -40px 0 0;
+  margin-inline-end: calc(-1 * var(--pad-x)); /* bleed to the screen edge like the prototype */
+  align-self: end;
+  justify-self: end;
+  inline-size: clamp(260px, calc(var(--portal-h) * 0.55), 560px);
+  z-index: 0;
+}
+
+.customerImg {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+}
+
+.mic {
+  position: absolute;
+  left: 6%;
+  top: 22%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-inline-size: 196px;
+  padding: 8px 10px 8px 18px;
+  border: 0;
+  border-radius: 999px;
+  direction: rtl;
+  font: inherit;
+  color: var(--brand-highlight);
+  background: var(--brand-glass);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  backdrop-filter: blur(12px) saturate(1.4);
+  box-shadow:
+    inset 0 1px 0 var(--brand-glass-inner),
+    0 0 0 1px var(--brand-glass-edge),
+    0 14px 30px -14px var(--brand-shadow-deep);
+  cursor: not-allowed;
+}
+
+.micText {
+  display: grid;
+  gap: 4px;
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.wave {
+  display: block;
+  inline-size: 88px;
+  block-size: 12px;
+  background: repeating-linear-gradient(90deg, var(--brand-lime) 0 2px, transparent 2px 5px);
+  -webkit-mask-image: linear-gradient(90deg, var(--brand-highlight), transparent);
+  mask-image: linear-gradient(90deg, var(--brand-highlight), transparent);
+  opacity: 0.8;
+}
+
+.micIcon {
+  inline-size: 50px;
+  block-size: 50px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--brand-lime);
+  box-shadow: inset 0 0 0 2px var(--brand-lime), 0 0 18px -4px var(--brand-glow);
+}
+
+/* ── Tashfeer + portal ──────────────────────────────────────────────────────── */
+.stage {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: calc(var(--portal-h) * 0.012);
+  block-size: var(--portal-h);
+  position: relative;
+  z-index: 1;
+}
+
+.robot {
+  flex: none;
+  block-size: calc(var(--portal-h) * 0.81);
+  inline-size: auto;
+  /* Preflight's img{max-width:100%} makes a replaced element "compressible": its min-content width counts as 0,
+     the grid then under-sized this column and the ring spilled ~145px over the cards. */
+  max-inline-size: none;
+  margin-bottom: calc(var(--portal-h) * 0.062);
+  filter: drop-shadow(0 0 16px var(--brand-glow-soft));
+}
+
+.portal {
+  position: relative;
+  flex: none;
+  block-size: var(--portal-h);
+  aspect-ratio: 350 / 511;
+}
+
+/* no z-index / transform here: its children share the portal's stacking order with the chat */
+.portalArt {
+  position: absolute;
+  inset: 0;
+}
+
+.portalGlow {
+  position: absolute;
+  left: 12.86%;
+  top: 12.51%;
+  inline-size: 69.14%;
+  block-size: 77.43%;
+  z-index: 1;
+  background: radial-gradient(
+    ellipse at 50% 55%,
+    var(--brand-glow-soft),
+    color-mix(in srgb, var(--brand-bg) 94%, transparent) 62%,
+    var(--brand-glow-emerald)
+  );
+  -webkit-mask: var(--inner-mask) 0 0 / 100% 100% no-repeat;
+  mask: var(--inner-mask) 0 0 / 100% 100% no-repeat;
+}
+
+.ring {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.chat {
+  position: absolute;
+  left: 12.86%;
+  top: 12.51%;
+  inline-size: 69.14%;
+  block-size: 77.43%;
+  z-index: 2;
+}
+
+/* ── Numbered cards orbiting the portal's right side ────────────────────────── */
+.features {
+  grid-column: 3;
+  grid-row: 1;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  direction: rtl;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  block-size: calc(var(--portal-h) * 0.8);
+  position: relative;
+  z-index: 2;
+}
+
+.feature:nth-child(1),
+.feature:nth-child(5) {
+  transform: translateX(calc(var(--portal-h) * -0.05));
+}
+.feature:nth-child(2),
+.feature:nth-child(4) {
+  transform: translateX(calc(var(--portal-h) * -0.012));
+}
+
+/* ── 900–1279: portal beside the copy, cards as a row underneath ────────────── */
+@media (max-width: 1279px) {
+  .scene {
+    --copy-min: 340px;
+    --features-row-h: 96px;
+    --phrase-row-h: 40px;
+    --portal-h: min(
+      clamp(
+        420px,
+        calc(100svh - var(--header-h) - 56px - var(--features-row-h) - var(--phrase-row-h)),
+        760px
+      ),
+      calc((100vw - 2 * var(--pad-x) - var(--gap-x) - var(--copy-min)) / 1.02)
+    );
+    grid-template-columns: minmax(var(--copy-min), 1fr) auto;
+    grid-template-rows: 1fr auto;
+    row-gap: 20px;
+  }
+
+  /* the ambient phrase gets its own band right above the portal (reserved by the stage's top margin),
+     so it can never cover the copy column — P1-16 */
+  .phrases {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+    translate: 0 calc(var(--portal-h) / -2);
+  }
+
+  .stage {
+    margin-top: var(--phrase-row-h);
+  }
+
+  /* the narrower copy column is taller than the portal here, so the page may scroll a little — readable text wins */
+  .features {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 12px;
+    block-size: auto;
+  }
+
+  .feature {
+    transform: none !important;
+  }
+}
+
+/* ── <900: stacked; chat leaves the ring and becomes a full-width panel ─────── */
+@media (max-width: 899px) {
+  .scene {
+    --portal-h: min(62vw, 330px);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    direction: rtl;
+    gap: 18px;
+    min-block-size: auto;
+    padding: 18px 16px 32px;
+  }
+
+  .copy {
+    order: 1;
+    align-self: auto;
+  }
+
+  .headline > .l1Row {
+    inline-size: 72%;
+  }
+
+  .customer {
+    margin-top: 18px;
+    margin-inline-end: -16px;
+    inline-size: min(78vw, 340px);
+  }
+
+  .mic {
+    min-inline-size: 172px;
+    padding: 6px 8px 6px 14px;
+  }
+
+  .micIcon {
+    inline-size: 42px;
+    block-size: 42px;
+  }
+
+  .phrases {
+    translate: none;
+  }
+
+  .stage {
+    order: 3;
+    margin-top: 0;
+    direction: ltr; /* keep Tashfeer to the left of the portal, as in the approved composition */
+    display: grid;
+    grid-template-columns: 1fr auto auto 1fr;
+    grid-template-areas:
+      ". robot art ."
+      "chat chat chat chat";
+    align-items: end;
+    column-gap: 8px;
+    row-gap: 0;
+    block-size: auto;
+  }
+
+  .robot {
+    grid-area: robot;
+    margin-bottom: calc(var(--portal-h) * 0.06);
+  }
+
+  .portal {
+    display: contents;
+  }
+
+  .portalArt {
+    grid-area: art;
+    position: relative;
+    inset: auto;
+    block-size: var(--portal-h);
+    aspect-ratio: 350 / 511;
+  }
+
+  .chat {
+    grid-area: chat;
+    position: relative;
+    left: auto;
+    top: auto;
+    inline-size: 100%;
+    block-size: auto;
+    margin-top: -18px;
+  }
+
+  .features {
+    order: 4;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 12px;
+    block-size: auto;
+  }
+
+  .feature {
+    transform: none !important;
+  }
+
+  .feature:last-child {
+    grid-column: 1 / -1;
+    justify-self: center;
+  }
+}

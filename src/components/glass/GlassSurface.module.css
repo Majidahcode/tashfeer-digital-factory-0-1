@@ -1,0 +1,28 @@
+/* One glass treatment for the whole product (replaces the prototype's per-screen glass systems). */
+.glass {
+  position: relative;
+  background: linear-gradient(160deg, var(--brand-glass-sheen), transparent 42%), var(--brand-glass);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  backdrop-filter: blur(14px) saturate(1.15);
+  border: 1px solid var(--brand-glass-edge);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 var(--brand-glass-inner),
+    0 18px 44px -18px var(--brand-shadow-deep);
+}
+
+.raised {
+  background: linear-gradient(160deg, var(--brand-glass-sheen), transparent 42%), var(--brand-glass-strong);
+  box-shadow:
+    inset 0 1px 0 var(--brand-glass-inner),
+    0 24px 60px -22px var(--brand-shadow-deep);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .raised {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: var(--brand-glass-strong);
+  }
+}

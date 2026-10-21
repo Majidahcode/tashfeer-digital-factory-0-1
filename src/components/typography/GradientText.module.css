@@ -1,0 +1,53 @@
+/* Reflective, background-integrated lettering (master prompt R3). Body text never uses this. */
+.gradient {
+  background-image: var(--gradient-sheen), var(--gradient-heading);
+  background-size: 260% 100%, 100% 100%;
+  background-position: 130% 0, 0 0;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 1px 0 var(--brand-shadow)) drop-shadow(0 0 16px var(--brand-glow-soft));
+}
+
+.wordmark {
+  background-image: var(--gradient-sheen), var(--gradient-wordmark);
+}
+
+.sheen {
+  animation: sheen 11s var(--ease-out) infinite;
+}
+
+@keyframes sheen {
+  0%,
+  64% {
+    background-position: 130% 0, 0 0;
+  }
+  100% {
+    background-position: -30% 0, 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheen {
+    animation: none;
+  }
+}
+
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  .gradient {
+    background: none;
+    color: var(--brand-text-silver);
+    -webkit-text-fill-color: currentColor;
+  }
+}
+
+@media (forced-colors: active) {
+  .gradient {
+    background: none;
+    filter: none;
+    color: CanvasText;
+    -webkit-text-fill-color: CanvasText;
+  }
+}

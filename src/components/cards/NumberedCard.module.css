@@ -1,0 +1,56 @@
+/* Numbered glass tile modelled on the 01/02/03 reference: dark fill, lime/emerald light, luminous lower edge, no thick border. */
+.item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.tile {
+  --tile: 64px;
+  position: relative;
+  flex: none;
+  inline-size: var(--tile);
+  block-size: var(--tile);
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-squircle);
+  background:
+    radial-gradient(120% 70% at 50% 118%, var(--brand-glow) 0%, transparent 62%),
+    linear-gradient(180deg, var(--brand-glass-base) 0%, var(--brand-bg) 72%);
+  box-shadow:
+    inset 0 -1.5px 0 color-mix(in srgb, var(--brand-highlight) 72%, transparent),
+    inset 0 -14px 22px -14px var(--brand-glow),
+    inset 0 1px 0 var(--brand-glass-inner),
+    0 0 0 1px var(--brand-glass-edge),
+    0 16px 26px -14px var(--brand-glow);
+}
+
+.num {
+  direction: ltr;
+  font-size: calc(var(--tile) * 0.44);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  background: var(--gradient-digits);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.label {
+  max-inline-size: 9em; /* bounded so the cards column has a known width (HomeScene --cards-min); longer labels wrap */
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--brand-text-silver);
+}
+
+@media (forced-colors: active) {
+  .num {
+    background: none;
+    color: CanvasText;
+    -webkit-text-fill-color: CanvasText;
+  }
+}

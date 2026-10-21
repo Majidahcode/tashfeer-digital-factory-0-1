@@ -1,0 +1,271 @@
+/*
+ * Intake window inside the portal. Phase 1 = visual shell; real intake arrives in Phase 3.
+ *
+ * Inside the ring the chat box has a fixed aspect ratio (height = 1.635 × width), so container-inline units
+ * (cqi, % of the chat width) also express fractions of its height: 1% of height = 1.635cqi. Rows are anchored
+ * at fixed fractions of the box — header at 6.4%, messages from 18%, footer ending at 87.5% — and their side
+ * insets come from the measured hole of the ring (alpha < 25%) at the lowest position each row reaches on the
+ * tallest portal (960px), so nothing is hidden behind the ring at any size. Verified by the ring-occlusion e2e test.
+ */
+.chat {
+  container-type: inline-size;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  direction: rtl;
+  color: var(--brand-text-silver);
+}
+
+/* masked glass that follows the portal opening (mask from the approved prototype) */
+.bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(160deg, var(--brand-glass-sheen), transparent 45%), var(--brand-glass);
+  -webkit-backdrop-filter: blur(8px) saturate(1.3);
+  backdrop-filter: blur(8px) saturate(1.3);
+  box-shadow: inset 0 0 40px var(--brand-glow-soft);
+  -webkit-mask: var(--chat-mask) 0 0 / 100% 100% no-repeat;
+  mask: var(--chat-mask) 0 0 / 100% 100% no-repeat;
+}
+
+.content {
+  flex: 1;
+  min-block-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10.5cqi 8cqi 20.4cqi; /* top 6.4% / bottom 12.5% of the box height */
+}
+
+.head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-inline: 14%;
+}
+
+.avatar {
+  inline-size: 30px;
+  block-size: 30px;
+  flex: none;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--brand-bg);
+  box-shadow: 0 0 0 1px var(--brand-glass-edge);
+}
+
+.name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--brand-highlight);
+}
+
+.messages {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* start at 18% of the box height (29.4cqi) whatever the header's px height; the ring's hole is off-centre
+     there (12–92% of the width), hence the asymmetric sides */
+  margin: max(0px, calc(18.9cqi - 38px)) 1.5cqi 0 5.5cqi;
+  border-radius: 12px;
+}
+
+.messages:focus-visible {
+  outline: 2px solid var(--brand-lime);
+  outline-offset: 2px;
+}
+
+.status {
+  align-self: center;
+  margin: 0;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+  text-align: center;
+  color: var(--brand-highlight);
+  background: var(--brand-glow-soft);
+}
+
+.bubble {
+  margin: 0;
+  padding: 8px 11px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.65;
+  background: var(--brand-glass-inner);
+  box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
+}
+
+.note {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--state-warning);
+}
+
+.pick {
+  flex: none;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--brand-muted);
+}
+
+.tools {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+  margin-inline: 2cqi; /* 10% from each side: the hole spans 8.5–92% at this row's lowest position */
+}
+
+.tool {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  padding: 7px 0 6px;
+  border: 0;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.2;
+  color: var(--brand-text-silver);
+  background: var(--brand-glass-inner);
+}
+
+.tool svg {
+  color: var(--brand-lime);
+}
+
+.inputRow {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-inline: 6.5cqi; /* 14.5% from each side: the hole spans 13–87% at this row's lowest position */
+  padding: 4px 6px;
+  border-radius: 14px;
+  background: var(--brand-glass-inner);
+  box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
+}
+
+.inputRow:focus-within {
+  box-shadow:
+    inset 0 0 0 1px var(--brand-lime),
+    0 0 18px -6px var(--brand-glow);
+}
+
+.textarea {
+  flex: 1;
+  min-inline-size: 0;
+  block-size: 44px;
+  padding: 6px 4px;
+  border: 0;
+  outline: 0;
+  resize: none;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--brand-highlight);
+  background: transparent;
+}
+
+.textarea::placeholder {
+  color: var(--brand-muted);
+}
+
+.iconBtn {
+  flex: none;
+  inline-size: 36px;
+  block-size: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: var(--brand-lime);
+  background: var(--brand-glass);
+  box-shadow: inset 0 0 0 1px var(--brand-glow);
+}
+
+.footer {
+  flex: none;
+  display: flex;
+  justify-content: center;
+  margin-inline: 13%;
+}
+
+.enter {
+  min-inline-size: 120px;
+  padding: 7px 28px;
+  border: 0;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--brand-highlight);
+  background: linear-gradient(180deg, var(--brand-emerald), var(--brand-bg-forest));
+  box-shadow:
+    inset 0 1px 0 var(--brand-glass-inner),
+    0 0 0 1px var(--brand-glow),
+    0 0 22px -6px var(--brand-glow);
+}
+
+.tool:disabled,
+.iconBtn:disabled,
+.enter:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* narrow portal (≈1024–1279 px screens): drop the hint line so the conversation keeps its room;
+   the tools group keeps its accessible name */
+@container (max-width: 300px) {
+  .pick {
+    display: none;
+  }
+}
+
+/* <900: the chat leaves the ring and becomes a full-width panel below the portal art */
+@media (max-width: 899px) {
+  .bg {
+    -webkit-mask: none;
+    mask: none;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--brand-glass-edge);
+  }
+  .content {
+    padding: 16px;
+    gap: 10px;
+  }
+  .head,
+  .messages,
+  .tools,
+  .inputRow,
+  .footer {
+    margin: 0;
+  }
+  .head {
+    justify-content: flex-start;
+  }
+  .messages {
+    flex: none;
+    overflow: visible;
+  }
+  .footer {
+    justify-content: stretch;
+  }
+  .enter {
+    flex: 1;
+  }
+}

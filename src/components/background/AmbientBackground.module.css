@@ -1,0 +1,26 @@
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-background);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Static atmospheric light from the approved scene: lime from the lower left, emerald behind the portal. */
+.glows {
+  position: absolute;
+  inset: -24px;
+  background:
+    radial-gradient(ellipse 48% 42% at 12% 100%, var(--brand-glow-soft), transparent 70%),
+    radial-gradient(ellipse 42% 50% at 70% 46%, var(--brand-glow-emerald), transparent 72%),
+    radial-gradient(ellipse 30% 24% at 88% 8%, var(--brand-glow-soft), transparent 70%);
+  will-change: transform;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  will-change: transform;
+}
