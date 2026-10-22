@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Copies / extracts approved artwork from the reference package into public/assets
- * and writes src/generated/asset-manifest.json (dimensions, format, alpha, sha256).
+ * Copies approved artwork from the reference package (and committed derivatives of it) into public/assets
+ * and writes src/generated/asset-manifest.json (dimensions, format, alpha, sha256, provenance, portal geometry).
  *
  *   node scripts/sync-assets.mjs           # sync + write manifest
  *   node scripts/sync-assets.mjs --check   # verify the committed manifest matches the sources (CI)
@@ -17,12 +17,11 @@ import sharp from "sharp";
 import {
   AGENTS_DIR,
   AGENT_SOURCES,
-  EMBEDDED_ASSETS,
+  DERIVED_ASSETS,
   FILE_ASSETS,
   MANIFEST_PATH,
   OUTPUT_DIR,
   PACKAGE_ROOT,
-  PROTOTYPE_HTML,
   PUBLIC_PREFIX,
 } from "./assets.config.mjs";
 
@@ -52,19 +51,15 @@ async function emit(relTo, buf) {
   await writeFile(out, buf);
 }
 
-function extractDataUri(html, after, label) {
-  const anchor = html.indexOf(after);
-  if (anchor < 0) {
-    errors.push(`${label}: context "${after}" not found in prototype`);
-    return null;
-  }
-  const start = html.indexOf("data:", anchor);
-  const m = /^data:([a-z]+\/[a-z0-9.+-]+);base64,([A-Za-z0-9+/=]+)/.exec(html.slice(start, start + 3_000_000));
-  if (!m) {
-    errors.push(`${label}: no base64 data URI after "${after}"`);
-    return null;
-  }
-  return Buffer.from(m[2], "base64");
+/** Geometry the portal layout needs (ring band box + the content and glass openings), from the provenance file. */
+function portalGeometry(prov) {
+  const pick = (key) => prov.openings[prov[key]];
+  return {
+    size: prov.size,
+    ringBox: prov.ringBox,
+    content: { alphaBelow: Number(prov.contentOpening), ...pick("contentOpening") },
+    glass: { alphaBelow: Number(prov.glassOpening), box: pick("glassOpening").box },
+  };
 }
 
 async function main() {
@@ -87,17 +82,33 @@ async function main() {
     manifest.assets[a.id] = { src: `${PUBLIC_PREFIX}/${a.to}`, ...info, sha256: sha256(buf), source: a.from };
   }
 
-  const html = await readFile(path.join(root, PROTOTYPE_HTML), "utf8");
-  for (const a of EMBEDDED_ASSETS) {
-    const buf = extractDataUri(html, a.after, a.id);
-    if (!buf) continue;
+  for (const a of DERIVED_ASSETS) {
+    const src = path.join(root, a.from);
+    const provFile = path.join(root, a.provenance);
+    if (!existsSync(src) || !existsSync(provFile)) {
+      errors.push(`${a.id}: missing derivative ${a.from} or its provenance ${a.provenance}`);
+      continue;
+    }
+    const prov = JSON.parse(await readFile(provFile, "utf8"));
+    const original = path.join(root, prov.source);
+    if (!existsSync(original)) {
+      errors.push(`${a.id}: original ${prov.source} not found`);
+      continue;
+    }
+    const originalSha = sha256(await readFile(original));
+    if (originalSha !== prov.sourceSha256) {
+      errors.push(`${a.id}: ${prov.source} changed since the derivative was made — run: python3 -I scripts/derive-portal-ring.py`);
+    }
+    const buf = await readFile(src);
     const info = await describe(buf, a.id, a.expect);
     await emit(a.to, buf);
     manifest.assets[a.id] = {
       src: `${PUBLIC_PREFIX}/${a.to}`,
       ...info,
       sha256: sha256(buf),
-      source: `${PROTOTYPE_HTML} (embedded after ${a.after})`,
+      source: a.from,
+      derivedFrom: { source: prov.source, sha256: prov.sourceSha256, by: "scripts/derive-portal-ring.py" },
+      ...(a.id === "portal-ring" ? { geometry: portalGeometry(prov) } : {}),
     };
   }
 

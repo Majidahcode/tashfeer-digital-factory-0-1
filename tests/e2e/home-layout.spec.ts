@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
+import manifest from "@/generated/asset-manifest.json";
 import { FEATURES, isWide, openHome } from "./support";
+
+const RING_SRC = manifest.assets["portal-ring"].src;
 
 test.beforeEach(async ({ page }) => {
   await openHome(page);
@@ -138,12 +141,22 @@ test("P1-07 no horizontal overflow: document, sections, and every element inside
     for (const el of document.querySelectorAll<HTMLElement>("header, main, section, footer")) {
       if (el.scrollWidth > el.clientWidth + 0.5) overflow.push(`${el.tagName}.${el.className} ${el.scrollWidth}>${el.clientWidth}`);
     }
+    // every element's *visible* part (its box clipped by any ancestor that clips horizontally) stays in the viewport
     const outside: string[] = [];
     for (const el of document.body.querySelectorAll("*")) {
       if (el.closest("[data-ambient-background], .sr-only, .skip-link")) continue;
       const r = el.getBoundingClientRect();
       if (r.width === 0 && r.height === 0) continue;
-      if (r.left < -1 || r.right > innerWidth + 1) outside.push(`${el.tagName}.${el.className} [${r.left.toFixed(0)}, ${r.right.toFixed(0)}]`);
+      let left = r.left;
+      let right = r.right;
+      for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+        if (getComputedStyle(a).overflowX === "visible") continue;
+        const ar = a.getBoundingClientRect();
+        left = Math.max(left, ar.left);
+        right = Math.min(right, ar.right);
+      }
+      if (right <= left) continue; // fully clipped
+      if (left < -1 || right > innerWidth + 1) outside.push(`${el.tagName}.${el.className} [${left.toFixed(0)}, ${right.toFixed(0)}]`);
     }
     window.scrollTo(10_000, window.scrollY);
     return { overflow, outside, scrolledX: window.scrollX };
@@ -226,14 +239,15 @@ test("P1-16 ambient phrases never overlap the headline, chat, cards, header, con
   expect(hits).toEqual([]);
 });
 
-test("the portal ring never covers the chat's content, the numbered cards or the phrases", async ({ page }) => {
-  // The ring art is drawn above the chat (and below the cards). Sample the real ring alpha under points on every
-  // element's outline; > 30% opacity there means the element is hidden by — or drawn over — the visible ring.
-  const covered = await page.evaluate(async () => {
+test("the owner's ring is what renders, and nothing important sits on it or on the chat", async ({ page }) => {
+  // Sample the real ring alpha under points on each element's outline. The chat content and the cards are drawn above
+  // the ring: they must stay off its band (> 50 % opaque). Phrases are drawn below it: they must stay out of its glow
+  // (> 30 %). Tashfeer, the customer and the voice pill must not cover any chat control.
+  const result = await page.evaluate(async (ringSrc) => {
     const ringEl = document.querySelector<HTMLImageElement>("img[data-portal-ring]")!;
     const box = ringEl.getBoundingClientRect();
     const src = new Image();
-    src.src = "/assets/portal/ring.webp";
+    src.src = ringSrc;
     await src.decode();
     const canvas = document.createElement("canvas");
     canvas.width = src.naturalWidth;
@@ -248,23 +262,157 @@ test("the portal ring never covers the chat's content, the numbered cards or the
       return data[(v * width + u) * 4 + 3]! / 255;
     };
     const chat = "[data-chat-shell]";
-    const targets: Array<[string, Element]> = [];
-    for (const sel of [`${chat} h2`, `${chat} [role=log] > *`, `${chat} p`, `${chat} button`, "[data-feature-card] > *", "[data-phrase-index]"]) {
-      for (const el of document.querySelectorAll(sel)) targets.push([sel, el]);
-    }
-    const field = document.querySelector(`${chat} textarea`)?.parentElement;
-    if (field) targets.push([`${chat} input row`, field]);
+    const field = document.querySelector(`${chat} textarea`)?.parentElement ?? null;
+    const controls = [
+      ...document.querySelectorAll(`${chat} h2, ${chat} [role=log], ${chat} [role=log] > *, ${chat} p, ${chat} button`),
+      ...(field ? [field] : []),
+    ].filter((el) => getComputedStyle(el).display !== "none");
+    const rules: Array<[string, Element[], number]> = [
+      ["chat control", controls, 0.5],
+      ["card", [...document.querySelectorAll("[data-feature-card] > *")], 0.5],
+      ["phrase", [...document.querySelectorAll("[data-phrase-index]")], 0.3],
+    ];
     const out: string[] = [];
-    for (const [sel, el] of targets) {
-      const r = el.getBoundingClientRect();
-      if (r.width < 2 || r.height < 2) continue;
-      const i = Math.min(4, r.width / 2, r.height / 2); // stay inside rounded corners
-      const xs = [r.left + i, r.left + r.width / 4, r.left + r.width / 2, r.right - r.width / 4, r.right - i];
-      const ys = [r.top + i, r.top + r.height / 2, r.bottom - i];
-      const worst = Math.max(...xs.flatMap((x) => ys.map((y) => alphaAt(x, y))));
-      if (worst > 0.3) out.push(`${sel} "${(el.textContent ?? "").trim().slice(0, 18)}" ring alpha ${worst.toFixed(2)}`);
+    for (const [what, els, max] of rules) {
+      for (const el of els) {
+        const r = el.getBoundingClientRect();
+        if (r.width < 2 || r.height < 2) continue;
+        const i = Math.min(4, r.width / 2, r.height / 2); // stay inside rounded corners
+        const xs = [r.left + i, r.left + r.width / 4, r.left + r.width / 2, r.right - r.width / 4, r.right - i];
+        const ys = [r.top + i, r.top + r.height / 2, r.bottom - i];
+        const worst = Math.max(...xs.flatMap((x) => ys.map((y) => alphaAt(x, y))));
+        if (worst > max) out.push(`${what} "${(el.textContent ?? "").trim().slice(0, 18)}" on ring alpha ${worst.toFixed(2)}`);
+      }
+    }
+    const people = ["[data-tashfeer]", "[data-seated-customer]", "[data-scene-part=customer] button"];
+    for (const sel of people) {
+      const p = document.querySelector(sel)?.getBoundingClientRect();
+      if (!p) continue;
+      for (const c of controls) {
+        const q = c.getBoundingClientRect();
+        if (p.left < q.right && p.right > q.left && p.top < q.bottom && p.bottom > q.top)
+          out.push(`${sel} covers chat control "${(c.textContent ?? "").trim().slice(0, 18)}"`);
+      }
+    }
+    return { out, loaded: ringEl.complete && ringEl.naturalWidth > 0, current: decodeURIComponent(ringEl.currentSrc) };
+  }, RING_SRC);
+  expect(result.loaded).toBe(true);
+  expect(result.current).toContain(RING_SRC);
+  expect(result.out).toEqual([]);
+});
+
+test("the portal's glow is never cut inside the screen", async ({ page }) => {
+  // The ring's glow may fade off the screen's edge, but a box that clips it must clip at that edge: a clip inside the
+  // screen draws a hard straight line through the glow (it once sat 12 px inside a phone's edges).
+  const cuts = await page.evaluate(() => {
+    const ring = document.querySelector("img[data-portal-ring]")!;
+    const r = ring.getBoundingClientRect();
+    const out: string[] = [];
+    for (let a = ring.parentElement; a && a !== document.documentElement; a = a.parentElement) {
+      if (getComputedStyle(a).overflowX === "visible") continue;
+      const b = a.getBoundingClientRect();
+      const name = `${a.tagName}.${a.className}`;
+      if (r.left < b.left - 0.5 && b.left > 0.5) out.push(`${name} cuts the glow at x=${b.left.toFixed(1)}`);
+      if (r.right > b.right + 0.5 && b.right < innerWidth - 0.5) out.push(`${name} cuts the glow at x=${b.right.toFixed(1)}`);
     }
     return out;
   });
-  expect(covered).toEqual([]);
+  expect(cuts).toEqual([]);
+});
+
+test("clip-to-text lettering paints every glyph whole, Arabic dots and hamza included", async ({ page }) => {
+  // A clip-to-text fill is painted only inside the element's box, and Arabic ink reaches past a tight line box (the
+  // dots under ي fall 0.47 em under the baseline): they vanished once («تشفىر», «أبنى»). Measure each element's real
+  // ink with its own font and require its box to contain it.
+  const result = await page.evaluate(async () => {
+    await document.fonts.ready;
+    const ctx = document.createElement("canvas").getContext("2d")!;
+    const K = 10; // canvas metrics are whole pixels: measure at 10× and scale down
+    // an empty inline-block sits on its line's baseline (its bottom edge); first and last line
+    const baseline = (el: HTMLElement, atStart: boolean) => {
+      const probe = document.createElement("span");
+      probe.style.cssText = "display:inline-block;inline-size:0;block-size:0";
+      if (atStart) el.prepend(probe);
+      else el.append(probe);
+      const y = probe.getBoundingClientRect().bottom;
+      probe.remove();
+      return y;
+    };
+    const out: string[] = [];
+    let checked = 0;
+    for (const el of document.body.querySelectorAll<HTMLElement>("*")) {
+      const cs = getComputedStyle(el);
+      if (!`${cs.getPropertyValue("background-clip")} ${cs.getPropertyValue("-webkit-background-clip")}`.includes("text")) continue;
+      const text = (el.textContent ?? "").trim();
+      if (!text || el.getBoundingClientRect().width === 0) continue;
+      if (/flex|grid/.test(cs.display)) {
+        out.push(`"${text.slice(0, 24)}": ${cs.display} lettering cannot be measured`);
+        continue;
+      }
+      ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${Number.parseFloat(cs.fontSize) * K}px ${cs.fontFamily}`;
+      ctx.direction = cs.direction === "rtl" ? "rtl" : "ltr";
+      const m = ctx.measureText(text);
+      const inkTop = baseline(el, true) - m.actualBoundingBoxAscent / K;
+      const inkBottom = baseline(el, false) + m.actualBoundingBoxDescent / K;
+      const box = el.getBoundingClientRect();
+      checked++;
+      if (inkTop < box.top - 0.25 || inkBottom > box.bottom + 0.25)
+        out.push(`"${text.slice(0, 24)}": ink ${inkTop.toFixed(1)}–${inkBottom.toFixed(1)}, painted ${box.top.toFixed(1)}–${box.bottom.toFixed(1)}`);
+    }
+    return { out, checked };
+  });
+  expect(result.checked).toBeGreaterThanOrEqual(10); // wordmark, 4 headline lines, 5 phrases (+ the cards' digits)
+  expect(result.out).toEqual([]);
+});
+
+test("the portal with its chat is the dominant element of the first screen", async ({ page }) => {
+  const areas = await page.evaluate(() => {
+    const area = (sel: string) => {
+      const r = document.querySelector(sel)?.getBoundingClientRect();
+      return r ? r.width * r.height : 0;
+    };
+    const chat = document.querySelector("[data-chat-shell]")!.getBoundingClientRect();
+    const portal = document.querySelector("[data-portal]")!.getBoundingClientRect();
+    const header = document.querySelector("[data-site-header]")!.getBoundingClientRect();
+    return {
+      portal: area("[data-portal]"),
+      robot: area("[data-tashfeer]"),
+      customer: area("[data-seated-customer]"),
+      headline: area("[data-hero-headline]"),
+      chatInsidePortal:
+        chat.left >= portal.left && chat.right <= portal.right && chat.top >= portal.top && chat.bottom <= portal.bottom,
+      // the ring's band (the portal box) is whole on the first screen: not cropped by the screen or the header
+      portalWhole:
+        portal.left >= 0 && portal.right <= innerWidth && portal.top >= header.bottom - 1 && portal.bottom <= innerHeight,
+    };
+  });
+  expect(areas.chatInsidePortal).toBe(true);
+  expect(areas.portalWhole).toBe(true);
+  for (const other of ["robot", "customer", "headline"] as const) {
+    expect(areas.portal, `portal vs ${other}`).toBeGreaterThan(1.5 * areas[other]);
+  }
+});
+
+test("narrow screens lead with the portal: portal → Tashfeer & customer → headline → text → cards", async ({ page }, info) => {
+  test.skip((info.project.use.viewport?.width ?? 0) >= 900, "stacked layout is below 900 px");
+  const tops = await page.evaluate(() => {
+    const top = (sel: string) => document.querySelector(sel)!.getBoundingClientRect().top + scrollY;
+    const bottom = (sel: string) => document.querySelector(sel)!.getBoundingClientRect().bottom + scrollY;
+    return {
+      header: bottom("[data-site-header]"),
+      portal: top("[data-portal]"),
+      portalBottom: bottom("[data-portal]"),
+      robot: top("[data-tashfeer]"),
+      customer: top("[data-scene-part=customer]"),
+      headline: top("[data-hero-headline]"),
+      lede: top("[data-scene-part=copy] [class*=lede]"),
+      features: top("[data-scene-part=features]"),
+    };
+  });
+  expect(tops.portal - tops.header, "the portal comes right after the header").toBeLessThan(40);
+  // the characters are arranged around the portal's lower half, before the copy
+  expect(Math.min(tops.robot, tops.customer)).toBeGreaterThanOrEqual(tops.portal + (tops.portalBottom - tops.portal) / 2 - 1);
+  expect(Math.max(tops.robot, tops.customer)).toBeLessThan(tops.headline);
+  expect(tops.headline).toBeLessThan(tops.lede);
+  expect(tops.lede).toBeLessThan(tops.features);
 });

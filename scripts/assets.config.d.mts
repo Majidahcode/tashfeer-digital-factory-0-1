@@ -12,7 +12,13 @@ export const PUBLIC_PREFIX: string;
 export const MANIFEST_PATH: string;
 
 export const FILE_ASSETS: ReadonlyArray<{ id: string; from: string; to: string; expect: ExpectedImage }>;
-export const EMBEDDED_ASSETS: ReadonlyArray<{ id: string; after: string; to: string; expect: ExpectedImage }>;
+export const DERIVED_ASSETS: ReadonlyArray<{
+  id: string;
+  from: string;
+  provenance: string;
+  to: string;
+  expect: ExpectedImage;
+}>;
 
 /** Agent role → file name in AGENTS_DIR; null = image not supplied yet (DEC-04). */
 export const AGENT_SOURCES: Readonly<Record<string, string | null>>;

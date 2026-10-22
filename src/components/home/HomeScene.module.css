@@ -1,36 +1,46 @@
 /*
- * Responsive scene. Geometry ratios come from the approved prototype (ring 490×716, chat 338.8×554.4 inside it,
- * robot 580 tall beside it) but sizes are computed from the viewport instead of scaling a fixed canvas:
- *   --portal-h = min(height available, width left after the copy and card columns / 1.02)
- * The stage (robot 0.311·H + gap 0.012·H + ring 0.685·H = 1.008·H) gets exactly its own width, so the cards
- * never slide over the ring; text keeps real, readable sizes at every width.
+ * Screen 1. Hierarchy: (1) the owner's luminous portal with the intake inside it, (2) Tashfeer, (3) the seated
+ * customer; the copy states the value proposition without competing. Everything is sized from --ring-h, the height of
+ * the ring's visible band (its glow overflows the portal box on purpose):
+ *
+ *   ≥1280      copy + customer | Tashfeer + portal | cards — one viewport, the portal as tall as the screen allows
+ *   900–1279   copy | portal, cards as a row underneath
+ *   600–899    portal first, Tashfeer and the customer flanking its lower half, then the copy
+ *   <600       portal first (as wide as the screen), Tashfeer and the customer at its base, then the copy
+ *
+ * --ring-aspect (band width ÷ height) comes from the asset's measured geometry (inline style, HomeScene.tsx).
  */
 .scene {
   --pad-x: clamp(16px, 2vw, 56px);
   --gap-x: clamp(12px, 1.2vw, 28px);
-  --copy-min: clamp(365px, 30vw, 520px);
-  --cards-min: 216px; /* tile 64 + gap 14 + label ≤ 9em (135) — keep in sync with NumberedCard */
-  --portal-h: min(
-    clamp(460px, calc(100svh - var(--header-h) - 56px), 960px),
-    calc((100vw - 2 * var(--pad-x) - 2 * var(--gap-x) - var(--copy-min) - var(--cards-min)) / 1.02)
+  --copy-min: clamp(330px, 26vw, 470px);
+  --cards-min: 216px; /* tile 64 + gap 14 + label ≤ 9em — keep in sync with NumberedCard */
+  --robot-k: 0.6; /* Tashfeer's height ÷ ring height */
+  --robot-ar: 0.3844; /* robot image width ÷ height (346 × 900) */
+  --air-top: 14px; /* the glow above the ring passes softly under the translucent header */
+  --glow-below: 0.096; /* the ring image extends this far below its band (× ring height), measured on the asset */
+  --stage-k: calc(var(--ring-aspect) + var(--robot-k) * var(--robot-ar) + 0.015);
+  --ring-h: min(
+    calc((100svh - var(--header-h) - var(--air-top)) / (1 + var(--glow-below))),
+    calc((100vw - 2 * var(--pad-x) - 2 * var(--gap-x) - var(--copy-min) - var(--cards-min)) / var(--stage-k)),
+    940px
   );
+  --air-bottom: calc(var(--ring-h) * var(--glow-below)); /* room for the glow's tail — no clipping, no scroll */
 
   position: relative;
   z-index: var(--z-content);
   isolation: isolate;
   direction: ltr; /* the composition is visual: customer & copy left, portal right — as approved */
   display: grid;
-  grid-template-columns: minmax(var(--copy-min), 680px) auto minmax(var(--cards-min), 300px);
+  grid-template-columns: minmax(var(--copy-min), 620px) auto minmax(var(--cards-min), 290px);
   justify-content: space-between;
-  align-items: center;
+  align-items: start;
   column-gap: var(--gap-x);
   min-block-size: calc(100svh - var(--header-h));
-  padding: clamp(10px, 2vh, 24px) var(--pad-x) clamp(12px, 2.2vh, 30px);
+  padding: var(--air-top) var(--pad-x) var(--air-bottom);
 }
 
-/* ── Copy column (copy at the top, seated customer at the bottom) ───────────── */
-/* rows: copy text, then the customer anchored to the bottom. The customer may rise 40px into the copy area
-   (its top is transparent), which keeps common laptop screens free of scroll without covering any text. */
+/* ── Copy column: compact copy at the top, the seated customer anchored to the bottom ───────────────────────── */
 .copy {
   grid-column: 1;
   grid-row: 1;
@@ -41,13 +51,14 @@
   grid-template-rows: auto 1fr;
   position: relative;
   z-index: 2;
+  margin-bottom: calc(6px - var(--air-bottom)); /* the customer sits near the screen's bottom edge */
 }
 
 .copyText {
   display: flex;
   flex-direction: column;
-  gap: clamp(10px, 1.6vh, 18px);
-  padding-top: clamp(4px, 2.4vh, 32px);
+  gap: clamp(8px, 1.3vh, 14px);
+  padding-top: clamp(56px, 7vh, 72px); /* room above the badge for an ambient phrase (outside the portal's glow) */
   position: relative;
   z-index: 1;
 }
@@ -56,9 +67,9 @@
   align-self: flex-start;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   margin: 0;
-  padding: 8px 16px;
+  padding: 6px 14px;
   border-radius: 999px;
   font-size: 14px;
   line-height: 1.5;
@@ -66,8 +77,8 @@
 }
 
 .dot {
-  inline-size: 10px;
-  block-size: 10px;
+  inline-size: 9px;
+  block-size: 9px;
   flex: none;
   border-radius: 50%;
   background: var(--brand-lime);
@@ -76,9 +87,11 @@
 
 .headline {
   position: relative;
+  display: flex; /* a column of flex items: the lines' ink-padding margins add up instead of collapsing */
+  flex-direction: column;
   margin: 0;
   font-weight: 800;
-  line-height: 1.18;
+  line-height: 1.2;
   text-align: end;
 }
 
@@ -96,7 +109,7 @@
 
 .l1 {
   flex: none;
-  font-size: clamp(36px, 3vw, 58px);
+  font-size: clamp(28px, 2.3vw, 46px);
 }
 
 .line,
@@ -115,54 +128,58 @@
 
 .dash {
   flex: none;
-  inline-size: 28px;
+  inline-size: 24px;
 }
 
 .curve {
   flex: none;
-  inline-size: 30px;
-  block-size: 33px;
+  inline-size: 26px;
+  block-size: 29px;
   align-self: flex-start;
-  margin-top: calc(0.5em - 9px);
+  margin-top: calc(0.5em - 8px);
   fill: none;
   stroke: var(--brand-text-silver);
   stroke-width: 2;
   stroke-linecap: round;
   opacity: 0.85;
 }
+
 .l2 {
-  font-size: clamp(23px, 1.9vw, 38px);
-  margin-top: 2px;
+  --ink-mt: 2px; /* GradientText owns the margins (it compensates its ink padding) */
+  font-size: clamp(19px, 1.45vw, 30px);
+  text-wrap: balance; /* when it wraps, two even lines — never one orphaned word */
 }
+
 .l3 {
-  font-size: clamp(19px, 1.45vw, 28px);
-  margin-top: 4px;
+  --ink-mt: 3px;
+  font-size: clamp(15px, 1.05vw, 21px);
 }
+
 .l4 {
-  font-size: clamp(32px, 2.75vw, 54px);
+  font-size: clamp(26px, 2.1vw, 42px);
 }
 
 .lede {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  max-inline-size: 48ch;
+  gap: 2px;
+  max-inline-size: 46ch;
 }
 
 .lede p {
   margin: 0;
-  font-size: 15px;
-  line-height: 1.8;
+  font-size: 14px;
+  line-height: 1.75;
   color: var(--brand-text-silver);
 }
 
 .customer {
   position: relative;
-  margin: -40px 0 0;
+  margin: -30px 0 0;
   margin-inline-end: calc(-1 * var(--pad-x)); /* bleed to the screen edge like the prototype */
   align-self: end;
   justify-self: end;
-  inline-size: clamp(260px, calc(var(--portal-h) * 0.55), 560px);
+  inline-size: clamp(230px, calc(var(--ring-h) * 0.46), 440px);
   z-index: 0;
 }
 
@@ -170,18 +187,22 @@
   display: block;
   inline-size: 100%;
   block-size: auto;
+  /* the owner's image is cut flat under the chair; where that edge is not the screen's edge (tablets, phones) it
+     would read as a crop, so it dissolves into the floor instead (presentation only — the asset is unchanged) */
+  -webkit-mask-image: linear-gradient(180deg, var(--brand-highlight) 88%, transparent);
+  mask-image: linear-gradient(180deg, var(--brand-highlight) 88%, transparent);
 }
 
 .mic {
   position: absolute;
   left: 6%;
-  top: 22%;
+  top: 20%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  min-inline-size: 196px;
-  padding: 8px 10px 8px 18px;
+  gap: 10px;
+  min-inline-size: 176px;
+  padding: 6px 8px 6px 16px;
   border: 0;
   border-radius: 999px;
   direction: rtl;
@@ -199,16 +220,16 @@
 
 .micText {
   display: grid;
-  gap: 4px;
-  font-size: 15px;
+  gap: 3px;
+  font-size: 14px;
   font-weight: 800;
   white-space: nowrap;
 }
 
 .wave {
   display: block;
-  inline-size: 88px;
-  block-size: 12px;
+  inline-size: 80px;
+  block-size: 10px;
   background: repeating-linear-gradient(90deg, var(--brand-lime) 0 2px, transparent 2px 5px);
   -webkit-mask-image: linear-gradient(90deg, var(--brand-highlight), transparent);
   mask-image: linear-gradient(90deg, var(--brand-highlight), transparent);
@@ -216,8 +237,8 @@
 }
 
 .micIcon {
-  inline-size: 50px;
-  block-size: 50px;
+  inline-size: 44px;
+  block-size: 44px;
   flex: none;
   display: grid;
   place-items: center;
@@ -226,135 +247,136 @@
   box-shadow: inset 0 0 0 2px var(--brand-lime), 0 0 18px -4px var(--brand-glow);
 }
 
-/* ── Tashfeer + portal ──────────────────────────────────────────────────────── */
+/* ── Tashfeer + the portal ──────────────────────────────────────────────────────────────────────────────────── */
 .stage {
   grid-column: 2;
   grid-row: 1;
   display: flex;
   align-items: flex-end;
-  gap: calc(var(--portal-h) * 0.012);
-  block-size: var(--portal-h);
+  gap: calc(var(--ring-h) * 0.015);
+  block-size: var(--ring-h);
   position: relative;
   z-index: 1;
 }
 
 .robot {
   flex: none;
-  block-size: calc(var(--portal-h) * 0.81);
+  block-size: calc(var(--ring-h) * var(--robot-k));
   inline-size: auto;
-  /* Preflight's img{max-width:100%} makes a replaced element "compressible": its min-content width counts as 0,
-     the grid then under-sized this column and the ring spilled ~145px over the cards. */
+  /* Preflight's img{max-width:100%} makes a replaced element "compressible" (min-content 0) and the grid would
+     under-size this column (it once let the ring slide ~145px over the cards). */
   max-inline-size: none;
-  margin-bottom: calc(var(--portal-h) * 0.062);
+  margin-bottom: calc(var(--ring-h) * 0.02);
+  position: relative;
+  z-index: 2; /* in front of the portal's glow */
   filter: drop-shadow(0 0 16px var(--brand-glow-soft));
 }
 
+/* the portal box = the ring's visible band; its children share one stacking context: glass < ring < chat */
 .portal {
   position: relative;
   flex: none;
-  block-size: var(--portal-h);
-  aspect-ratio: 350 / 511;
-}
-
-/* no z-index / transform here: its children share the portal's stacking order with the chat */
-.portalArt {
-  position: absolute;
-  inset: 0;
-}
-
-.portalGlow {
-  position: absolute;
-  left: 12.86%;
-  top: 12.51%;
-  inline-size: 69.14%;
-  block-size: 77.43%;
+  block-size: var(--ring-h);
   z-index: 1;
-  background: radial-gradient(
-    ellipse at 50% 55%,
-    var(--brand-glow-soft),
-    color-mix(in srgb, var(--brand-bg) 94%, transparent) 62%,
-    var(--brand-glow-emerald)
-  );
-  -webkit-mask: var(--inner-mask) 0 0 / 100% 100% no-repeat;
-  mask: var(--inner-mask) 0 0 / 100% 100% no-repeat;
 }
 
 .ring {
   position: absolute;
-  inset: 0;
-  inline-size: 100%;
-  block-size: 100%;
-  z-index: 3;
+  left: var(--img-l);
+  top: var(--img-t);
+  inline-size: var(--img-w);
+  block-size: var(--img-h);
+  max-inline-size: none;
+  z-index: 2;
   pointer-events: none;
 }
 
-.chat {
+/* the chat's glass: fills the ring's opening (measured mask), framed by the ring's own inner glow above it */
+.glass {
   position: absolute;
-  left: 12.86%;
-  top: 12.51%;
-  inline-size: 69.14%;
-  block-size: 77.43%;
-  z-index: 2;
+  left: var(--glass-l);
+  top: var(--glass-t);
+  inline-size: var(--glass-w);
+  block-size: var(--glass-h);
+  z-index: 1;
+  background:
+    radial-gradient(ellipse at 50% 42%, var(--brand-glass-sheen), transparent 70%),
+    radial-gradient(ellipse at 50% 50%, var(--brand-glass-strong) 40%, var(--brand-glass) 100%);
+  box-shadow: inset 0 0 40px var(--brand-glow-soft);
+  -webkit-mask: var(--hole-mask) 0 0 / 100% 100% no-repeat;
+  mask: var(--hole-mask) 0 0 / 100% 100% no-repeat;
 }
 
-/* ── Numbered cards orbiting the portal's right side ────────────────────────── */
+/* ── Numbered cards along the ring's right side ─────────────────────────────────────────────────────────────── */
 .features {
   grid-column: 3;
   grid-row: 1;
   list-style: none;
-  margin: 0;
+  margin: calc(var(--ring-h) * 0.1) 0 0;
   padding: 0;
   direction: rtl;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  block-size: calc(var(--portal-h) * 0.8);
+  block-size: calc(var(--ring-h) * 0.8);
   position: relative;
   z-index: 2;
 }
 
 .feature:nth-child(1),
 .feature:nth-child(5) {
-  transform: translateX(calc(var(--portal-h) * -0.05));
+  transform: translateX(calc(var(--ring-h) * -0.04));
 }
 .feature:nth-child(2),
 .feature:nth-child(4) {
-  transform: translateX(calc(var(--portal-h) * -0.012));
+  transform: translateX(calc(var(--ring-h) * -0.01));
 }
 
-/* ── 900–1279: portal beside the copy, cards as a row underneath ────────────── */
+/* ── 900–1279: copy | portal, cards as a row underneath ─────────────────────────────────────────────────────── */
 @media (max-width: 1279px) {
   .scene {
-    --copy-min: 340px;
-    --features-row-h: 96px;
+    --copy-min: 330px;
     --phrase-row-h: 40px;
-    --portal-h: min(
-      clamp(
-        420px,
-        calc(100svh - var(--header-h) - 56px - var(--features-row-h) - var(--phrase-row-h)),
-        760px
-      ),
-      calc((100vw - 2 * var(--pad-x) - var(--gap-x) - var(--copy-min)) / 1.02)
+    --air-bottom: 24px;
+    --stage-k: calc(var(--ring-aspect) + var(--robot-k) * var(--robot-ar) + 0.015);
+    --ring-h: min(
+      calc(100svh - var(--header-h) - var(--air-top) - 64px),
+      calc((100vw - 2 * var(--pad-x) - var(--gap-x) - var(--copy-min)) / var(--stage-k)),
+      720px
     );
     grid-template-columns: minmax(var(--copy-min), 1fr) auto;
-    grid-template-rows: 1fr auto;
-    row-gap: 20px;
+    grid-template-rows: auto auto;
+    row-gap: 28px;
   }
 
-  /* the ambient phrase gets its own band right above the portal (reserved by the stage's top margin),
-     so it can never cover the copy column — P1-16 */
-  .phrases {
-    grid-column: 2;
+  .copy {
     grid-row: 1;
-    align-self: center;
-    translate: 0 calc(var(--portal-h) / -2);
+    margin-bottom: 0;
   }
 
+  /* the ambient phrase has its own band above the copy, outside the portal's glow */
+  .phrases {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
+  }
+
+  .copyText {
+    padding-top: calc(var(--phrase-row-h) + 24px);
+  }
+
+  .customer {
+    inline-size: clamp(220px, calc(var(--ring-h) * 0.42), 400px);
+  }
+
+  /* the portal sits by the screen's edge here: its glow fades off that edge. The stage reaches the edge (bleeding
+     through the scene's padding) and clips there — at the screen's edge, never inside it — so nothing scrolls */
   .stage {
-    margin-top: var(--phrase-row-h);
+    margin-inline-end: calc(-1 * var(--pad-x));
+    padding-inline-end: var(--pad-x);
+    overflow-x: clip;
   }
 
-  /* the narrower copy column is taller than the portal here, so the page may scroll a little — readable text wins */
   .features {
     grid-column: 1 / -1;
     grid-row: 2;
@@ -362,6 +384,7 @@
     justify-content: space-between;
     gap: 12px;
     block-size: auto;
+    margin-top: 0;
   }
 
   .feature {
@@ -369,96 +392,126 @@
   }
 }
 
-/* ── <900: stacked; chat leaves the ring and becomes a full-width panel ─────── */
+/* ── <900: the portal first; Tashfeer and the customer around it; then the copy, phrases and cards ─────────── */
 @media (max-width: 899px) {
   .scene {
-    --portal-h: min(62vw, 330px);
+    --pad-x: 12px;
+    --band-w: min(calc(100vw - 2 * var(--pad-x)), 430px);
+    --ring-h: calc(var(--band-w) / var(--ring-aspect));
+    --robot-k: 0.32; /* the portal, Tashfeer and the customer fit a phone's first screen */
+    --cust-w: min(46vw, 200px);
+    --pill-h: 44px;
+    --chars-h: calc(var(--ring-h) * var(--robot-k)); /* characters' band under the ring */
     display: flex;
     flex-direction: column;
     align-items: stretch;
     direction: rtl;
-    gap: 18px;
+    gap: 16px;
     min-block-size: auto;
-    padding: 18px 16px 32px;
+    padding: 6px var(--pad-x) 32px;
   }
 
   .copy {
+    display: contents; /* its two parts are placed separately: the customer beside the portal, the copy below */
+  }
+
+  .stage {
     order: 1;
-    align-self: auto;
+    display: block;
+    block-size: auto;
+    margin: 0 calc(-1 * var(--pad-x));
+    padding: 0 var(--pad-x) var(--chars-h);
+    direction: ltr;
+    /* the glow fades off the screen's edges: the stage spans the full width and clips exactly there (a clip inside
+       the screen drew a hard vertical edge through the glow); without the clip, mobile browsers zoom out to fit it */
+    overflow-x: clip;
+  }
+
+  .portal {
+    margin-inline: auto;
+  }
+
+  .robot {
+    position: absolute;
+    left: calc(var(--pad-x) + 2px);
+    bottom: 0;
+    margin: 0;
+    block-size: var(--chars-h);
+  }
+
+  /* the customer sits on the same floor line as Tashfeer, opposite him; the voice pill fills the space above the
+     customer beside the ring (figure = pill + image; its bottom = the stage's bottom) */
+  .customer {
+    order: 2;
+    align-self: flex-start; /* RTL: the right side */
+    inline-size: var(--cust-w);
+    margin: calc(-1 * (0.6992 * var(--cust-w) + 8px + var(--pill-h)) - 16px) calc(-1 * var(--pad-x)) 0 0;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .mic {
+    position: static;
+    box-sizing: border-box;
+    block-size: var(--pill-h);
+    min-inline-size: 0;
+    padding: 4px 6px 4px 12px;
+  }
+
+  .micIcon {
+    inline-size: 36px;
+    block-size: 36px;
+  }
+
+  .wave {
+    inline-size: 56px;
+  }
+
+  .copyText {
+    order: 3;
+    padding-top: 4px;
+  }
+
+  .copyText > .headline {
+    order: 1;
+  }
+  .copyText > .badge {
+    order: 2;
+  }
+  .copyText > .lede {
+    order: 3;
   }
 
   .headline > .l1Row {
     inline-size: 72%;
   }
 
-  .customer {
-    margin-top: 18px;
-    margin-inline-end: -16px;
-    inline-size: min(78vw, 340px);
+  .l1 {
+    font-size: 32px;
   }
-
-  .mic {
-    min-inline-size: 172px;
-    padding: 6px 8px 6px 14px;
+  .l2 {
+    font-size: 21px;
   }
-
-  .micIcon {
-    inline-size: 42px;
-    block-size: 42px;
+  .l3 {
+    font-size: 17px;
+  }
+  .l4 {
+    font-size: 29px;
   }
 
   .phrases {
-    translate: none;
-  }
-
-  .stage {
-    order: 3;
-    margin-top: 0;
-    direction: ltr; /* keep Tashfeer to the left of the portal, as in the approved composition */
-    display: grid;
-    grid-template-columns: 1fr auto auto 1fr;
-    grid-template-areas:
-      ". robot art ."
-      "chat chat chat chat";
-    align-items: end;
-    column-gap: 8px;
-    row-gap: 0;
-    block-size: auto;
-  }
-
-  .robot {
-    grid-area: robot;
-    margin-bottom: calc(var(--portal-h) * 0.06);
-  }
-
-  .portal {
-    display: contents;
-  }
-
-  .portalArt {
-    grid-area: art;
-    position: relative;
-    inset: auto;
-    block-size: var(--portal-h);
-    aspect-ratio: 350 / 511;
-  }
-
-  .chat {
-    grid-area: chat;
-    position: relative;
-    left: auto;
-    top: auto;
-    inline-size: 100%;
-    block-size: auto;
-    margin-top: -18px;
+    order: 4;
   }
 
   .features {
-    order: 4;
+    order: 5;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 14px 12px;
     block-size: auto;
+    margin: 0;
   }
 
   .feature {
@@ -468,5 +521,20 @@
   .feature:last-child {
     grid-column: 1 / -1;
     justify-self: center;
+  }
+}
+
+/* 600–899: wider screens put the characters beside the ring's lower half instead of under it */
+@media (min-width: 600px) and (max-width: 899px) {
+  .scene {
+    --band-w: min(calc(100vw - 340px), 440px);
+    --robot-k: 0.385;
+    --cust-w: min(26vw, 200px); /* narrow enough that the chair clears the ring's lower-right curve */
+    --chars-h: 0px;
+  }
+
+  .robot {
+    left: max(calc(var(--pad-x) + 6px), calc(50% - var(--band-w) / 2 - var(--ring-h) * var(--robot-k) * var(--robot-ar) - 6px));
+    block-size: calc(var(--ring-h) * var(--robot-k));
   }
 }

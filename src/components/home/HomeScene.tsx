@@ -7,12 +7,14 @@ import { Icon } from "@/components/icons/Icon";
 import { GradientText } from "@/components/typography/GradientText";
 import { AMBIENT_PHRASES, FEATURES, HERO } from "@/domain/home-content";
 import { asset, assetUrl } from "@/lib/assets";
+import { GLASS_BOX, RING_ASPECT, RING_IMAGE, boxVars } from "@/lib/portal-geometry";
 import { ChatShell } from "./ChatShell";
 import styles from "./HomeScene.module.css";
 
 /**
- * Screen 1 — the approved composition (seated customer, headline, Tashfeer beside the portal, intake inside the
- * portal, numbered cards around it) rebuilt as a responsive layout instead of a scaled 1400×842 canvas.
+ * Screen 1 — the owner's luminous portal with the intake inside it is the focal point; Tashfeer and the seated
+ * customer frame it; the copy states the value proposition without taking over. Desktop keeps the approved
+ * left-to-right composition; narrow screens lead with the portal (see HomeScene.module.css).
  */
 export function HomeScene() {
   const robot = asset("tashfeer");
@@ -20,7 +22,12 @@ export function HomeScene() {
   const customer = asset("seated-customer");
 
   return (
-    <section className={styles.scene} aria-labelledby="hero-title" data-scene="">
+    <section
+      className={styles.scene}
+      aria-labelledby="hero-title"
+      data-scene=""
+      style={{ "--ring-aspect": RING_ASPECT.toFixed(4) } as CSSProperties}
+    >
       <AmbientPhrases phrases={AMBIENT_PHRASES} className={styles.phrases} />
 
       <div className={styles.copy} data-scene-part="copy">
@@ -64,7 +71,8 @@ export function HomeScene() {
             height={customer.height}
             alt="العميل جالس يتابع بناء منتجه"
             className={styles.customerImg}
-            sizes="(max-width: 899px) 70vw, 36vw"
+            sizes="(max-width: 899px) 55vw, 30vw"
+            data-seated-customer=""
           />
           <button type="button" className={styles.mic} disabled aria-label="تحدّث الآن — غير مفعّل في معاينة التصميم">
             <span className={styles.micText}>
@@ -85,29 +93,28 @@ export function HomeScene() {
           height={robot.height}
           alt="تشفير"
           className={styles.robot}
-          sizes="(max-width: 899px) 30vw, 22vw"
+          sizes="(max-width: 899px) 30vw, 16vw"
           priority
           data-tashfeer=""
         />
-        <div className={styles.portal} data-portal="">
-          <div className={styles.portalArt}>
-            <div
-              className={styles.portalGlow}
-              aria-hidden="true"
-              style={{ "--inner-mask": assetUrl("portal-inner-mask") } as CSSProperties}
-            />
-            <Image
-              src={ring.src}
-              width={ring.width}
-              height={ring.height}
-              alt=""
-              className={styles.ring}
-              sizes="(max-width: 899px) 55vw, 40vw"
-              priority
-              data-portal-ring=""
-            />
-          </div>
-          <ChatShell className={styles.chat} />
+        {/* the portal box is the ring's visible band; the glow overflows it. Glass < ring < chat content. */}
+        <div className={styles.portal} data-portal="" style={{ aspectRatio: RING_ASPECT, ...boxVars("img", RING_IMAGE) }}>
+          <div
+            className={styles.glass}
+            aria-hidden="true"
+            style={{ ...boxVars("glass", GLASS_BOX), "--hole-mask": assetUrl("portal-hole-mask") } as CSSProperties}
+          />
+          <Image
+            src={ring.src}
+            width={ring.width}
+            height={ring.height}
+            alt=""
+            className={styles.ring}
+            sizes="(max-width: 899px) 150vw, 70vw"
+            priority
+            data-portal-ring=""
+          />
+          <ChatShell />
         </div>
       </div>
 

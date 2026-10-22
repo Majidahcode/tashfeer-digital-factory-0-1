@@ -20,7 +20,15 @@
   font-weight: 600;
   line-height: 1.5;
   text-align: center;
-  background-image: var(--gradient-heading);
+  /* the dots under a yeh can reach the bottom of this line box (see GradientText): the padding strip carries the
+     fill's last stop under it as a safety margin; the negative margin keeps bottom-anchored slots where they were */
+  padding-bottom: 0.15em;
+  margin-bottom: -0.15em;
+  background-image: linear-gradient(var(--brand-emerald-bright), var(--brand-emerald-bright)), var(--gradient-heading);
+  background-origin: padding-box, content-box;
+  background-size: 100% calc(0.15em + 1px), 100% 100%;
+  background-position: 0 100%, 0 0;
+  background-repeat: no-repeat;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -39,11 +47,12 @@
   filter: drop-shadow(0 0 14px var(--brand-glow-soft));
 }
 
-/* ≥1280: five distinct slots in the bands above and below the scene content.
-   Top slots are offset in px from the header (not %), so the fade-in offset and parallax never reach it. */
+/* ≥1280: five distinct slots in the bands above and below the scene content, all outside the portal's glow.
+   Top slots are offset in px from the header (not %), so the fade-in offset and parallax never reach it; the copy
+   column keeps room above its badge for s0. */
 .s0 {
   top: 22px;
-  left: 39%;
+  left: 2%;
 }
 .s1 {
   bottom: 1%;

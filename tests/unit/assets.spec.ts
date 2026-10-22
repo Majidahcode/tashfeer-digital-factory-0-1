@@ -47,15 +47,33 @@ test("each available agent image comes from its explicitly mapped file, bytes un
   }
 });
 
-test("brand, character and portal assets are byte-identical copies with alpha", () => {
+test("brand and character assets are byte-identical copies with alpha", () => {
   for (const id of ["brand-mark", "tashfeer", "seated-customer"] as const) {
     const a = manifest.assets[id];
     expect(a.hasAlpha, id).toBe(true);
     expect(a.sha256, id).toBe(sha(a.source));
   }
-  // the transparent ring embedded in the approved prototype (ASSET_INVENTORY §4)
-  expect(manifest.assets["portal-ring"].sha256.startsWith("455ab0f23699")).toBe(true);
-  expect([manifest.assets["portal-ring"].width, manifest.assets["portal-ring"].height]).toEqual([350, 511]);
+});
+
+test("the portal is derived from the owner's original ring, which is unchanged", () => {
+  const ORIGINAL = "Tashfeer_Claude_Pro_MVP_Package/Tashfeer_Claude_Pro_MVP_Package/02-assets/portal/luminous-portal-ring-original.jpg";
+  for (const id of ["portal-ring", "portal-hole-mask"] as const) {
+    const a = manifest.assets[id];
+    expect(a.derivedFrom.source, id).toBe(ORIGINAL);
+    expect(a.derivedFrom.sha256, id).toBe(sha(ORIGINAL)); // the original's bytes are what the derivative was made from
+    expect(a.sha256, id).toBe(sha(a.source)); // the committed derivative is what the app serves
+    expect(a.hasAlpha, id).toBe(true);
+    expect(a.source.startsWith("Tashfeer_Claude_Pro_MVP_Package")).toBe(false); // nothing written into the package
+  }
+  const ring = manifest.assets["portal-ring"];
+  expect(ring.src).toBe("/assets/portal/luminous-portal-ring.png");
+  // the opening the chat uses lies inside the ring band, under 50 % ring opacity
+  expect(ring.geometry.content.alphaBelow).toBe(0.5);
+  const box = ring.geometry.content.box;
+  expect(box.left).toBeGreaterThan(0.1);
+  expect(box.left + box.width).toBeLessThan(0.9);
+  expect(box.top).toBeGreaterThan(0.1);
+  expect(box.top + box.height).toBeLessThan(0.9);
 });
 
 test("the committed manifest is in sync with the reference package", () => {
