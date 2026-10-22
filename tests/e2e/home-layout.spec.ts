@@ -398,6 +398,7 @@ test("narrow screens lead with the portal: portal → Tashfeer & customer → he
   const tops = await page.evaluate(() => {
     const top = (sel: string) => document.querySelector(sel)!.getBoundingClientRect().top + scrollY;
     const bottom = (sel: string) => document.querySelector(sel)!.getBoundingClientRect().bottom + scrollY;
+    const right = (sel: string) => document.querySelector(sel)!.getBoundingClientRect().right;
     return {
       header: bottom("[data-site-header]"),
       portal: top("[data-portal]"),
@@ -405,7 +406,9 @@ test("narrow screens lead with the portal: portal → Tashfeer & customer → he
       robot: top("[data-tashfeer]"),
       customer: top("[data-scene-part=customer]"),
       headline: top("[data-hero-headline]"),
+      headlineRight: right("[data-hero-headline]"),
       lede: top("[data-scene-part=copy] [class*=lede]"),
+      ledeRight: right("[data-scene-part=copy] [class*=lede]"),
       features: top("[data-scene-part=features]"),
     };
   });
@@ -413,6 +416,8 @@ test("narrow screens lead with the portal: portal → Tashfeer & customer → he
   // the characters are arranged around the portal's lower half, before the copy
   expect(Math.min(tops.robot, tops.customer)).toBeGreaterThanOrEqual(tops.portal + (tops.portalBottom - tops.portal) / 2 - 1);
   expect(Math.max(tops.robot, tops.customer)).toBeLessThan(tops.headline);
-  expect(tops.headline).toBeLessThan(tops.lede);
+  // the headline is read before the paragraphs: above them, or (600–899, two columns) level with them on the right
+  if (tops.ledeRight < tops.headlineRight - 40) expect(Math.abs(tops.headline - tops.lede)).toBeLessThan(2);
+  else expect(tops.headline).toBeLessThan(tops.lede);
   expect(tops.lede).toBeLessThan(tops.features);
 });

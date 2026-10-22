@@ -2,13 +2,13 @@ import Image from "next/image";
 import type { CSSProperties } from "react";
 import { AmbientPhrases } from "@/components/background/AmbientPhrases";
 import { NumberedCard } from "@/components/cards/NumberedCard";
-import { GlassSurface } from "@/components/glass/GlassSurface";
 import { Icon } from "@/components/icons/Icon";
 import { GradientText } from "@/components/typography/GradientText";
 import { AMBIENT_PHRASES, FEATURES, HERO } from "@/domain/home-content";
 import { asset, assetUrl } from "@/lib/assets";
 import { GLASS_BOX, RING_ASPECT, RING_IMAGE, boxVars } from "@/lib/portal-geometry";
 import { ChatShell } from "./ChatShell";
+import { SpeakerArrow } from "./SpeakerArrow";
 import styles from "./HomeScene.module.css";
 
 /**
@@ -32,23 +32,13 @@ export function HomeScene() {
 
       <div className={styles.copy} data-scene-part="copy">
         <div className={styles.copyText}>
-          <GlassSurface as="p" className={styles.badge}>
-            <span className={styles.dot} aria-hidden="true" />
-            {HERO.badge}
-          </GlassSurface>
-
+          {/* three tiers, one reading order everywhere: headline → introductory statement → supporting paragraphs */}
           <h1 id="hero-title" className={styles.headline} data-hero-headline="">
-            {/* «— أنا ——↘» : the prototype's pointer from "I" toward Tashfeer, rebuilt to flex with the column */}
+            {/* «أنا» is Tashfeer: SpeakerArrow draws its pointer to the robot; on narrow screens the word sits by him */}
             <span className={styles.l1Row}>
-              <svg className={styles.curve} viewBox="0 0 40 44" aria-hidden="true" focusable="false">
-                <path d="M0 12H14Q30 12 30 36" />
-                <path d="M23 30L30 40L37 30" />
-              </svg>
-              <span className={styles.line} aria-hidden="true" />
-              <GradientText sheen className={styles.l1}>
+              <GradientText sheen className={styles.l1} data-speaker-label="">
                 {HERO.lines[0]}
               </GradientText>
-              <span className={styles.dash} aria-hidden="true" />
             </span>
             <GradientText className={styles.l2}>{HERO.lines[1]}</GradientText>
             <GradientText className={styles.l3}>{HERO.lines[2]}</GradientText>
@@ -56,6 +46,11 @@ export function HomeScene() {
               {HERO.lines[3]}
             </GradientText>
           </h1>
+
+          <p className={styles.intro}>
+            <span className={styles.dot} aria-hidden="true" />
+            {HERO.badge}
+          </p>
 
           <div className={styles.lede}>
             {HERO.lede.map((p) => (
@@ -104,19 +99,22 @@ export function HomeScene() {
             aria-hidden="true"
             style={{ ...boxVars("glass", GLASS_BOX), "--hole-mask": assetUrl("portal-hole-mask") } as CSSProperties}
           />
+          {/* served as-is (lossless WebP of the derived ring): the optimizer's AVIF smeared its fine sparks */}
           <Image
             src={ring.src}
             width={ring.width}
             height={ring.height}
             alt=""
             className={styles.ring}
-            sizes="(max-width: 899px) 150vw, 70vw"
+            unoptimized
             priority
             data-portal-ring=""
           />
           <ChatShell />
         </div>
       </div>
+
+      <SpeakerArrow />
 
       <ol className={styles.features} aria-label="مراحل المصنع" data-scene-part="features">
         {FEATURES.map((label, i) => (

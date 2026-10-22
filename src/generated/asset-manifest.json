@@ -30,13 +30,13 @@
       "source": "Tashfeer_Claude_Pro_MVP_Package/Tashfeer_Claude_Pro_MVP_Package/02-assets/characters/seated-customer-original.webp"
     },
     "portal-ring": {
-      "src": "/assets/portal/luminous-portal-ring.png",
-      "format": "png",
+      "src": "/assets/portal/luminous-portal-ring.webp",
+      "format": "webp",
       "width": 670,
       "height": 842,
       "hasAlpha": true,
-      "sha256": "fcedb66a1da0c0b7fb45b12a9fc8a45532d83f24923144991a585128778e2e3c",
-      "source": "assets/derived/portal/luminous-portal-ring.png",
+      "sha256": "f2e6a88881c18f904a72e24e6d580749c059b760d9b909c689b14ae5eeebb600",
+      "source": "assets/derived/portal/luminous-portal-ring.webp",
       "derivedFrom": {
         "source": "Tashfeer_Claude_Pro_MVP_Package/Tashfeer_Claude_Pro_MVP_Package/02-assets/portal/luminous-portal-ring-original.jpg",
         "sha256": "9f98acea97a699a6fd3e59ec303e6f64e6c82d41490def644b119c5f3c3391c0",

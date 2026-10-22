@@ -162,7 +162,7 @@
 .tool svg {
   inline-size: calc(16 * var(--u));
   block-size: calc(16 * var(--u));
-  color: var(--brand-lime);
+  color: var(--brand-gold); /* as in the approved prototype (.t5 .ic) */
 }
 
 .inputRow {

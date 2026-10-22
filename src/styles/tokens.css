@@ -1,29 +1,30 @@
 /*
  * Tashfeer design tokens — the ONLY place colour literals are allowed (enforced by scripts/check-tokens.mjs).
  *
- * Palette sampled from 01-reference/card-style-reference-01-02-03.jpg, card region only
- * (x150–736, y570–900; 0% blue/cyan pixels). Method and contrast ratios: docs/ASSET_INVENTORY.md §9.
- * Owner decision DEC-02 (2026-10-21): use the reference values; review the side-by-side in Phase 1.
+ * Owner decision DEC-02 (2026-10-22): the Neon palette — the «النموذج (نيون)» column of
+ * docs/review/phase-1/palette-comparison-dec-02.jpg, i.e. the values of the approved prototype
+ * 01-reference/current-tashfeer-prototype.html (--bg, --em, --lime, --yel, --sil, --gold).
+ * (The palette sampled from the 01/02/03 card reference was used until then.)
  */
 :root {
-  /* ── Palette (sampled) ───────────────────────────────────────────── */
-  --brand-bg: #031007; /* darkest 15% median */
-  --brand-bg-forest: #162916; /* green around the cards */
-  --brand-glass-base: #10150f; /* card fill */
-  --brand-emerald: #357f22; /* saturated green median — large text / light only */
-  --brand-emerald-bright: #53c32c; /* emerald peak */
-  --brand-lime: #a1d520; /* acid-lime peak — main light */
-  --brand-lime-soft: #8acc3f; /* lime median */
-  --brand-highlight: #e8f8bc; /* brightest rim reflection — replaces pure white */
-  --brand-text-silver: #d6e4d6; /* primary text (14.7:1 on --brand-bg) */
-  --brand-muted: #acc788; /* secondary text (10.4:1) */
-  --brand-decor: #6a7f5a; /* decorative / disabled only (4.4:1) */
-  --brand-digit-top: #9baf32; /* numeral gradient, measured on card 01 */
-  --brand-digit-mid: #3b7018;
-  --brand-digit-low: #215725;
-  --brand-digit-fade: #0e2f10;
+  /* ── Palette: the six Neon values, exactly ───────────────────────── */
+  --brand-bg: #030504; /* near-black background */
+  --brand-emerald: #087a3f; /* rich emerald */
+  --brand-lime: #baff24; /* bright lime — the main light */
+  --brand-highlight: #e5ff45; /* intense yellow-green highlight */
+  --brand-text-silver: #c9ceca; /* silver-grey typography */
+  --brand-gold: #d9b84a; /* gold accent — the prototype's attachment icons */
 
-  /* ── Semantic states (outside the reference, approved with DEC-02) ── */
+  /* ── Secondary roles: sRGB mixes of the six values above, nothing else (tests/unit/tokens.spec.ts) ── */
+  --brand-bg-forest: #053a1f; /* emerald 45% + bg — the primary button's lower shade */
+  --brand-glass-base: #04110a; /* emerald 10% + bg — card and glass fill */
+  --brand-emerald-bright: #61bc32; /* emerald 50% + lime — emerald lit by lime */
+  --brand-muted: #a5aaa6; /* silver 82% + bg — secondary text */
+  --brand-digit-top: #6ac330; /* lime 55% + emerald — numeral gradient */
+  --brand-digit-mid: #087a3f; /* emerald */
+  --brand-digit-low: #075d30; /* emerald 75% + bg */
+
+  /* ── Semantic states (outside the palette, approved with DEC-02) ── */
   --state-danger: #e8836f;
   --state-warning: #e9be55;
   --state-success: var(--brand-lime);
@@ -31,9 +32,10 @@
   /* ── Derived, alpha variants (always from the palette above) ─────── */
   --brand-glass: color-mix(in srgb, var(--brand-glass-base) 58%, transparent);
   --brand-glass-strong: color-mix(in srgb, var(--brand-glass-base) 78%, transparent);
-  --brand-glass-edge: color-mix(in srgb, var(--brand-highlight) 10%, transparent);
-  --brand-glass-sheen: color-mix(in srgb, var(--brand-highlight) 7%, transparent);
-  --brand-glass-inner: color-mix(in srgb, var(--brand-highlight) 9%, transparent);
+  /* glass edges are neutral, like the prototype's white glass borders (the yellow-green highlight is for accents) */
+  --brand-glass-edge: color-mix(in srgb, var(--brand-text-silver) 14%, transparent);
+  --brand-glass-sheen: color-mix(in srgb, var(--brand-text-silver) 9%, transparent);
+  --brand-glass-inner: color-mix(in srgb, var(--brand-text-silver) 11%, transparent);
   --brand-glow: color-mix(in srgb, var(--brand-lime) 35%, transparent);
   --brand-glow-soft: color-mix(in srgb, var(--brand-lime) 16%, transparent);
   --brand-glow-emerald: color-mix(in srgb, var(--brand-emerald) 42%, transparent);

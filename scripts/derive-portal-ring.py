@@ -50,6 +50,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "Tashfeer_Claude_Pro_MVP_Package/Tashfeer_Claude_Pro_MVP_Package/02-assets/portal/luminous-portal-ring-original.jpg"
 OUT_DIR = ROOT / "assets/derived/portal"
 OUT_PNG = OUT_DIR / "luminous-portal-ring.png"
+OUT_WEBP = OUT_DIR / "luminous-portal-ring.webp"  # the same pixels, lossless: what the page serves
 OUT_MASK = OUT_DIR / "luminous-portal-hole-mask.png"
 OUT_JSON = OUT_DIR / "luminous-portal-ring.json"
 
@@ -249,6 +250,8 @@ def main():
     raw, _, crop, box, _, B = derive(args.debug)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     Image.fromarray(crop, "RGBA").save(OUT_PNG, optimize=True)
+    # served as-is (no re-encoding): a lossy encoder smears the ring's fine sparks; lossless WebP is 37% smaller
+    Image.fromarray(crop, "RGBA").save(OUT_WEBP, lossless=True, quality=100, method=6, exact=True)
     geo, mask = geometry(crop)
     Image.fromarray(mask, "RGBA").save(OUT_MASK, optimize=True)
     if args.verify:
@@ -280,6 +283,7 @@ def main():
     }
     OUT_JSON.write_text(json.dumps(meta, indent=1) + "\n")
     print(f"wrote {OUT_PNG.relative_to(ROOT)} {meta['size'][0]}x{meta['size'][1]} from crop {meta['cropBox']}")
+    print(f"wrote {OUT_WEBP.relative_to(ROOT)} (lossless, identical pixels)")
 
 
 if __name__ == "__main__":

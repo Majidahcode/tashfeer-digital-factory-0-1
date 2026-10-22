@@ -57,91 +57,31 @@
 .copyText {
   display: flex;
   flex-direction: column;
-  gap: clamp(8px, 1.3vh, 14px);
-  padding-top: clamp(56px, 7vh, 72px); /* room above the badge for an ambient phrase (outside the portal's glow) */
+  padding-top: clamp(56px, 7vh, 72px); /* room above the headline for an ambient phrase (outside the portal's glow) */
   position: relative;
   z-index: 1;
+  text-align: start; /* RTL: every line starts at the right edge */
 }
 
-.badge {
-  align-self: flex-start;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--brand-text-silver);
-}
-
-.dot {
-  inline-size: 9px;
-  block-size: 9px;
-  flex: none;
-  border-radius: 50%;
-  background: var(--brand-lime);
-  box-shadow: 0 0 10px var(--brand-glow);
-}
-
+/* ── Copy: three tiers in one reading order — headline, introductory statement, supporting paragraphs ──────── */
 .headline {
   position: relative;
   display: flex; /* a column of flex items: the lines' ink-padding margins add up instead of collapsing */
   flex-direction: column;
+  align-items: flex-start; /* RTL start: the lines hug the right edge, like the paragraphs under them */
   margin: 0;
   font-weight: 800;
   line-height: 1.2;
-  text-align: end;
+  text-align: start;
 }
 
 .headline > span {
   display: block;
 }
 
-/* first line: [curve↘][line][أنا][dash] in RTL order = «— أنا ——↘» visually, on the start (right) half */
-.headline > .l1Row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  inline-size: 58%;
-}
-
+/* «أنا» alone: its pointer to Tashfeer is drawn by SpeakerArrow (wide screens: from its side; narrow: by him) */
 .l1 {
-  flex: none;
   font-size: clamp(28px, 2.3vw, 46px);
-}
-
-.line,
-.dash {
-  block-size: 2px;
-  border-radius: 2px;
-  background: var(--brand-text-silver);
-  opacity: 0.85;
-}
-
-.line {
-  flex: 1;
-  min-inline-size: 24px;
-  margin-inline-start: -10px;
-}
-
-.dash {
-  flex: none;
-  inline-size: 24px;
-}
-
-.curve {
-  flex: none;
-  inline-size: 26px;
-  block-size: 29px;
-  align-self: flex-start;
-  margin-top: calc(0.5em - 8px);
-  fill: none;
-  stroke: var(--brand-text-silver);
-  stroke-width: 2;
-  stroke-linecap: round;
-  opacity: 0.85;
 }
 
 .l2 {
@@ -156,21 +96,46 @@
 }
 
 .l4 {
+  --ink-mt: 0.3em; /* the hamza of «أبني» rises toward «لا» right above it: keep them apart */
   font-size: clamp(26px, 2.1vw, 42px);
+}
+
+.intro {
+  display: flex;
+  align-items: baseline; /* the dot sits on the first line */
+  gap: 10px;
+  margin: clamp(12px, 1.8vh, 18px) 0 0;
+  max-inline-size: 36ch;
+  font-size: clamp(15px, 0.86vw, 17px);
+  font-weight: 600;
+  line-height: 1.65;
+  color: var(--brand-text-silver);
+  text-wrap: balance;
+}
+
+.dot {
+  inline-size: 8px;
+  block-size: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--brand-lime);
+  box-shadow: 0 0 10px var(--brand-glow);
 }
 
 .lede {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  max-inline-size: 46ch;
+  gap: 10px; /* the same space between every paragraph */
+  margin: clamp(10px, 1.4vh, 14px) 0 0;
+  max-inline-size: 42ch;
 }
 
 .lede p {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.75;
-  color: var(--brand-text-silver);
+  font-size: clamp(14px, 0.78vw, 16px);
+  line-height: 1.8;
+  color: var(--brand-muted);
+  text-wrap: pretty; /* no one-word last line */
 }
 
 .customer {
@@ -377,11 +342,12 @@
     overflow-x: clip;
   }
 
+  /* one row, five equal steps (RTL: 01 on the right), each tile + label together */
   .features {
     grid-column: 1 / -1;
     grid-row: 2;
-    flex-direction: row;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 12px;
     block-size: auto;
     margin-top: 0;
@@ -469,23 +435,28 @@
     inline-size: 56px;
   }
 
+  /* the customer's image faces right; here he sits right of the portal, so he is mirrored to face it and
+     Tashfeer (no text in that image; Tashfeer is never mirrored — his chest reads «تشفير») */
+  .customerImg {
+    transform: scaleX(-1);
+  }
+
   .copyText {
     order: 3;
     padding-top: 4px;
+    position: static; /* «أنا» is placed by Tashfeer, relative to the scene */
   }
 
-  .copyText > .headline {
-    order: 1;
-  }
-  .copyText > .badge {
-    order: 2;
-  }
-  .copyText > .lede {
-    order: 3;
+  .headline {
+    position: static;
   }
 
+  /* «أنا» beside Tashfeer's head, in the characters' band under the ring; SpeakerArrow hooks it onto his shoulder */
   .headline > .l1Row {
-    inline-size: 72%;
+    position: absolute;
+    z-index: 3;
+    top: calc(6px + var(--ring-h) + 2px);
+    left: calc(var(--pad-x) + 2px + var(--chars-h) * var(--robot-ar) + 44px);
   }
 
   .l1 {
@@ -505,11 +476,13 @@
     order: 4;
   }
 
+  /* the five steps stacked in order, one per row: same tile, same spacing, label beside its number */
   .features {
     order: 5;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
     block-size: auto;
     margin: 0;
   }
@@ -518,9 +491,8 @@
     transform: none !important;
   }
 
-  .feature:last-child {
-    grid-column: 1 / -1;
-    justify-self: center;
+  .feature > span:first-child {
+    --tile: 52px;
   }
 }
 
@@ -533,8 +505,62 @@
     --chars-h: 0px;
   }
 
+  .scene {
+    --robot-w: calc(var(--ring-h) * var(--robot-k) * var(--robot-ar));
+    --robot-x: max(calc(var(--pad-x) + 6px), calc(50% - var(--band-w) / 2 - var(--robot-w) - 6px));
+  }
+
   .robot {
-    left: max(calc(var(--pad-x) + 6px), calc(50% - var(--band-w) / 2 - var(--ring-h) * var(--robot-k) * var(--robot-ar) - 6px));
+    left: var(--robot-x);
     block-size: calc(var(--ring-h) * var(--robot-k));
+  }
+
+  /* «أنا» above Tashfeer's head, left of the ring; SpeakerArrow drops onto his head */
+  .headline > .l1Row {
+    top: calc(6px + var(--ring-h) * (1 - var(--robot-k)) - 38px - 56px);
+    left: calc(var(--robot-x) + var(--robot-w) / 2);
+    transform: translateX(-50%);
+  }
+
+  /* the copy in two columns at this width (RTL: headline and introduction on the right, paragraphs on the left),
+     so the paragraphs keep a readable measure without leaving half the screen empty */
+  .copyText {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 32px;
+    align-items: start;
+  }
+
+  .headline {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .intro {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .lede {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    margin-top: 0;
+  }
+
+  /* one row of five steps (RTL: 01 on the right): tile above its label, equal columns */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .feature {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+
+  .feature > span:first-child {
+    --tile: 56px;
   }
 }

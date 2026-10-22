@@ -46,10 +46,11 @@ export const FILE_ASSETS = [
 export const DERIVED_ASSETS = [
   {
     id: "portal-ring",
-    from: "assets/derived/portal/luminous-portal-ring.png",
+    // lossless WebP of luminous-portal-ring.png (same pixels), served without re-encoding
+    from: "assets/derived/portal/luminous-portal-ring.webp",
     provenance: "assets/derived/portal/luminous-portal-ring.json",
-    to: "portal/luminous-portal-ring.png",
-    expect: { format: "png", alpha: true },
+    to: "portal/luminous-portal-ring.webp",
+    expect: { format: "webp", alpha: true },
   },
   {
     id: "portal-hole-mask",

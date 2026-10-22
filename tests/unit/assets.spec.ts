@@ -66,7 +66,7 @@ test("the portal is derived from the owner's original ring, which is unchanged",
     expect(a.source.startsWith("Tashfeer_Claude_Pro_MVP_Package")).toBe(false); // nothing written into the package
   }
   const ring = manifest.assets["portal-ring"];
-  expect(ring.src).toBe("/assets/portal/luminous-portal-ring.png");
+  expect(ring.src).toBe("/assets/portal/luminous-portal-ring.webp");
   // the opening the chat uses lies inside the ring band, under 50 % ring opacity
   expect(ring.geometry.content.alphaBelow).toBe(0.5);
   const box = ring.geometry.content.box;
@@ -74,6 +74,16 @@ test("the portal is derived from the owner's original ring, which is unchanged",
   expect(box.left + box.width).toBeLessThan(0.9);
   expect(box.top).toBeGreaterThan(0.1);
   expect(box.top + box.height).toBeLessThan(0.9);
+});
+
+test("the served portal is a lossless copy of the derived master — every pixel identical", async () => {
+  const { default: sharp } = await import("sharp");
+  const raw = (file: string) => sharp(path.join(process.cwd(), file)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const master = await raw("assets/derived/portal/luminous-portal-ring.png");
+  const served = await raw(manifest.assets["portal-ring"].source);
+  expect(served.info.width).toBe(master.info.width);
+  expect(served.info.height).toBe(master.info.height);
+  expect(Buffer.compare(served.data, master.data)).toBe(0);
 });
 
 test("the committed manifest is in sync with the reference package", () => {

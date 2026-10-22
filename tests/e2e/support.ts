@@ -14,6 +14,8 @@ export const isWide = (info: TestInfo) => width(info) >= 1920;
 export async function openHome(page: Page) {
   await page.goto("/");
   await page.locator("[data-ambient-background][data-ambient-motion]").waitFor({ state: "attached" });
+  // the «أنا» pointer is drawn from the live layout after hydration
+  await page.locator("[data-speaker-arrow] [data-arrow-line]").waitFor({ state: "attached" });
   await page.evaluate(async () => {
     await document.fonts.ready;
   });
