@@ -1,0 +1,61 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+@theme inline {
+  --color-brand-bg: var(--brand-bg);
+  --color-brand-lime: var(--brand-lime);
+  --color-brand-emerald: var(--brand-emerald);
+  --color-brand-silver: var(--brand-text-silver);
+  --color-brand-muted: var(--brand-muted);
+  --font-sans: var(--font-sans);
+}
+
+html {
+  background: var(--brand-bg);
+  color: var(--brand-text-silver);
+  color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  position: relative; /* the containing block of the page-long background (AmbientBackground) */
+  min-height: 100svh;
+  margin: 0;
+  background: var(--brand-bg);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-x: clip;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand-lime);
+  outline-offset: 3px;
+}
+
+.skip-link {
+  position: absolute;
+  inset-inline-start: 12px;
+  top: -64px;
+  z-index: 100;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--brand-glass-strong);
+  color: var(--brand-highlight);
+  font-size: 15px;
+  text-decoration: none;
+  transition: top var(--dur-fast) var(--ease-out);
+}
+.skip-link:focus-visible {
+  top: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}

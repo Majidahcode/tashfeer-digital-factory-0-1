@@ -1,0 +1,179 @@
+{
+ "stage_fonts_1440": {
+  "u": 1.0286,
+  "items": [
+   {
+    "sel": ".chat .msg",
+    "cssPx": 11,
+    "visualPx": 11.31
+   },
+   {
+    "sel": ".t5 button",
+    "cssPx": 9.5,
+    "visualPx": 9.77
+   },
+   {
+    "sel": ".t6 button",
+    "cssPx": 8.5,
+    "visualPx": 8.74
+   },
+   {
+    "sel": ".hp",
+    "cssPx": 12,
+    "visualPx": 12.34
+   },
+   {
+    "sel": ".badge1",
+    "cssPx": 10.5,
+    "visualPx": 10.8
+   },
+   {
+    "sel": ".fr",
+    "cssPx": 12,
+    "visualPx": 12.34
+   },
+   {
+    "sel": ".chat header small",
+    "cssPx": 9,
+    "visualPx": 9.26
+   },
+   {
+    "sel": "#idea",
+    "cssPx": 11,
+    "visualPx": 11.31
+   },
+   {
+    "sel": "#s1 .phr.p1",
+    "cssPx": 13,
+    "visualPx": 13.37
+   }
+  ]
+ },
+ "s4_reply_li_1440": {
+  "position": "fixed",
+  "bottom": "0px",
+  "height": "450px",
+  "rect": [
+   59,
+   542,
+   484,
+   450
+  ],
+  "overlapsPrototypeA": true
+ },
+ "s5_layout_1440": {
+  "screenScrollWidth": 1496,
+  "clientWidth": 1440,
+  "gridLeft": 0,
+  "gridRight": 1440,
+  "columns": [
+   [
+    1180,
+    1440
+   ],
+   [
+    296,
+    1164
+   ],
+   [
+    0,
+    280
+   ]
+  ],
+  "padPaddingLeft": "0px"
+ },
+ "stage_fonts_1280": {
+  "u": 0.9143,
+  "items": [
+   {
+    "sel": ".chat .msg",
+    "cssPx": 11,
+    "visualPx": 10.06
+   },
+   {
+    "sel": ".t5 button",
+    "cssPx": 9.5,
+    "visualPx": 8.69
+   },
+   {
+    "sel": ".t6 button",
+    "cssPx": 8.5,
+    "visualPx": 7.77
+   },
+   {
+    "sel": ".hp",
+    "cssPx": 12,
+    "visualPx": 10.97
+   },
+   {
+    "sel": ".badge1",
+    "cssPx": 10.5,
+    "visualPx": 9.6
+   },
+   {
+    "sel": ".fr",
+    "cssPx": 12,
+    "visualPx": 10.97
+   },
+   {
+    "sel": ".chat header small",
+    "cssPx": 9,
+    "visualPx": 8.23
+   },
+   {
+    "sel": "#idea",
+    "cssPx": 11,
+    "visualPx": 10.06
+   },
+   {
+    "sel": "#s1 .phr.p1",
+    "cssPx": 13,
+    "visualPx": 11.89
+   }
+  ]
+ },
+ "s4_reply_li_1280": {
+  "position": "fixed",
+  "bottom": "0px",
+  "height": "400px",
+  "rect": [
+   52,
+   531,
+   484,
+   400
+  ],
+  "overlapsPrototypeA": true
+ },
+ "s5_layout_1280": {
+  "screenScrollWidth": 1336,
+  "clientWidth": 1280,
+  "gridLeft": 0,
+  "gridRight": 1280,
+  "columns": [
+   [
+    1020,
+    1280
+   ],
+   [
+    296,
+    1004
+   ],
+   [
+    0,
+    280
+   ]
+  ],
+  "padPaddingLeft": "0px"
+ },
+ "mobile_toggle": {
+  "toggle": [
+   300,
+   749,
+   82,
+   31
+  ],
+  "chatTop": 657,
+  "overlapsChat": true,
+  "docScrollH": 1208
+ }
+}

@@ -1,0 +1,271 @@
+/*
+ * Intake window inside the owner's portal ring. Phase 1 = visual shell; real intake arrives in Phase 3.
+ *
+ * Glass (owner's correction of 2026-10-22): every surface is translucent dark green with a fine lime edge and a
+ * faint top highlight — no grey fills — so the chat belongs to the portal's light instead of sitting on it like a
+ * card. No backdrop blur: what shows through is the page's soft light field (the background leaves its sparks out
+ * of the chat), and a blur over an animated background would be recomputed on every frame.
+ *
+ * The box is the ring's opening where the ring is under 50% opaque; rows sit at measured heights and widths of
+ * that opening (src/lib/portal-geometry.ts sets --<row>-t/h/l/r as percentages of this box), so the chat follows
+ * the ellipse instead of a rectangle. The content is drawn above the ring art (z 3) and its glass below (z 1), so
+ * the ring's inner glow frames the glass but never covers a control.
+ *
+ * --u is one pixel at the smallest ring (content box ≈ 235 px wide, a 390 px phone) and grows with the ring, up to
+ * ×1.35: every size below is a multiple of it, so the composition is identical at every size and never below the
+ * readable minimums (12 px controls, 14 px paragraphs).
+ */
+.chat {
+  position: absolute;
+  left: var(--content-l);
+  top: var(--content-t);
+  width: var(--content-w);
+  height: var(--content-h);
+  z-index: 3;
+  container-type: inline-size;
+  direction: rtl;
+  color: var(--brand-text-silver);
+}
+
+.chat > * {
+  --u: clamp(1px, 0.4255cqi, 1.35px);
+  position: absolute;
+  margin: 0;
+}
+
+.head {
+  top: var(--head-t);
+  height: var(--head-h);
+  left: var(--head-l);
+  right: var(--head-r);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(6 * var(--u));
+}
+
+.avatar {
+  inline-size: calc(26 * var(--u));
+  block-size: calc(26 * var(--u));
+  flex: none;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--brand-bg);
+  box-shadow: 0 0 0 1px var(--brand-glass-edge), 0 0 12px -2px var(--brand-glow);
+}
+
+.name {
+  margin: 0;
+  font-size: calc(15 * var(--u));
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--brand-highlight);
+}
+
+.statusRow {
+  top: var(--status-t);
+  height: var(--status-h);
+  left: var(--status-l);
+  right: var(--status-r);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status {
+  padding: calc(2 * var(--u)) calc(9 * var(--u));
+  border-radius: 999px;
+  font-size: calc(12 * var(--u));
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  color: var(--brand-highlight);
+  background: var(--brand-glow-soft);
+}
+
+.log {
+  top: var(--log-t);
+  height: var(--log-h);
+  left: var(--log-l);
+  right: var(--log-r);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: calc(5 * var(--u));
+  border-radius: calc(12 * var(--u));
+  scrollbar-width: thin;
+}
+
+.log:focus-visible {
+  outline: 2px solid var(--brand-lime);
+  outline-offset: 2px;
+}
+
+.bubble {
+  margin: 0;
+  padding: calc(6 * var(--u)) calc(10 * var(--u));
+  border-radius: calc(12 * var(--u));
+  font-size: calc(14 * var(--u));
+  line-height: 1.55;
+  text-wrap: balance; /* even lines in the narrow opening, no one-word last line */
+  background: var(--chat-surface);
+  box-shadow:
+    inset 0 1px 0 var(--chat-sheen),
+    inset 0 0 0 1px var(--chat-edge);
+}
+
+.note {
+  margin: 0;
+  font-size: calc(14 * var(--u));
+  line-height: 1.5;
+  color: var(--state-warning);
+}
+
+.pick {
+  display: none; /* only where the opening is wide enough (large rings) */
+  top: var(--pick-t);
+  height: var(--pick-h);
+  left: var(--pick-l);
+  right: var(--pick-r);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+  white-space: nowrap;
+  color: var(--brand-muted);
+}
+
+@container (min-width: 330px) {
+  .pick {
+    display: block;
+  }
+}
+
+.tools {
+  top: var(--tools-t);
+  height: var(--tools-h);
+  left: var(--tools-l);
+  right: var(--tools-r);
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: center;
+  gap: calc(4 * var(--u));
+}
+
+.tool {
+  display: grid;
+  justify-items: center;
+  gap: calc(2 * var(--u));
+  padding: calc(5 * var(--u)) 0 calc(4 * var(--u));
+  border: 0;
+  border-radius: calc(10 * var(--u));
+  font: inherit;
+  font-size: calc(12 * var(--u));
+  line-height: 1.2;
+  color: var(--brand-text-silver);
+  background: var(--chat-surface);
+  box-shadow:
+    inset 0 1px 0 var(--chat-sheen),
+    inset 0 0 0 1px var(--chat-edge);
+}
+
+.tool svg {
+  inline-size: calc(16 * var(--u));
+  block-size: calc(16 * var(--u));
+  color: var(--brand-gold); /* as in the approved prototype (.t5 .ic) */
+}
+
+.inputRow {
+  top: var(--input-t);
+  height: var(--input-h);
+  left: var(--input-l);
+  right: var(--input-r);
+  display: flex;
+  align-items: center;
+  gap: calc(5 * var(--u));
+  padding: calc(3 * var(--u)) calc(5 * var(--u));
+  box-sizing: border-box;
+  border-radius: calc(14 * var(--u));
+  background: var(--chat-surface-deep);
+  box-shadow:
+    inset 0 1px 0 var(--chat-sheen),
+    inset 0 0 0 1px var(--chat-edge);
+}
+
+.inputRow:focus-within {
+  box-shadow:
+    inset 0 0 0 1px var(--brand-lime),
+    0 0 18px -6px var(--brand-glow);
+}
+
+.textarea {
+  flex: 1;
+  min-inline-size: 0;
+  block-size: calc(34 * var(--u));
+  padding: calc(6 * var(--u)) calc(4 * var(--u));
+  border: 0;
+  outline: 0;
+  resize: none;
+  overflow: hidden;
+  font: inherit;
+  font-size: calc(14 * var(--u));
+  line-height: 1.5;
+  color: var(--brand-highlight);
+  background: transparent;
+}
+
+.textarea::placeholder {
+  color: var(--brand-muted);
+}
+
+.iconBtn {
+  flex: none;
+  inline-size: calc(30 * var(--u));
+  block-size: calc(30 * var(--u));
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: var(--brand-lime);
+  background: var(--chat-surface);
+  box-shadow: inset 0 0 0 1px var(--brand-glow);
+}
+
+.iconBtn svg {
+  inline-size: calc(16 * var(--u));
+  block-size: calc(16 * var(--u));
+}
+
+.footer {
+  top: var(--enter-t);
+  height: var(--enter-h);
+  left: var(--enter-l);
+  right: var(--enter-r);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.enter {
+  min-inline-size: calc(104 * var(--u));
+  padding: calc(5 * var(--u)) calc(22 * var(--u));
+  border: 0;
+  border-radius: calc(12 * var(--u));
+  font: inherit;
+  font-size: calc(15 * var(--u));
+  font-weight: 800;
+  line-height: 1.6;
+  color: var(--brand-highlight);
+  background: linear-gradient(180deg, var(--brand-emerald), var(--brand-bg-forest));
+  box-shadow:
+    inset 0 1px 0 var(--brand-glass-inner),
+    0 0 0 1px var(--brand-glow),
+    0 0 22px -6px var(--brand-glow);
+}
+
+/* disabled in this design preview, and visibly so — but still legible, not greyed out */
+.tool:disabled,
+.iconBtn:disabled,
+.enter:disabled {
+  cursor: not-allowed;
+  opacity: 0.74;
+}

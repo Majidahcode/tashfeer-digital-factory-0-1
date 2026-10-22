@@ -1,0 +1,24 @@
+/* The «أنا» → Tashfeer pointer: an overlay in the scene's coordinates (drawn by SpeakerArrow.tsx). */
+.arrow {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 3;
+  fill: none;
+  stroke: var(--brand-text-silver);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.85;
+  filter: drop-shadow(0 0 6px var(--brand-glow-soft));
+}
+
+@media (forced-colors: active) {
+  .arrow {
+    stroke: CanvasText;
+    filter: none;
+  }
+}

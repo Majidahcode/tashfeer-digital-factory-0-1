@@ -1,0 +1,80 @@
+/*
+ * Reflective, background-integrated lettering (master prompt R3). Body text never uses this.
+ *
+ * Arabic ink reaches outside a tight line box: in Cairo a hamza rises 1.01em over the baseline and the dots under a
+ * yeh fall 0.47em under it, while a 1.1–1.2 line box ends ≈ 0.2em under it. A clip-to-text fill is painted only
+ * inside the element's box, so those dots vanished (ي read as ى — «تشفىر», «أبنى»). The padding extends the box
+ * over that ink and the negative margins give the space back, so the layout is unchanged (callers set extra margin
+ * through --ink-mt / --ink-mb). The gradient still spans exactly the line box (content-box origin), and the two
+ * padding strips take its end colours, so every glyph keeps the colour it had.
+ */
+.gradient {
+  --ink-over: 0.12em;
+  --ink-under: 0.3em;
+  --ink-fill: var(--gradient-heading);
+  --ink-head: var(--brand-highlight); /* the fill's first and last stops */
+  --ink-tail: var(--brand-emerald-bright);
+  padding-block: var(--ink-over) var(--ink-under);
+  margin-block: calc(var(--ink-mt, 0px) - var(--ink-over)) calc(var(--ink-mb, 0px) - var(--ink-under));
+  background-image:
+    var(--gradient-sheen),
+    linear-gradient(var(--ink-head), var(--ink-head)),
+    linear-gradient(var(--ink-tail), var(--ink-tail)),
+    var(--ink-fill);
+  background-origin: content-box, padding-box, padding-box, content-box;
+  /* the strips overlap the fill by 1px (same colour), so rounding never leaves a hairline through the dots */
+  background-size:
+    260% 100%,
+    100% calc(var(--ink-over) + 1px),
+    100% calc(var(--ink-under) + 1px),
+    100% 100%;
+  background-position: 130% 0, 0 0, 0 100%, 0 0;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 1px 0 var(--brand-shadow)) drop-shadow(0 0 16px var(--brand-glow-soft));
+}
+
+.wordmark {
+  --ink-fill: var(--gradient-wordmark);
+  --ink-tail: var(--brand-lime);
+}
+
+.sheen {
+  animation: sheen 11s var(--ease-out) infinite;
+}
+
+@keyframes sheen {
+  0%,
+  64% {
+    background-position: 130% 0, 0 0, 0 100%, 0 0;
+  }
+  100% {
+    background-position: -30% 0, 0 0, 0 100%, 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheen {
+    animation: none;
+  }
+}
+
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  .gradient {
+    background: none;
+    color: var(--brand-text-silver);
+    -webkit-text-fill-color: currentColor;
+  }
+}
+
+@media (forced-colors: active) {
+  .gradient {
+    background: none;
+    filter: none;
+    color: CanvasText;
+    -webkit-text-fill-color: CanvasText;
+  }
+}

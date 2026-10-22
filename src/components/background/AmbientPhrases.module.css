@@ -1,0 +1,106 @@
+/*
+ * Phrase slots are safe zones of the homepage scene (they must never cover the headline, chat, cards or controls —
+ * verified by e2e test P1-16). Coordinates are physical (the scene uses a visual LTR grid like the approved prototype).
+ */
+.layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: clip; /* the fade-in offset must never extend the page (it added a 1px scroll at 1280×800) */
+  will-change: transform;
+}
+
+.phrase {
+  position: absolute;
+  direction: rtl;
+  inline-size: max-content;
+  max-inline-size: min(34ch, 36vw);
+  font-size: clamp(15px, 1.05vw, 19px);
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: center;
+  /* the dots under a yeh can reach the bottom of this line box (see GradientText): the padding strip carries the
+     fill's last stop under it as a safety margin; the negative margin keeps bottom-anchored slots where they were */
+  padding-bottom: 0.15em;
+  margin-bottom: -0.15em;
+  background-image: linear-gradient(var(--brand-emerald-bright), var(--brand-emerald-bright)), var(--gradient-heading);
+  background-origin: padding-box, content-box;
+  background-size: 100% calc(0.15em + 1px), 100% 100%;
+  background-position: 0 100%, 0 0;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  opacity: 0.1;
+  transform: translateY(6px);
+  transition:
+    opacity var(--dur-phrase) var(--ease-out),
+    transform var(--dur-phrase) var(--ease-out),
+    filter var(--dur-phrase) var(--ease-out);
+}
+
+.phrase[data-state="revealed"] {
+  opacity: 0.92;
+  transform: none;
+  filter: drop-shadow(0 0 14px var(--brand-glow-soft));
+}
+
+/* ≥1280: one slot per phrase in the bands above and below the scene content, all outside the portal's glow.
+   The top slot is offset in px from the header (not %), so the fade-in offset and parallax never reach it. */
+.s1 {
+  bottom: 1%;
+  left: 30%; /* between the seated customer and Tashfeer's feet */
+}
+.s2 {
+  bottom: 2.5%;
+  right: 1.5%;
+}
+.s3 {
+  top: 22px;
+  right: 2%;
+}
+.s4 {
+  bottom: 1%;
+  left: 50%;
+}
+
+/* <1280: one in-flow slot (above the copy on small laptops, after the steps on tablets and phones — placed by the
+   scene). All phrases share it; ghosts are hidden so stacked phrases never show through each other. */
+@media (max-width: 1279px) {
+  .layer {
+    position: relative;
+    inset: auto;
+    block-size: 40px;
+    inline-size: 100%;
+  }
+  .phrase {
+    opacity: 0;
+    inset: 0;
+    margin: auto;
+    block-size: max-content;
+    max-inline-size: 92%;
+  }
+  .s1,
+  .s2,
+  .s3,
+  .s4 {
+    inset: 0;
+  }
+}
+
+@media (max-width: 899px) {
+  .layer {
+    block-size: 56px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phrase,
+  .phrase[data-state="revealed"] {
+    transform: none;
+    filter: none;
+    transition: opacity 400ms linear;
+  }
+}

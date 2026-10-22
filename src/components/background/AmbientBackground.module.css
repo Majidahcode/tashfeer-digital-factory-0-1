@@ -1,0 +1,29 @@
+/*
+ * One background for the whole page: it covers the body from the top of the page to its end (body is its containing
+ * block), so every section — portal, characters, headline, steps — sits on the same atmosphere, in full-page captures
+ * too. It never takes pointer events and never affects layout (strict containment).
+ */
+.root {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-background);
+  pointer-events: none;
+  overflow: hidden;
+  contain: strict;
+}
+
+/* both canvases are as long as the page (their height is set from the page's length, in 128 px steps) */
+.light,
+.sparks {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+/* drawn at 1/8 resolution: the browser's smooth upscaling is what keeps the light fields soft */
+.light {
+  image-rendering: auto;
+}

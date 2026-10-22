@@ -1,0 +1,44 @@
+{
+  "name": "tashfeer-digital-factory",
+  "version": "0.1.0",
+  "private": true,
+  "description": "مصنع تشفير — Tashfeer AI Digital Factory (MVP)",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "assets:sync": "node scripts/sync-assets.mjs",
+    "assets:check": "node scripts/sync-assets.mjs --check",
+    "predev": "npm run assets:sync",
+    "dev": "next dev",
+    "prebuild": "npm run assets:sync",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint . && node scripts/check-tokens.mjs",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "playwright test -c playwright.unit.config.ts",
+    "test:e2e": "playwright test -c playwright.config.ts",
+    "review:shots": "node scripts/review-shots.mjs",
+    "check": "npm run lint && npm run typecheck && npm run test"
+  },
+  "dependencies": {
+    "@fontsource/cairo": "5.3.0",
+    "next": "16.4.2",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.56.0",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "22.20.4",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.4.0",
+    "playwright-core": "1.56.0",
+    "sharp": "0.35.5",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3"
+  }
+}

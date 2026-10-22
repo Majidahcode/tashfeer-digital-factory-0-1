@@ -1,0 +1,3554 @@
+{
+  "url": "file:///home/claude/majidahcode/tashfeer-digital-factory-0-1/Tashfeer_Claude_Pro_MVP_Package/Tashfeer_Claude_Pro_MVP_Package/01-reference/current-tashfeer-prototype.html",
+  "runs": {
+    "desktop-1440x900": {
+      "viewport": [
+        1440,
+        900
+      ],
+      "shots": {
+        "intro_400ms": "desktop-1440x900/s1_intro_0400ms.jpg",
+        "intro_1100ms": "desktop-1440x900/s1_intro_1100ms.jpg",
+        "intro_1800ms": "desktop-1440x900/s1_intro_1800ms.jpg",
+        "intro_2500ms": "desktop-1440x900/s1_intro_2500ms.jpg",
+        "s1": "desktop-1440x900/s1_home.jpg",
+        "s1_filled": "desktop-1440x900/s1_filled.jpg",
+        "portal_200ms": "desktop-1440x900/portal_0200ms.jpg",
+        "portal_600ms": "desktop-1440x900/portal_0600ms.jpg",
+        "portal_1000ms": "desktop-1440x900/portal_1000ms.jpg",
+        "portal_1400ms": "desktop-1440x900/portal_1400ms.jpg",
+        "portal_1800ms": "desktop-1440x900/portal_1800ms.jpg",
+        "portal_2300ms": "desktop-1440x900/portal_2300ms.jpg",
+        "portal_2800ms": "desktop-1440x900/portal_2800ms.jpg",
+        "portal_3300ms": "desktop-1440x900/portal_3300ms.jpg",
+        "portal_3800ms": "desktop-1440x900/portal_3800ms.jpg",
+        "portal_4300ms": "desktop-1440x900/portal_4300ms.jpg",
+        "portal_5000ms": "desktop-1440x900/portal_5000ms.jpg",
+        "s2": "desktop-1440x900/s2_agents.jpg",
+        "s2_carousel_end": "desktop-1440x900/s2_after_carousel.jpg",
+        "s3": "desktop-1440x900/s3_team.jpg",
+        "jelly_300ms": "desktop-1440x900/jelly_0300ms.jpg",
+        "jelly_900ms": "desktop-1440x900/jelly_0900ms.jpg",
+        "jelly_1500ms": "desktop-1440x900/jelly_1500ms.jpg",
+        "s4": "desktop-1440x900/s4_prototypes.jpg",
+        "s4_after_feedback": "desktop-1440x900/s4_after_feedback.jpg",
+        "s5": "desktop-1440x900/s5_factory.jpg",
+        "s5_gate": "desktop-1440x900/s5_quality_gate.jpg",
+        "s5_end": "desktop-1440x900/s5_end.jpg"
+      },
+      "console": [],
+      "s1_layout": {
+        "viewport": [
+          1440,
+          900
+        ],
+        "activeScreen": "s1",
+        "u": "1.0285714285714285",
+        "stage": {
+          "x": 0,
+          "y": -2,
+          "w": 1440,
+          "h": 866,
+          "right": 1440,
+          "bottom": 865
+        },
+        "stageMarginLeft": 0,
+        "stageMarginRight": -0.0,
+        "screenScrollWidth": 2057,
+        "screenClientWidth": 1440,
+        "docScrollWidth": 1440,
+        "robot": {
+          "x": 519,
+          "y": 192,
+          "w": 229,
+          "h": 597,
+          "right": 749,
+          "bottom": 788
+        },
+        "robotVisible": true,
+        "ring": {
+          "x": 761,
+          "y": 97,
+          "w": 504,
+          "h": 736,
+          "right": 1265,
+          "bottom": 834
+        },
+        "ringVisible": true,
+        "chat": {
+          "x": 826,
+          "y": 189,
+          "w": 348,
+          "h": 570,
+          "right": 1174,
+          "bottom": 760
+        },
+        "customerVisible": true,
+        "featureCards": [
+          {
+            "text": "🧭 فهم احتياجاتك",
+            "rect": {
+              "x": 1285,
+              "y": 134,
+              "w": 130,
+              "h": 47,
+              "right": 1414,
+              "bottom": 180
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "📊 تحليل المشروع",
+            "rect": {
+              "x": 1285,
+              "y": 257,
+              "w": 130,
+              "h": 47,
+              "right": 1414,
+              "bottom": 304
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "🔎 بحث وتدقيق",
+            "rect": {
+              "x": 1285,
+              "y": 380,
+              "w": 130,
+              "h": 47,
+              "right": 1414,
+              "bottom": 427
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "🧊 بناء النماذج الأولية",
+            "rect": {
+              "x": 1285,
+              "y": 473,
+              "w": 130,
+              "h": 47,
+              "right": 1414,
+              "bottom": 520
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "🚀 الإنتاج الفعلي",
+            "rect": {
+              "x": 1285,
+              "y": 576,
+              "w": 130,
+              "h": 47,
+              "right": 1414,
+              "bottom": 623
+            },
+            "visible": true,
+            "clippedX": false
+          }
+        ],
+        "phrases": [
+          {
+            "text": "منتجك ينبني قدامك في مصنع تشفير",
+            "on": true,
+            "visible": true,
+            "rect": {
+              "x": 576,
+              "y": 58,
+              "w": 267,
+              "h": 39,
+              "right": 843,
+              "bottom": 97
+            }
+          },
+          {
+            "text": "موقعك قديم ودك تجدده؟",
+            "on": false,
+            "visible": true,
+            "rect": {
+              "x": 293,
+              "y": 451,
+              "w": 211,
+              "h": 52,
+              "right": 504,
+              "bottom": 503
+            }
+          },
+          {
+            "text": "تطبيقك صاير بطيء وما يواكب الدنيا؟",
+            "on": false,
+            "visible": true,
+            "rect": {
+              "x": 1275,
+              "y": 677,
+              "w": 144,
+              "h": 72,
+              "right": 1419,
+              "bottom": 749
+            }
+          }
+        ],
+        "h1Color": "rgb(255, 255, 255)",
+        "h1BgClip": "border-box",
+        "logoIsSvg": true,
+        "logoImg": false,
+        "fontCairoLoaded": true,
+        "particles": 90
+      },
+      "phrase_rotation_indices": [
+        0,
+        1,
+        2
+      ],
+      "empty_submit_error": "اكتب وصفًا مختصرًا لمشروعك أولًا.",
+      "chips_after_upload": [
+        "صورة: test-upload.png"
+      ],
+      "state_files": [
+        "صورة: test-upload.png"
+      ],
+      "transition_seconds_wall": 8.12,
+      "transition_state_timeline_ms": [
+        [
+          32,
+          "preparing"
+        ],
+        [
+          375,
+          "enteringPortal"
+        ],
+        [
+          2102,
+          "cameraCrossing"
+        ],
+        [
+          4167,
+          "revealingAgents"
+        ],
+        [
+          7971,
+          "completed"
+        ]
+      ],
+      "pushState_calls_during_transition": 1,
+      "hash_after_transition": "#s2",
+      "s2_cards": [
+        {
+          "id": "pm",
+          "name": "مدير المنتج",
+          "en": "Product Manager",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلproduct-manager.png",
+          "recommended": true,
+          "selected": true,
+          "rendered": null
+        },
+        {
+          "id": "research",
+          "name": "الباحث",
+          "en": "Research Agent",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": true,
+          "selected": true,
+          "rendered": {
+            "natural": [
+              415,
+              640
+            ],
+            "drawn": [
+              209,
+              322
+            ],
+            "slot": [
+              209,
+              330
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "req",
+          "name": "محلل المتطلبات",
+          "en": "Requirements Analyst",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلrequirements-analyst.png",
+          "recommended": true,
+          "selected": true,
+          "rendered": null
+        },
+        {
+          "id": "ux",
+          "name": "مصمم UX/UI",
+          "en": "UX/UI Designer",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": true,
+          "selected": true,
+          "rendered": {
+            "natural": [
+              302,
+              640
+            ],
+            "drawn": [
+              198,
+              420
+            ],
+            "slot": [
+              198,
+              428
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "arch",
+          "name": "معماري البرمجيات",
+          "en": "Software Architect",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": true,
+          "selected": true,
+          "rendered": {
+            "natural": [
+              294,
+              640
+            ],
+            "drawn": [
+              198,
+              431
+            ],
+            "slot": [
+              198,
+              439
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "front",
+          "name": "المطور الأمامي",
+          "en": "Frontend Developer",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": true,
+          "selected": true,
+          "rendered": {
+            "natural": [
+              349,
+              640
+            ],
+            "drawn": [
+              198,
+              363
+            ],
+            "slot": [
+              198,
+              371
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "back",
+          "name": "المطور الخلفي",
+          "en": "Backend Developer",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": true,
+          "selected": true,
+          "rendered": {
+            "natural": [
+              332,
+              640
+            ],
+            "drawn": [
+              198,
+              382
+            ],
+            "slot": [
+              198,
+              390
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "db",
+          "name": "قاعدة البيانات",
+          "en": "Database Agent",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": true,
+          "selected": true,
+          "rendered": {
+            "natural": [
+              364,
+              640
+            ],
+            "drawn": [
+              198,
+              348
+            ],
+            "slot": [
+              198,
+              356
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "qa",
+          "name": "اختبار الجودة",
+          "en": "QA Agent",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": true,
+          "selected": true,
+          "rendered": {
+            "natural": [
+              365,
+              640
+            ],
+            "drawn": [
+              198,
+              347
+            ],
+            "slot": [
+              198,
+              355
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "sec",
+          "name": "الأمن السيبراني",
+          "en": "Cybersecurity Agent",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلcybersecurity-agent.png",
+          "recommended": true,
+          "selected": true,
+          "rendered": null
+        },
+        {
+          "id": "perf",
+          "name": "الأداء",
+          "en": "Performance Agent",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلperformance-agent.png",
+          "recommended": true,
+          "selected": true,
+          "rendered": null
+        },
+        {
+          "id": "ops",
+          "name": "العمليات",
+          "en": "DevOps Agent",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلdevops-agent.png",
+          "recommended": true,
+          "selected": true,
+          "rendered": null
+        }
+      ],
+      "s2_summary": "ملخص المشروع\nنوع المنتج\nموقع / منصة ويب\nوصف العميل\nنبغى موقع لمركز تشخيص طبي فيه حجز مواعيد ودفع إلكتروني وحسابات للعملاء، والموقع الحالي بطيء ونبي نجدده\nالجمهور المستهدف\nيُحدَّد مع العميل لاحقًا\nالمواد المرفقة\n1 عنصر\nسبب الترشيح\n• النطاق والبحث والمتطلبات والتصميم: أساس أي منتج جديد\n• واجهة + خلفية + بيانات: المنتج يحتاج تخزينًا وتفاعلًا\n• التشغيل والنشر: لتسليم الحزمة النهائية\n• الوصف يتضمن بيانات عملاء/حجوزات: تستلزم مراجعة أمنية\n• الأداء مذكور أو متوقع في الوصف\n\nتحليل تجريبي بقواعد ثابتة — لا يوجد ذكاء اصطناعي متصل بعد.",
+      "s2_count_label": "المختارون 12 / 12",
+      "state_contains_urls": false,
+      "s2_carousel": {
+        "forward": [
+          {
+            "counter": "1 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "2 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "3 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "4 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "5 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "6 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "7 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "8 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "9 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "10 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "11 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "12 / 12",
+            "nextDisabled": "true"
+          }
+        ],
+        "backward": [
+          {
+            "counter": "12 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "11 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "10 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "9 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "8 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "7 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "6 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "5 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "4 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "3 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "2 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "1 / 12",
+            "prevDisabled": "true"
+          }
+        ],
+        "lastCardVisible": {
+          "lastId": "ops",
+          "inside": true,
+          "lastRect": [
+            788,
+            1025
+          ],
+          "carRect": [
+            403,
+            1411
+          ]
+        },
+        "firstCardVisible": {
+          "firstId": "pm",
+          "inside": true
+        }
+      },
+      "after_clear": {
+        "label": "المختارون 0 / 12",
+        "confirmDisabled": true
+      },
+      "after_select_recommended": "المختارون 12 / 12",
+      "s3_details_first": "بانتظار الصورة\nمدير المنتج\nProduct Manager\nإدارة المنتج وتحديد النطاق\nدوره في مشروعك\nيثبّت نطاق موقع / منصة ويب المطلوب: «نبغى موقع لمركز تشخيص طبي فيه حجز مواعيد ودفع إلكتروني وحسابات للعملاء…» ويقسمه إلى مراحل قابلة للتسليم\nيضع ميزة الحجز في أول الأولويات ويحدد شكل رحلة العميل فيها\nيتابع اعتمادك في كل مرحلة ويجمع ملاحظاتك\nيراجع المواد التي أرفقتها (1) ويحوّلها إلى مرجع للنطاق\nالتفاصيل\nيستلم\nوصف العميل والمرفقات\nسينفّذ\nتحديد النطاق · ترتيب الأولويات · تنسيق الاعتماد\nالمخرجات المتوقعة\nوثيقة نطاق المنتج وخارطة المراحل\nالأدوات المقترحة\nNotion · Linear\nالاعتماديات\nلا يعتمد على أحد؛ يبدأ السلسلة\nيسلّم العمل إلى\nالباحث\n\nخطة مقترحة مبنية على وصفك — لم يبدأ أي تنفيذ.",
+      "s3_team_cards": [
+        {
+          "id": "pm",
+          "name": "مدير المنتج",
+          "en": "Product Manager",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلproduct-manager.png",
+          "recommended": false,
+          "selected": true,
+          "rendered": null
+        },
+        {
+          "id": "research",
+          "name": "الباحث",
+          "en": "Research Agent",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": false,
+          "selected": false,
+          "rendered": {
+            "natural": [
+              415,
+              640
+            ],
+            "drawn": [
+              151,
+              233
+            ],
+            "slot": [
+              151,
+              241
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "req",
+          "name": "محلل المتطلبات",
+          "en": "Requirements Analyst",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلrequirements-analyst.png",
+          "recommended": false,
+          "selected": false,
+          "rendered": null
+        },
+        {
+          "id": "ux",
+          "name": "مصمم UX/UI",
+          "en": "UX/UI Designer",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": false,
+          "selected": false,
+          "rendered": {
+            "natural": [
+              302,
+              640
+            ],
+            "drawn": [
+              144,
+              305
+            ],
+            "slot": [
+              144,
+              313
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "arch",
+          "name": "معماري البرمجيات",
+          "en": "Software Architect",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": false,
+          "selected": false,
+          "rendered": {
+            "natural": [
+              294,
+              640
+            ],
+            "drawn": [
+              144,
+              313
+            ],
+            "slot": [
+              144,
+              321
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "front",
+          "name": "المطور الأمامي",
+          "en": "Frontend Developer",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": false,
+          "selected": false,
+          "rendered": {
+            "natural": [
+              349,
+              640
+            ],
+            "drawn": [
+              144,
+              264
+            ],
+            "slot": [
+              144,
+              272
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "back",
+          "name": "المطور الخلفي",
+          "en": "Backend Developer",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": false,
+          "selected": false,
+          "rendered": {
+            "natural": [
+              332,
+              640
+            ],
+            "drawn": [
+              144,
+              277
+            ],
+            "slot": [
+              144,
+              285
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "db",
+          "name": "قاعدة البيانات",
+          "en": "Database Agent",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": false,
+          "selected": false,
+          "rendered": {
+            "natural": [
+              364,
+              640
+            ],
+            "drawn": [
+              144,
+              253
+            ],
+            "slot": [
+              144,
+              261
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "qa",
+          "name": "اختبار الجودة",
+          "en": "QA Agent",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": false,
+          "selected": false,
+          "rendered": {
+            "natural": [
+              365,
+              640
+            ],
+            "drawn": [
+              144,
+              252
+            ],
+            "slot": [
+              144,
+              260
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "sec",
+          "name": "الأمن السيبراني",
+          "en": "Cybersecurity Agent",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلcybersecurity-agent.png",
+          "recommended": false,
+          "selected": false,
+          "rendered": null
+        },
+        {
+          "id": "perf",
+          "name": "الأداء",
+          "en": "Performance Agent",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلperformance-agent.png",
+          "recommended": false,
+          "selected": false,
+          "rendered": null
+        },
+        {
+          "id": "ops",
+          "name": "العمليات",
+          "en": "DevOps Agent",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلdevops-agent.png",
+          "recommended": false,
+          "selected": false,
+          "rendered": null
+        }
+      ],
+      "s3_journey": [
+        "مدير المنتج",
+        "الباحث",
+        "محلل المتطلبات",
+        "مصمم UX/UI",
+        "معماري البرمجيات",
+        "قاعدة البيانات",
+        "المطور الخلفي",
+        "المطور الأمامي",
+        "اختبار الجودة",
+        "الأمن السيبراني",
+        "الأداء",
+        "العمليات"
+      ],
+      "s3_carousel": {
+        "forward": [
+          {
+            "counter": "1 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "2 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "3 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "4 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "5 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "6 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "7 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "8 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "9 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "10 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "11 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "12 / 12",
+            "nextDisabled": "true"
+          }
+        ],
+        "backward": [
+          {
+            "counter": "12 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "11 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "10 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "9 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "8 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "7 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "6 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "5 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "4 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "3 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "2 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "1 / 12",
+            "prevDisabled": "true"
+          }
+        ],
+        "lastCardVisible": {
+          "lastId": "ops",
+          "inside": true,
+          "lastRect": [
+            499,
+            679
+          ],
+          "carRect": [
+            236,
+            945
+          ]
+        },
+        "firstCardVisible": {
+          "firstId": "pm",
+          "inside": true
+        }
+      },
+      "s3_confirm_note": "محاكاة: لن يبدأ أي بناء حقيقي. سينتقل النموذج إلى مرحلة مراجعة التصور.",
+      "s3_start_label_after_first_click": "تأكيد بدء الإنتاج (محاكاة)",
+      "s4_mock_A_text": "◆ Spectrum Diagnostics\nاحجز موعد\nدقة أعلى لحياة أفضل\n\nنتائج دقيقة وصحة متكاملة\n\nالاستشارات الطبية\nالتصوير الطبي\nأشعة متقدمة\nالفحوصات المخبرية",
+      "s4_mock_B_text": "◆ Spectrum Diagnostics\nاحجز موعد\nتقنيات متقدمة لنتائج أدق\n\nأحدث التقنيات العالمية\n\nالاستشارات الطبية\nالتصوير الطبي\nأشعة متقدمة\nالفحوصات المخبرية",
+      "s4_mentions_brief": true,
+      "s4_revision": {
+        "vtag": "v2",
+        "content_identical_except_version": true,
+        "feedback_list": [
+          "ملاحظتك: اجعل الصفحة الرئيسية أبسط وضع زر الحجز في الأعلى",
+          "تشفير (محاكاة): استلمت ملاحظاتك — النموذجان بحاجة لمراجعة. جهّزت نسخة معدلة v2 للعرض."
+        ]
+      },
+      "s5_initial": {
+        "banner": "محاكاة واجهة — لا يوجد تنفيذ خلفي حقيقي في هذه النسخة",
+        "progress": "التقدم 0% (محاكاة)",
+        "stages": [
+          "1 تحليل المتطلبات جارٍ",
+          "2 البحث بانتظار",
+          "3 تصميم UX/UI بانتظار",
+          "4 البنية التقنية بانتظار",
+          "5 التطوير بانتظار",
+          "6 الاختبار بانتظار",
+          "7 الأمن بانتظار",
+          "8 بوابة الجودة بانتظار",
+          "9 النشر بانتظار",
+          "10 التسليم بانتظار"
+        ]
+      },
+      "s5_at_gate": {
+        "progress": "التقدم 70% (محاكاة)",
+        "log": "6:40:40 م · بدء المحاكاة — لا تنفيذ فعلي\n6:40:43 م · اكتملت مرحلة: تحليل المتطلبات (محاكاة)\n6:40:46 م · اكتملت مرحلة: البحث (محاكاة)\n6:40:49 م · اكتملت مرحلة: تصميم UX/UI (محاكاة)\n6:40:52 م · اكتملت مرحلة: البنية التقنية (محاكاة)\n6:40:55 م · اكتملت مرحلة: التطوير (محاكاة)\n6:40:58 م · اكتملت مرحلة: الاختبار (محاكاة)\n6:41:01 م · اكتملت مرحلة: الأمن (محاكاة)\n6:41:04 م · بوابة الجودة: تنتظر مراجعتك (محاكاة)"
+      },
+      "s5_end": {
+        "progress": "التقدم 100% (محاكاة)",
+        "deliverables": "رابط مباشر\nنموذج توضيحي — غير حقيقي\nالكود المصدري\nنموذج توضيحي — غير حقيقي\nالوثائق\nنموذج توضيحي — غير حقيقي\nتقرير الاختبار\nنموذج توضيحي — غير حقيقي\nمعلومات الإصدار\nنموذج توضيحي — غير حقيقي",
+        "log_tail": [
+          "6:41:07 م · اكتملت مرحلة: النشر (محاكاة)",
+          "6:41:10 م · اكتملت مرحلة: التسليم (محاكاة)",
+          "6:41:10 م · انتهت المحاكاة — لم يُنشر أي موقع فعلي"
+        ]
+      },
+      "after_reload": {
+        "hash": "#s1",
+        "active": "s1",
+        "idea": "",
+        "ideaField": "",
+        "selected": 0
+      }
+    },
+    "desktop-1280x800": {
+      "viewport": [
+        1280,
+        800
+      ],
+      "shots": {
+        "s1": "desktop-1280x800/s1_home.jpg",
+        "s1_filled": "desktop-1280x800/s1_filled.jpg",
+        "s2": "desktop-1280x800/s2_agents.jpg",
+        "s2_carousel_end": "desktop-1280x800/s2_after_carousel.jpg",
+        "s3": "desktop-1280x800/s3_team.jpg",
+        "s4": "desktop-1280x800/s4_prototypes.jpg",
+        "s4_after_feedback": "desktop-1280x800/s4_after_feedback.jpg",
+        "s5": "desktop-1280x800/s5_factory.jpg"
+      },
+      "console": [],
+      "s1_layout": {
+        "viewport": [
+          1280,
+          800
+        ],
+        "activeScreen": "s1",
+        "u": "0.9142857142857143",
+        "stage": {
+          "x": 0,
+          "y": 5,
+          "w": 1280,
+          "h": 770,
+          "right": 1280,
+          "bottom": 774
+        },
+        "stageMarginLeft": 0,
+        "stageMarginRight": 0,
+        "screenScrollWidth": 1829,
+        "screenClientWidth": 1280,
+        "docScrollWidth": 1280,
+        "robot": {
+          "x": 462,
+          "y": 177,
+          "w": 204,
+          "h": 530,
+          "right": 666,
+          "bottom": 707
+        },
+        "robotVisible": true,
+        "ring": {
+          "x": 677,
+          "y": 92,
+          "w": 448,
+          "h": 655,
+          "right": 1125,
+          "bottom": 747
+        },
+        "ringVisible": true,
+        "chat": {
+          "x": 734,
+          "y": 174,
+          "w": 310,
+          "h": 507,
+          "right": 1044,
+          "bottom": 681
+        },
+        "customerVisible": true,
+        "featureCards": [
+          {
+            "text": "🧭 فهم احتياجاتك",
+            "rect": {
+              "x": 1142,
+              "y": 125,
+              "w": 115,
+              "h": 42,
+              "right": 1257,
+              "bottom": 166
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "📊 تحليل المشروع",
+            "rect": {
+              "x": 1142,
+              "y": 234,
+              "w": 115,
+              "h": 42,
+              "right": 1257,
+              "bottom": 276
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "🔎 بحث وتدقيق",
+            "rect": {
+              "x": 1142,
+              "y": 344,
+              "w": 115,
+              "h": 42,
+              "right": 1257,
+              "bottom": 386
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "🧊 بناء النماذج الأولية",
+            "rect": {
+              "x": 1142,
+              "y": 426,
+              "w": 115,
+              "h": 42,
+              "right": 1257,
+              "bottom": 468
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "🚀 الإنتاج الفعلي",
+            "rect": {
+              "x": 1142,
+              "y": 518,
+              "w": 115,
+              "h": 42,
+              "right": 1257,
+              "bottom": 559
+            },
+            "visible": true,
+            "clippedX": false
+          }
+        ],
+        "phrases": [
+          {
+            "text": "منتجك ينبني قدامك في مصنع تشفير",
+            "on": true,
+            "visible": true,
+            "rect": {
+              "x": 512,
+              "y": 58,
+              "w": 238,
+              "h": 35,
+              "right": 750,
+              "bottom": 92
+            }
+          },
+          {
+            "text": "موقعك قديم ودك تجدده؟",
+            "on": false,
+            "visible": true,
+            "rect": {
+              "x": 261,
+              "y": 407,
+              "w": 187,
+              "h": 47,
+              "right": 448,
+              "bottom": 454
+            }
+          },
+          {
+            "text": "تطبيقك صاير بطيء وما يواكب الدنيا؟",
+            "on": false,
+            "visible": true,
+            "rect": {
+              "x": 1134,
+              "y": 608,
+              "w": 128,
+              "h": 64,
+              "right": 1262,
+              "bottom": 672
+            }
+          }
+        ],
+        "h1Color": "rgb(255, 255, 255)",
+        "h1BgClip": "border-box",
+        "logoIsSvg": true,
+        "logoImg": false,
+        "fontCairoLoaded": true,
+        "particles": 80
+      },
+      "phrase_rotation_indices": [
+        0,
+        1,
+        2
+      ],
+      "empty_submit_error": "اكتب وصفًا مختصرًا لمشروعك أولًا.",
+      "chips_after_upload": [
+        "صورة: test-upload.png"
+      ],
+      "state_files": [
+        "صورة: test-upload.png"
+      ],
+      "transition_seconds_wall": 7.05,
+      "transition_state_timeline_ms": [
+        [
+          41,
+          "preparing"
+        ],
+        [
+          375,
+          "enteringPortal"
+        ],
+        [
+          2059,
+          "cameraCrossing"
+        ],
+        [
+          3829,
+          "revealingAgents"
+        ]
+      ],
+      "pushState_calls_during_transition": 1,
+      "hash_after_transition": "#s2",
+      "s2_cards": [
+        {
+          "id": "pm",
+          "name": "مدير المنتج",
+          "en": "Product Manager",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلproduct-manager.png",
+          "recommended": true,
+          "selected": true,
+          "rendered": null
+        },
+        {
+          "id": "research",
+          "name": "الباحث",
+          "en": "Research Agent",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": true,
+          "selected": true,
+          "rendered": {
+            "natural": [
+              415,
+              640
+            ],
+            "drawn": [
+              183,
+              283
+            ],
+            "slot": [
+              183,
+              291
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "req",
+          "name": "محلل المتطلبات",
+          "en": "Requirements Analyst",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلrequirements-analyst.png",
+          "recommended": true,
+          "selected": true,
+          "rendered": null
+        },
+        {
+          "id": "ux",
+          "name": "مصمم UX/UI",
+          "en": "UX/UI Designer",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": true,
+          "selected": true,
+          "rendered": {
+            "natural": [
+              302,
+              640
+            ],
+            "drawn": [
+              174,
+              369
+            ],
+            "slot": [
+              174,
+              377
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "arch",
+          "name": "معماري البرمجيات",
+          "en": "Software Architect",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": true,
+          "selected": true,
+          "rendered": {
+            "natural": [
+              294,
+              640
+            ],
+            "drawn": [
+              174,
+              379
+            ],
+            "slot": [
+              174,
+              387
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "front",
+          "name": "المطور الأمامي",
+          "en": "Frontend Developer",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": true,
+          "selected": true,
+          "rendered": {
+            "natural": [
+              349,
+              640
+            ],
+            "drawn": [
+              174,
+              319
+            ],
+            "slot": [
+              174,
+              327
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "back",
+          "name": "المطور الخلفي",
+          "en": "Backend Developer",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": true,
+          "selected": true,
+          "rendered": {
+            "natural": [
+              332,
+              640
+            ],
+            "drawn": [
+              174,
+              335
+            ],
+            "slot": [
+              174,
+              344
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "db",
+          "name": "قاعدة البيانات",
+          "en": "Database Agent",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": true,
+          "selected": true,
+          "rendered": {
+            "natural": [
+              364,
+              640
+            ],
+            "drawn": [
+              174,
+              306
+            ],
+            "slot": [
+              174,
+              314
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "qa",
+          "name": "اختبار الجودة",
+          "en": "QA Agent",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": true,
+          "selected": true,
+          "rendered": {
+            "natural": [
+              365,
+              640
+            ],
+            "drawn": [
+              174,
+              305
+            ],
+            "slot": [
+              174,
+              313
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "sec",
+          "name": "الأمن السيبراني",
+          "en": "Cybersecurity Agent",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلcybersecurity-agent.png",
+          "recommended": true,
+          "selected": true,
+          "rendered": null
+        },
+        {
+          "id": "perf",
+          "name": "الأداء",
+          "en": "Performance Agent",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلperformance-agent.png",
+          "recommended": true,
+          "selected": true,
+          "rendered": null
+        },
+        {
+          "id": "ops",
+          "name": "العمليات",
+          "en": "DevOps Agent",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلdevops-agent.png",
+          "recommended": true,
+          "selected": true,
+          "rendered": null
+        }
+      ],
+      "s2_summary": "ملخص المشروع\nنوع المنتج\nموقع / منصة ويب\nوصف العميل\nنبغى موقع لمركز تشخيص طبي فيه حجز مواعيد ودفع إلكتروني وحسابات للعملاء، والموقع الحالي بطيء ونبي نجدده\nالجمهور المستهدف\nيُحدَّد مع العميل لاحقًا\nالمواد المرفقة\n1 عنصر\nسبب الترشيح\n• النطاق والبحث والمتطلبات والتصميم: أساس أي منتج جديد\n• واجهة + خلفية + بيانات: المنتج يحتاج تخزينًا وتفاعلًا\n• التشغيل والنشر: لتسليم الحزمة النهائية\n• الوصف يتضمن بيانات عملاء/حجوزات: تستلزم مراجعة أمنية\n• الأداء مذكور أو متوقع في الوصف\n\nتحليل تجريبي بقواعد ثابتة — لا يوجد ذكاء اصطناعي متصل بعد.",
+      "s2_count_label": "المختارون 12 / 12",
+      "state_contains_urls": false,
+      "s2_carousel": {
+        "forward": [
+          {
+            "counter": "1 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "2 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "3 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "4 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "5 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "6 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "7 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "8 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "9 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "10 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "11 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "12 / 12",
+            "nextDisabled": "true"
+          }
+        ],
+        "backward": [
+          {
+            "counter": "12 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "11 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "10 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "9 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "8 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "7 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "6 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "5 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "4 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "3 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "2 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "1 / 12",
+            "prevDisabled": "true"
+          }
+        ],
+        "lastCardVisible": {
+          "lastId": "ops",
+          "inside": true,
+          "lastRect": [
+            701,
+            912
+          ],
+          "carRect": [
+            358,
+            1254
+          ]
+        },
+        "firstCardVisible": {
+          "firstId": "pm",
+          "inside": true
+        }
+      },
+      "after_clear": {
+        "label": "المختارون 0 / 12",
+        "confirmDisabled": true
+      },
+      "after_select_recommended": "المختارون 12 / 12",
+      "s3_details_first": "بانتظار الصورة\nمدير المنتج\nProduct Manager\nإدارة المنتج وتحديد النطاق\nدوره في مشروعك\nيثبّت نطاق موقع / منصة ويب المطلوب: «نبغى موقع لمركز تشخيص طبي فيه حجز مواعيد ودفع إلكتروني وحسابات للعملاء…» ويقسمه إلى مراحل قابلة للتسليم\nيضع ميزة الحجز في أول الأولويات ويحدد شكل رحلة العميل فيها\nيتابع اعتمادك في كل مرحلة ويجمع ملاحظاتك\nيراجع المواد التي أرفقتها (1) ويحوّلها إلى مرجع للنطاق\nالتفاصيل\nيستلم\nوصف العميل والمرفقات\nسينفّذ\nتحديد النطاق · ترتيب الأولويات · تنسيق الاعتماد\nالمخرجات المتوقعة\nوثيقة نطاق المنتج وخارطة المراحل\nالأدوات المقترحة\nNotion · Linear\nالاعتماديات\nلا يعتمد على أحد؛ يبدأ السلسلة\nيسلّم العمل إلى\nالباحث\n\nخطة مقترحة مبنية على وصفك — لم يبدأ أي تنفيذ.",
+      "s3_team_cards": [
+        {
+          "id": "pm",
+          "name": "مدير المنتج",
+          "en": "Product Manager",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلproduct-manager.png",
+          "recommended": false,
+          "selected": true,
+          "rendered": null
+        },
+        {
+          "id": "research",
+          "name": "الباحث",
+          "en": "Research Agent",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": false,
+          "selected": false,
+          "rendered": {
+            "natural": [
+              415,
+              640
+            ],
+            "drawn": [
+              132,
+              203
+            ],
+            "slot": [
+              132,
+              212
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "req",
+          "name": "محلل المتطلبات",
+          "en": "Requirements Analyst",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلrequirements-analyst.png",
+          "recommended": false,
+          "selected": false,
+          "rendered": null
+        },
+        {
+          "id": "ux",
+          "name": "مصمم UX/UI",
+          "en": "UX/UI Designer",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": false,
+          "selected": false,
+          "rendered": {
+            "natural": [
+              302,
+              640
+            ],
+            "drawn": [
+              126,
+              266
+            ],
+            "slot": [
+              126,
+              274
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "arch",
+          "name": "معماري البرمجيات",
+          "en": "Software Architect",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": false,
+          "selected": false,
+          "rendered": {
+            "natural": [
+              294,
+              640
+            ],
+            "drawn": [
+              126,
+              273
+            ],
+            "slot": [
+              126,
+              282
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "front",
+          "name": "المطور الأمامي",
+          "en": "Frontend Developer",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": false,
+          "selected": false,
+          "rendered": {
+            "natural": [
+              349,
+              640
+            ],
+            "drawn": [
+              126,
+              230
+            ],
+            "slot": [
+              126,
+              238
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "back",
+          "name": "المطور الخلفي",
+          "en": "Backend Developer",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": false,
+          "selected": false,
+          "rendered": {
+            "natural": [
+              332,
+              640
+            ],
+            "drawn": [
+              126,
+              242
+            ],
+            "slot": [
+              126,
+              250
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "db",
+          "name": "قاعدة البيانات",
+          "en": "Database Agent",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": false,
+          "selected": false,
+          "rendered": {
+            "natural": [
+              364,
+              640
+            ],
+            "drawn": [
+              126,
+              221
+            ],
+            "slot": [
+              126,
+              229
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "qa",
+          "name": "اختبار الجودة",
+          "en": "QA Agent",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": false,
+          "selected": false,
+          "rendered": {
+            "natural": [
+              365,
+              640
+            ],
+            "drawn": [
+              126,
+              220
+            ],
+            "slot": [
+              126,
+              228
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "sec",
+          "name": "الأمن السيبراني",
+          "en": "Cybersecurity Agent",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلcybersecurity-agent.png",
+          "recommended": false,
+          "selected": false,
+          "rendered": null
+        },
+        {
+          "id": "perf",
+          "name": "الأداء",
+          "en": "Performance Agent",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلperformance-agent.png",
+          "recommended": false,
+          "selected": false,
+          "rendered": null
+        },
+        {
+          "id": "ops",
+          "name": "العمليات",
+          "en": "DevOps Agent",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلdevops-agent.png",
+          "recommended": false,
+          "selected": false,
+          "rendered": null
+        }
+      ],
+      "s3_journey": [
+        "مدير المنتج",
+        "الباحث",
+        "محلل المتطلبات",
+        "مصمم UX/UI",
+        "معماري البرمجيات",
+        "قاعدة البيانات",
+        "المطور الخلفي",
+        "المطور الأمامي",
+        "اختبار الجودة",
+        "الأمن السيبراني",
+        "الأداء",
+        "العمليات"
+      ],
+      "s3_carousel": {
+        "forward": [
+          {
+            "counter": "1 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "2 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "3 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "4 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "5 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "6 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "7 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "8 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "9 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "10 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "11 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "12 / 12",
+            "nextDisabled": "true"
+          }
+        ],
+        "backward": [
+          {
+            "counter": "12 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "11 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "10 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "9 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "8 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "7 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "6 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "5 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "4 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "3 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "2 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "1 / 12",
+            "prevDisabled": "true"
+          }
+        ],
+        "lastCardVisible": {
+          "lastId": "ops",
+          "inside": true,
+          "lastRect": [
+            445,
+            605
+          ],
+          "carRect": [
+            210,
+            840
+          ]
+        },
+        "firstCardVisible": {
+          "firstId": "pm",
+          "inside": true
+        }
+      },
+      "s3_confirm_note": "محاكاة: لن يبدأ أي بناء حقيقي. سينتقل النموذج إلى مرحلة مراجعة التصور.",
+      "s3_start_label_after_first_click": "تأكيد بدء الإنتاج (محاكاة)",
+      "s4_mock_A_text": "◆ Spectrum Diagnostics\nاحجز موعد\nدقة أعلى لحياة أفضل\n\nنتائج دقيقة وصحة متكاملة\n\nالاستشارات الطبية\nالتصوير الطبي\nأشعة متقدمة\nالفحوصات المخبرية",
+      "s4_mock_B_text": "◆ Spectrum Diagnostics\nاحجز موعد\nتقنيات متقدمة لنتائج أدق\n\nأحدث التقنيات العالمية\n\nالاستشارات الطبية\nالتصوير الطبي\nأشعة متقدمة\nالفحوصات المخبرية",
+      "s4_mentions_brief": true,
+      "s4_revision": {
+        "vtag": "v2",
+        "content_identical_except_version": true,
+        "feedback_list": [
+          "ملاحظتك: اجعل الصفحة الرئيسية أبسط وضع زر الحجز في الأعلى",
+          "تشفير (محاكاة): استلمت ملاحظاتك — النموذجان بحاجة لمراجعة. جهّزت نسخة معدلة v2 للعرض."
+        ]
+      },
+      "s5_initial": {
+        "banner": "محاكاة واجهة — لا يوجد تنفيذ خلفي حقيقي في هذه النسخة",
+        "progress": "التقدم 0% (محاكاة)",
+        "stages": [
+          "1 تحليل المتطلبات جارٍ",
+          "2 البحث بانتظار",
+          "3 تصميم UX/UI بانتظار",
+          "4 البنية التقنية بانتظار",
+          "5 التطوير بانتظار",
+          "6 الاختبار بانتظار",
+          "7 الأمن بانتظار",
+          "8 بوابة الجودة بانتظار",
+          "9 النشر بانتظار",
+          "10 التسليم بانتظار"
+        ]
+      },
+      "after_reload": {
+        "hash": "#s1",
+        "active": "s1",
+        "idea": "",
+        "ideaField": "",
+        "selected": 0
+      }
+    },
+    "mobile-390x844": {
+      "viewport": [
+        390,
+        844
+      ],
+      "shots": {
+        "s1": "mobile-390x844/s1_home.jpg",
+        "s1_filled": "mobile-390x844/s1_filled.jpg",
+        "s2": "mobile-390x844/s2_agents.jpg",
+        "s2_carousel_end": "mobile-390x844/s2_after_carousel.jpg",
+        "s3": "mobile-390x844/s3_team.jpg",
+        "s4": "mobile-390x844/s4_prototypes.jpg",
+        "s4_after_feedback": "mobile-390x844/s4_after_feedback.jpg",
+        "s5": "mobile-390x844/s5_factory.jpg"
+      },
+      "console": [],
+      "s1_layout": {
+        "viewport": [
+          390,
+          844
+        ],
+        "activeScreen": "s1",
+        "u": "0.2785714285714286",
+        "stage": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 1208,
+          "right": 390,
+          "bottom": 1208
+        },
+        "stageMarginLeft": 0,
+        "stageMarginRight": 0,
+        "screenScrollWidth": 390,
+        "screenClientWidth": 390,
+        "docScrollWidth": 390,
+        "robot": {
+          "x": 170,
+          "y": 507,
+          "w": 50,
+          "h": 130,
+          "right": 220,
+          "bottom": 637
+        },
+        "robotVisible": true,
+        "ring": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0,
+          "right": 0,
+          "bottom": 0
+        },
+        "ringVisible": false,
+        "chat": {
+          "x": 14,
+          "y": 657,
+          "w": 362,
+          "h": 521,
+          "right": 376,
+          "bottom": 1178
+        },
+        "customerVisible": false,
+        "featureCards": [
+          {
+            "text": "🧭 فهم احتياجاتك",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "w": 0,
+              "h": 0,
+              "right": 0,
+              "bottom": 0
+            },
+            "visible": false,
+            "clippedX": false
+          },
+          {
+            "text": "📊 تحليل المشروع",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "w": 0,
+              "h": 0,
+              "right": 0,
+              "bottom": 0
+            },
+            "visible": false,
+            "clippedX": false
+          },
+          {
+            "text": "🔎 بحث وتدقيق",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "w": 0,
+              "h": 0,
+              "right": 0,
+              "bottom": 0
+            },
+            "visible": false,
+            "clippedX": false
+          },
+          {
+            "text": "🧊 بناء النماذج الأولية",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "w": 0,
+              "h": 0,
+              "right": 0,
+              "bottom": 0
+            },
+            "visible": false,
+            "clippedX": false
+          },
+          {
+            "text": "🚀 الإنتاج الفعلي",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "w": 0,
+              "h": 0,
+              "right": 0,
+              "bottom": 0
+            },
+            "visible": false,
+            "clippedX": false
+          }
+        ],
+        "phrases": [
+          {
+            "text": "منتجك ينبني قدامك في مصنع تشفير",
+            "on": true,
+            "visible": true,
+            "rect": {
+              "x": 14,
+              "y": 457,
+              "w": 362,
+              "h": 38,
+              "right": 376,
+              "bottom": 495
+            }
+          },
+          {
+            "text": "موقعك قديم ودك تجدده؟",
+            "on": false,
+            "visible": false,
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "w": 0,
+              "h": 0,
+              "right": 0,
+              "bottom": 0
+            }
+          },
+          {
+            "text": "تطبيقك صاير بطيء وما يواكب الدنيا؟",
+            "on": false,
+            "visible": false,
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "w": 0,
+              "h": 0,
+              "right": 0,
+              "bottom": 0
+            }
+          }
+        ],
+        "h1Color": "rgb(255, 255, 255)",
+        "h1BgClip": "border-box",
+        "logoIsSvg": true,
+        "logoImg": false,
+        "fontCairoLoaded": true,
+        "particles": 24
+      },
+      "phrase_rotation_indices": [
+        0,
+        1,
+        2
+      ],
+      "empty_submit_error": "اكتب وصفًا مختصرًا لمشروعك أولًا.",
+      "chips_after_upload": [
+        "صورة: test-upload.png"
+      ],
+      "state_files": [
+        "صورة: test-upload.png"
+      ],
+      "transition_seconds_wall": 0.99,
+      "transition_state_timeline_ms": [
+        [
+          26,
+          "enteringPortal"
+        ],
+        [
+          530,
+          "revealingAgents"
+        ]
+      ],
+      "pushState_calls_during_transition": 1,
+      "hash_after_transition": "#s2",
+      "s2_cards": [
+        {
+          "id": "pm",
+          "name": "مدير المنتج",
+          "en": "Product Manager",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلproduct-manager.png",
+          "recommended": true,
+          "selected": true,
+          "rendered": null
+        },
+        {
+          "id": "research",
+          "name": "الباحث",
+          "en": "Research Agent",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": true,
+          "selected": true,
+          "rendered": {
+            "natural": [
+              415,
+              640
+            ],
+            "drawn": [
+              202,
+              311
+            ],
+            "slot": [
+              202,
+              319
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "req",
+          "name": "محلل المتطلبات",
+          "en": "Requirements Analyst",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلrequirements-analyst.png",
+          "recommended": true,
+          "selected": true,
+          "rendered": null
+        },
+        {
+          "id": "ux",
+          "name": "مصمم UX/UI",
+          "en": "UX/UI Designer",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": true,
+          "selected": true,
+          "rendered": {
+            "natural": [
+              302,
+              640
+            ],
+            "drawn": [
+              202,
+              428
+            ],
+            "slot": [
+              202,
+              436
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "arch",
+          "name": "معماري البرمجيات",
+          "en": "Software Architect",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": true,
+          "selected": true,
+          "rendered": {
+            "natural": [
+              294,
+              640
+            ],
+            "drawn": [
+              202,
+              439
+            ],
+            "slot": [
+              202,
+              448
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "front",
+          "name": "المطور الأمامي",
+          "en": "Frontend Developer",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": true,
+          "selected": true,
+          "rendered": {
+            "natural": [
+              349,
+              640
+            ],
+            "drawn": [
+              202,
+              370
+            ],
+            "slot": [
+              202,
+              378
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "back",
+          "name": "المطور الخلفي",
+          "en": "Backend Developer",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": true,
+          "selected": true,
+          "rendered": {
+            "natural": [
+              332,
+              640
+            ],
+            "drawn": [
+              202,
+              389
+            ],
+            "slot": [
+              202,
+              397
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "db",
+          "name": "قاعدة البيانات",
+          "en": "Database Agent",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": true,
+          "selected": true,
+          "rendered": {
+            "natural": [
+              364,
+              640
+            ],
+            "drawn": [
+              202,
+              355
+            ],
+            "slot": [
+              202,
+              363
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "qa",
+          "name": "اختبار الجودة",
+          "en": "QA Agent",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": true,
+          "selected": true,
+          "rendered": {
+            "natural": [
+              365,
+              640
+            ],
+            "drawn": [
+              202,
+              354
+            ],
+            "slot": [
+              202,
+              362
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "sec",
+          "name": "الأمن السيبراني",
+          "en": "Cybersecurity Agent",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلcybersecurity-agent.png",
+          "recommended": true,
+          "selected": true,
+          "rendered": null
+        },
+        {
+          "id": "perf",
+          "name": "الأداء",
+          "en": "Performance Agent",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلperformance-agent.png",
+          "recommended": true,
+          "selected": true,
+          "rendered": null
+        },
+        {
+          "id": "ops",
+          "name": "العمليات",
+          "en": "DevOps Agent",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلdevops-agent.png",
+          "recommended": true,
+          "selected": true,
+          "rendered": null
+        }
+      ],
+      "s2_summary": "ملخص المشروع\nنوع المنتج\nموقع / منصة ويب\nوصف العميل\nنبغى موقع لمركز تشخيص طبي فيه حجز مواعيد ودفع إلكتروني وحسابات للعملاء، والموقع الحالي بطيء ونبي نجدده\nالجمهور المستهدف\nيُحدَّد مع العميل لاحقًا\nالمواد المرفقة\n1 عنصر\nسبب الترشيح\n• النطاق والبحث والمتطلبات والتصميم: أساس أي منتج جديد\n• واجهة + خلفية + بيانات: المنتج يحتاج تخزينًا وتفاعلًا\n• التشغيل والنشر: لتسليم الحزمة النهائية\n• الوصف يتضمن بيانات عملاء/حجوزات: تستلزم مراجعة أمنية\n• الأداء مذكور أو متوقع في الوصف\n\nتحليل تجريبي بقواعد ثابتة — لا يوجد ذكاء اصطناعي متصل بعد.",
+      "s2_count_label": "المختارون 12 / 12",
+      "state_contains_urls": false,
+      "s2_carousel": {
+        "forward": [
+          {
+            "counter": "1 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "2 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "3 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "4 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "5 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "6 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "7 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "8 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "9 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "10 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "11 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "12 / 12",
+            "nextDisabled": "true"
+          }
+        ],
+        "backward": [
+          {
+            "counter": "12 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "11 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "10 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "9 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "8 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "7 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "6 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "5 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "4 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "3 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "2 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "1 / 12",
+            "prevDisabled": "true"
+          }
+        ],
+        "lastCardVisible": {
+          "lastId": "ops",
+          "inside": true,
+          "lastRect": [
+            73,
+            315
+          ],
+          "carRect": [
+            8,
+            382
+          ]
+        },
+        "firstCardVisible": {
+          "firstId": "pm",
+          "inside": true
+        }
+      },
+      "after_clear": {
+        "label": "المختارون 0 / 12",
+        "confirmDisabled": true
+      },
+      "after_select_recommended": "المختارون 12 / 12",
+      "s3_details_first": "بانتظار الصورة\nمدير المنتج\nProduct Manager\nإدارة المنتج وتحديد النطاق\nدوره في مشروعك\nيثبّت نطاق موقع / منصة ويب المطلوب: «نبغى موقع لمركز تشخيص طبي فيه حجز مواعيد ودفع إلكتروني وحسابات للعملاء…» ويقسمه إلى مراحل قابلة للتسليم\nيضع ميزة الحجز في أول الأولويات ويحدد شكل رحلة العميل فيها\nيتابع اعتمادك في كل مرحلة ويجمع ملاحظاتك\nيراجع المواد التي أرفقتها (1) ويحوّلها إلى مرجع للنطاق\nالتفاصيل\nيستلم\nوصف العميل والمرفقات\nسينفّذ\nتحديد النطاق · ترتيب الأولويات · تنسيق الاعتماد\nالمخرجات المتوقعة\nوثيقة نطاق المنتج وخارطة المراحل\nالأدوات المقترحة\nNotion · Linear\nالاعتماديات\nلا يعتمد على أحد؛ يبدأ السلسلة\nيسلّم العمل إلى\nالباحث\n\nخطة مقترحة مبنية على وصفك — لم يبدأ أي تنفيذ.",
+      "s3_team_cards": [
+        {
+          "id": "pm",
+          "name": "مدير المنتج",
+          "en": "Product Manager",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلproduct-manager.png",
+          "recommended": false,
+          "selected": true,
+          "rendered": null
+        },
+        {
+          "id": "research",
+          "name": "الباحث",
+          "en": "Research Agent",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": false,
+          "selected": false,
+          "rendered": {
+            "natural": [
+              415,
+              640
+            ],
+            "drawn": [
+              119,
+              183
+            ],
+            "slot": [
+              119,
+              191
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "req",
+          "name": "محلل المتطلبات",
+          "en": "Requirements Analyst",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلrequirements-analyst.png",
+          "recommended": false,
+          "selected": false,
+          "rendered": null
+        },
+        {
+          "id": "ux",
+          "name": "مصمم UX/UI",
+          "en": "UX/UI Designer",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": false,
+          "selected": false,
+          "rendered": {
+            "natural": [
+              302,
+              640
+            ],
+            "drawn": [
+              116,
+              247
+            ],
+            "slot": [
+              116,
+              255
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "arch",
+          "name": "معماري البرمجيات",
+          "en": "Software Architect",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": false,
+          "selected": false,
+          "rendered": {
+            "natural": [
+              294,
+              640
+            ],
+            "drawn": [
+              116,
+              254
+            ],
+            "slot": [
+              116,
+              262
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "front",
+          "name": "المطور الأمامي",
+          "en": "Frontend Developer",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": false,
+          "selected": false,
+          "rendered": {
+            "natural": [
+              349,
+              640
+            ],
+            "drawn": [
+              116,
+              214
+            ],
+            "slot": [
+              116,
+              222
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "back",
+          "name": "المطور الخلفي",
+          "en": "Backend Developer",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": false,
+          "selected": false,
+          "rendered": {
+            "natural": [
+              332,
+              640
+            ],
+            "drawn": [
+              116,
+              225
+            ],
+            "slot": [
+              116,
+              233
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "db",
+          "name": "قاعدة البيانات",
+          "en": "Database Agent",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": false,
+          "selected": false,
+          "rendered": {
+            "natural": [
+              364,
+              640
+            ],
+            "drawn": [
+              116,
+              205
+            ],
+            "slot": [
+              116,
+              213
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "qa",
+          "name": "اختبار الجودة",
+          "en": "QA Agent",
+          "hasImage": true,
+          "placeholder": null,
+          "recommended": false,
+          "selected": false,
+          "rendered": {
+            "natural": [
+              365,
+              640
+            ],
+            "drawn": [
+              116,
+              204
+            ],
+            "slot": [
+              116,
+              212
+            ],
+            "objectFit": "contain"
+          }
+        },
+        {
+          "id": "sec",
+          "name": "الأمن السيبراني",
+          "en": "Cybersecurity Agent",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلcybersecurity-agent.png",
+          "recommended": false,
+          "selected": false,
+          "rendered": null
+        },
+        {
+          "id": "perf",
+          "name": "الأداء",
+          "en": "Performance Agent",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلperformance-agent.png",
+          "recommended": false,
+          "selected": false,
+          "rendered": null
+        },
+        {
+          "id": "ops",
+          "name": "العمليات",
+          "en": "DevOps Agent",
+          "hasImage": false,
+          "placeholder": "بانتظار صورة الوكيلdevops-agent.png",
+          "recommended": false,
+          "selected": false,
+          "rendered": null
+        }
+      ],
+      "s3_journey": [
+        "مدير المنتج",
+        "الباحث",
+        "محلل المتطلبات",
+        "مصمم UX/UI",
+        "معماري البرمجيات",
+        "قاعدة البيانات",
+        "المطور الخلفي",
+        "المطور الأمامي",
+        "اختبار الجودة",
+        "الأمن السيبراني",
+        "الأداء",
+        "العمليات"
+      ],
+      "s3_carousel": {
+        "forward": [
+          {
+            "counter": "1 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "2 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "3 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "4 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "5 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "6 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "7 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "8 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "9 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "10 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "11 / 12",
+            "nextDisabled": "false"
+          },
+          {
+            "counter": "12 / 12",
+            "nextDisabled": "true"
+          }
+        ],
+        "backward": [
+          {
+            "counter": "12 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "11 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "10 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "9 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "8 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "7 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "6 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "5 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "4 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "3 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "2 / 12",
+            "prevDisabled": "false"
+          },
+          {
+            "counter": "1 / 12",
+            "prevDisabled": "true"
+          }
+        ],
+        "lastCardVisible": {
+          "lastId": "ops",
+          "inside": true,
+          "lastRect": [
+            120,
+            270
+          ],
+          "carRect": [
+            8,
+            382
+          ]
+        },
+        "firstCardVisible": {
+          "firstId": "pm",
+          "inside": true
+        }
+      },
+      "s3_confirm_note": "محاكاة: لن يبدأ أي بناء حقيقي. سينتقل النموذج إلى مرحلة مراجعة التصور.",
+      "s3_start_label_after_first_click": "تأكيد بدء الإنتاج (محاكاة)",
+      "s4_mock_A_text": "◆ Spectrum Diagnostics\nاحجز موعد\nدقة أعلى لحياة أفضل\n\nنتائج دقيقة وصحة متكاملة\n\nالاستشارات الطبية\nالتصوير الطبي\nأشعة متقدمة\nالفحوصات المخبرية",
+      "s4_mock_B_text": "◆ Spectrum Diagnostics\nاحجز موعد\nتقنيات متقدمة لنتائج أدق\n\nأحدث التقنيات العالمية\n\nالاستشارات الطبية\nالتصوير الطبي\nأشعة متقدمة\nالفحوصات المخبرية",
+      "s4_mentions_brief": true,
+      "s4_revision": {
+        "vtag": "v2",
+        "content_identical_except_version": true,
+        "feedback_list": [
+          "ملاحظتك: اجعل الصفحة الرئيسية أبسط وضع زر الحجز في الأعلى",
+          "تشفير (محاكاة): استلمت ملاحظاتك — النموذجان بحاجة لمراجعة. جهّزت نسخة معدلة v2 للعرض."
+        ]
+      },
+      "s5_initial": {
+        "banner": "محاكاة واجهة — لا يوجد تنفيذ خلفي حقيقي في هذه النسخة",
+        "progress": "التقدم 0% (محاكاة)",
+        "stages": [
+          "1 تحليل المتطلبات جارٍ",
+          "2 البحث بانتظار",
+          "3 تصميم UX/UI بانتظار",
+          "4 البنية التقنية بانتظار",
+          "5 التطوير بانتظار",
+          "6 الاختبار بانتظار",
+          "7 الأمن بانتظار",
+          "8 بوابة الجودة بانتظار",
+          "9 النشر بانتظار",
+          "10 التسليم بانتظار"
+        ]
+      },
+      "after_reload": {
+        "hash": "#s1",
+        "active": "s1",
+        "idea": "",
+        "ideaField": "",
+        "selected": 0
+      }
+    }
+  },
+  "browser_version": "141.0.7390.37",
+  "layout_extra": {
+    "wide-1920x1080": {
+      "layout": {
+        "viewport": [
+          1920,
+          1080
+        ],
+        "activeScreen": "s1",
+        "u": "1.3020304568527918",
+        "stage": {
+          "x": 49,
+          "y": -16,
+          "w": 1823,
+          "h": 1096,
+          "right": 1871,
+          "bottom": 1080
+        },
+        "stageMarginLeft": 49,
+        "stageMarginRight": 49,
+        "screenScrollWidth": 2653,
+        "screenClientWidth": 1920,
+        "docScrollWidth": 1920,
+        "robot": {
+          "x": 706,
+          "y": 228,
+          "w": 290,
+          "h": 755,
+          "right": 996,
+          "bottom": 984
+        },
+        "robotVisible": true,
+        "ring": {
+          "x": 1012,
+          "y": 109,
+          "w": 638,
+          "h": 932,
+          "right": 1650,
+          "bottom": 1041
+        },
+        "ringVisible": true,
+        "chat": {
+          "x": 1094,
+          "y": 225,
+          "w": 441,
+          "h": 722,
+          "right": 1535,
+          "bottom": 947
+        },
+        "customerVisible": true,
+        "featureCards": [
+          {
+            "text": "🧭 فهم احتياجاتك",
+            "rect": {
+              "x": 1675,
+              "y": 155,
+              "w": 164,
+              "h": 59,
+              "right": 1839,
+              "bottom": 214
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "📊 تحليل المشروع",
+            "rect": {
+              "x": 1675,
+              "y": 311,
+              "w": 164,
+              "h": 59,
+              "right": 1839,
+              "bottom": 370
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "🔎 بحث وتدقيق",
+            "rect": {
+              "x": 1675,
+              "y": 467,
+              "w": 164,
+              "h": 59,
+              "right": 1839,
+              "bottom": 526
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "🧊 بناء النماذج الأولية",
+            "rect": {
+              "x": 1675,
+              "y": 584,
+              "w": 164,
+              "h": 59,
+              "right": 1839,
+              "bottom": 643
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "🚀 الإنتاج الفعلي",
+            "rect": {
+              "x": 1675,
+              "y": 715,
+              "w": 164,
+              "h": 59,
+              "right": 1839,
+              "bottom": 774
+            },
+            "visible": true,
+            "clippedX": false
+          }
+        ],
+        "phrases": [
+          {
+            "text": "منتجك ينبني قدامك في مصنع تشفير",
+            "on": true,
+            "visible": true,
+            "rect": {
+              "x": 778,
+              "y": 59,
+              "w": 339,
+              "h": 49,
+              "right": 1116,
+              "bottom": 109
+            }
+          },
+          {
+            "text": "موقعك قديم ودك تجدده؟",
+            "on": false,
+            "visible": true,
+            "rect": {
+              "x": 420,
+              "y": 557,
+              "w": 267,
+              "h": 66,
+              "right": 687,
+              "bottom": 623
+            }
+          },
+          {
+            "text": "تطبيقك صاير بطيء وما يواكب الدنيا؟",
+            "on": false,
+            "visible": true,
+            "rect": {
+              "x": 1663,
+              "y": 843,
+              "w": 182,
+              "h": 91,
+              "right": 1845,
+              "bottom": 934
+            }
+          }
+        ],
+        "h1Color": "rgb(255, 255, 255)",
+        "h1BgClip": "border-box",
+        "logoIsSvg": true,
+        "logoImg": false,
+        "fontCairoLoaded": true,
+        "particles": 110
+      },
+      "shot": "wide-1920x1080/s1_home.jpg"
+    },
+    "ultrawide-2560x1080": {
+      "layout": {
+        "viewport": [
+          2560,
+          1080
+        ],
+        "activeScreen": "s1",
+        "u": "1.3020304568527918",
+        "stage": {
+          "x": 369,
+          "y": -16,
+          "w": 1823,
+          "h": 1096,
+          "right": 2191,
+          "bottom": 1080
+        },
+        "stageMarginLeft": 369,
+        "stageMarginRight": 369,
+        "screenScrollWidth": 2973,
+        "screenClientWidth": 2560,
+        "docScrollWidth": 2560,
+        "robot": {
+          "x": 1026,
+          "y": 228,
+          "w": 290,
+          "h": 755,
+          "right": 1316,
+          "bottom": 984
+        },
+        "robotVisible": true,
+        "ring": {
+          "x": 1332,
+          "y": 109,
+          "w": 638,
+          "h": 932,
+          "right": 1970,
+          "bottom": 1041
+        },
+        "ringVisible": true,
+        "chat": {
+          "x": 1414,
+          "y": 225,
+          "w": 441,
+          "h": 722,
+          "right": 1855,
+          "bottom": 947
+        },
+        "customerVisible": true,
+        "featureCards": [
+          {
+            "text": "🧭 فهم احتياجاتك",
+            "rect": {
+              "x": 1995,
+              "y": 155,
+              "w": 164,
+              "h": 59,
+              "right": 2159,
+              "bottom": 214
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "📊 تحليل المشروع",
+            "rect": {
+              "x": 1995,
+              "y": 311,
+              "w": 164,
+              "h": 59,
+              "right": 2159,
+              "bottom": 370
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "🔎 بحث وتدقيق",
+            "rect": {
+              "x": 1995,
+              "y": 467,
+              "w": 164,
+              "h": 59,
+              "right": 2159,
+              "bottom": 526
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "🧊 بناء النماذج الأولية",
+            "rect": {
+              "x": 1995,
+              "y": 584,
+              "w": 164,
+              "h": 59,
+              "right": 2159,
+              "bottom": 643
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "🚀 الإنتاج الفعلي",
+            "rect": {
+              "x": 1995,
+              "y": 715,
+              "w": 164,
+              "h": 59,
+              "right": 2159,
+              "bottom": 774
+            },
+            "visible": true,
+            "clippedX": false
+          }
+        ],
+        "phrases": [
+          {
+            "text": "منتجك ينبني قدامك في مصنع تشفير",
+            "on": true,
+            "visible": true,
+            "rect": {
+              "x": 1098,
+              "y": 59,
+              "w": 339,
+              "h": 49,
+              "right": 1436,
+              "bottom": 109
+            }
+          },
+          {
+            "text": "موقعك قديم ودك تجدده؟",
+            "on": false,
+            "visible": true,
+            "rect": {
+              "x": 740,
+              "y": 557,
+              "w": 267,
+              "h": 66,
+              "right": 1007,
+              "bottom": 623
+            }
+          },
+          {
+            "text": "تطبيقك صاير بطيء وما يواكب الدنيا؟",
+            "on": false,
+            "visible": true,
+            "rect": {
+              "x": 1983,
+              "y": 843,
+              "w": 182,
+              "h": 91,
+              "right": 2165,
+              "bottom": 934
+            }
+          }
+        ],
+        "h1Color": "rgb(255, 255, 255)",
+        "h1BgClip": "border-box",
+        "logoIsSvg": true,
+        "logoImg": false,
+        "fontCairoLoaded": true,
+        "particles": 110
+      },
+      "shot": "ultrawide-2560x1080/s1_home.jpg"
+    },
+    "laptop-1366x768": {
+      "layout": {
+        "viewport": [
+          1366,
+          768
+        ],
+        "activeScreen": "s1",
+        "u": "0.9060913705583756",
+        "stage": {
+          "x": 49,
+          "y": 5,
+          "w": 1269,
+          "h": 763,
+          "right": 1317,
+          "bottom": 768
+        },
+        "stageMarginLeft": 49,
+        "stageMarginRight": 49,
+        "screenScrollWidth": 1861,
+        "screenClientWidth": 1366,
+        "docScrollWidth": 1366,
+        "robot": {
+          "x": 506,
+          "y": 175,
+          "w": 202,
+          "h": 526,
+          "right": 708,
+          "bottom": 701
+        },
+        "robotVisible": true,
+        "ring": {
+          "x": 719,
+          "y": 92,
+          "w": 444,
+          "h": 649,
+          "right": 1163,
+          "bottom": 741
+        },
+        "ringVisible": true,
+        "chat": {
+          "x": 776,
+          "y": 173,
+          "w": 307,
+          "h": 502,
+          "right": 1083,
+          "bottom": 676
+        },
+        "customerVisible": true,
+        "featureCards": [
+          {
+            "text": "🧭 فهم احتياجاتك",
+            "rect": {
+              "x": 1180,
+              "y": 124,
+              "w": 114,
+              "h": 41,
+              "right": 1295,
+              "bottom": 165
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "📊 تحليل المشروع",
+            "rect": {
+              "x": 1180,
+              "y": 233,
+              "w": 114,
+              "h": 41,
+              "right": 1295,
+              "bottom": 274
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "🔎 بحث وتدقيق",
+            "rect": {
+              "x": 1180,
+              "y": 341,
+              "w": 114,
+              "h": 41,
+              "right": 1295,
+              "bottom": 383
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "🧊 بناء النماذج الأولية",
+            "rect": {
+              "x": 1180,
+              "y": 423,
+              "w": 114,
+              "h": 41,
+              "right": 1295,
+              "bottom": 464
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "🚀 الإنتاج الفعلي",
+            "rect": {
+              "x": 1180,
+              "y": 514,
+              "w": 114,
+              "h": 41,
+              "right": 1295,
+              "bottom": 555
+            },
+            "visible": true,
+            "clippedX": false
+          }
+        ],
+        "phrases": [
+          {
+            "text": "منتجك ينبني قدامك في مصنع تشفير",
+            "on": true,
+            "visible": true,
+            "rect": {
+              "x": 556,
+              "y": 58,
+              "w": 236,
+              "h": 34,
+              "right": 792,
+              "bottom": 92
+            }
+          },
+          {
+            "text": "موقعك قديم ودك تجدده؟",
+            "on": false,
+            "visible": true,
+            "rect": {
+              "x": 307,
+              "y": 404,
+              "w": 186,
+              "h": 46,
+              "right": 493,
+              "bottom": 450
+            }
+          },
+          {
+            "text": "تطبيقك صاير بطيء وما يواكب الدنيا؟",
+            "on": false,
+            "visible": true,
+            "rect": {
+              "x": 1172,
+              "y": 603,
+              "w": 127,
+              "h": 63,
+              "right": 1299,
+              "bottom": 667
+            }
+          }
+        ],
+        "h1Color": "rgb(255, 255, 255)",
+        "h1BgClip": "border-box",
+        "logoIsSvg": true,
+        "logoImg": false,
+        "fontCairoLoaded": true,
+        "particles": 85
+      },
+      "shot": "laptop-1366x768/s1_home.jpg"
+    },
+    "tablet-1024x768": {
+      "layout": {
+        "viewport": [
+          1024,
+          768
+        ],
+        "activeScreen": "s1",
+        "u": "0.7314285714285714",
+        "stage": {
+          "x": 0,
+          "y": 15,
+          "w": 1024,
+          "h": 616,
+          "right": 1024,
+          "bottom": 630
+        },
+        "stageMarginLeft": 0,
+        "stageMarginRight": 0,
+        "screenScrollWidth": 1463,
+        "screenClientWidth": 1024,
+        "docScrollWidth": 1024,
+        "robot": {
+          "x": 369,
+          "y": 152,
+          "w": 163,
+          "h": 424,
+          "right": 532,
+          "bottom": 576
+        },
+        "robotVisible": true,
+        "ring": {
+          "x": 541,
+          "y": 85,
+          "w": 358,
+          "h": 524,
+          "right": 900,
+          "bottom": 608
+        },
+        "ringVisible": true,
+        "chat": {
+          "x": 587,
+          "y": 150,
+          "w": 248,
+          "h": 405,
+          "right": 835,
+          "bottom": 556
+        },
+        "customerVisible": true,
+        "featureCards": [
+          {
+            "text": "🧭 فهم احتياجاتك",
+            "rect": {
+              "x": 913,
+              "y": 111,
+              "w": 92,
+              "h": 33,
+              "right": 1006,
+              "bottom": 144
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "📊 تحليل المشروع",
+            "rect": {
+              "x": 913,
+              "y": 198,
+              "w": 92,
+              "h": 33,
+              "right": 1006,
+              "bottom": 232
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "🔎 بحث وتدقيق",
+            "rect": {
+              "x": 913,
+              "y": 286,
+              "w": 92,
+              "h": 33,
+              "right": 1006,
+              "bottom": 319
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "🧊 بناء النماذج الأولية",
+            "rect": {
+              "x": 913,
+              "y": 352,
+              "w": 92,
+              "h": 33,
+              "right": 1006,
+              "bottom": 385
+            },
+            "visible": true,
+            "clippedX": false
+          },
+          {
+            "text": "🚀 الإنتاج الفعلي",
+            "rect": {
+              "x": 913,
+              "y": 425,
+              "w": 92,
+              "h": 33,
+              "right": 1006,
+              "bottom": 458
+            },
+            "visible": true,
+            "clippedX": false
+          }
+        ],
+        "phrases": [
+          {
+            "text": "منتجك ينبني قدامك في مصنع تشفير",
+            "on": true,
+            "visible": true,
+            "rect": {
+              "x": 410,
+              "y": 57,
+              "w": 190,
+              "h": 28,
+              "right": 600,
+              "bottom": 85
+            }
+          },
+          {
+            "text": "موقعك قديم ودك تجدده؟",
+            "on": false,
+            "visible": true,
+            "rect": {
+              "x": 208,
+              "y": 336,
+              "w": 150,
+              "h": 37,
+              "right": 358,
+              "bottom": 374
+            }
+          },
+          {
+            "text": "تطبيقك صاير بطيء وما يواكب الدنيا؟",
+            "on": false,
+            "visible": true,
+            "rect": {
+              "x": 907,
+              "y": 497,
+              "w": 102,
+              "h": 51,
+              "right": 1009,
+              "bottom": 548
+            }
+          }
+        ],
+        "h1Color": "rgb(255, 255, 255)",
+        "h1BgClip": "border-box",
+        "logoIsSvg": true,
+        "logoImg": false,
+        "fontCairoLoaded": true,
+        "particles": 64
+      },
+      "shot": "tablet-1024x768/s1_home.jpg"
+    }
+  },
+  "xss_probe": {
+    "handler_runs_on_s2": 0,
+    "handler_runs_after_s3": 1,
+    "raw_img_injected_in_s3_details": true,
+    "console": [
+      {
+        "type": "error",
+        "text": "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+      }
+    ]
+  },
+  "reduced_motion": {
+    "intro_still_running_at_400ms": false,
+    "transition_seconds": 0.49
+  },
+  "gate_video_raw": "<audit-workdir>/shots/video_raw/17f8da0a037c3961c61c03f8e4ea16cb.webm"
+}

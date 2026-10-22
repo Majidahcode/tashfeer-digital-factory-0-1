@@ -1,0 +1,117 @@
+/*
+ * Tashfeer design tokens — the ONLY place colour literals are allowed (enforced by scripts/check-tokens.mjs).
+ *
+ * Owner decision DEC-02 (2026-10-22): the Neon palette — the «النموذج (نيون)» column of
+ * docs/review/phase-1/palette-comparison-dec-02.jpg, i.e. the values of the approved prototype
+ * 01-reference/current-tashfeer-prototype.html (--bg, --em, --lime, --yel, --sil, --gold).
+ * (The palette sampled from the 01/02/03 card reference was used until then.)
+ */
+:root {
+  /* ── Palette: the six Neon values, exactly ───────────────────────── */
+  --brand-bg: #030504; /* near-black background */
+  --brand-emerald: #087a3f; /* rich emerald */
+  --brand-lime: #baff24; /* bright lime — the main light */
+  --brand-highlight: #e5ff45; /* intense yellow-green highlight */
+  --brand-text-silver: #c9ceca; /* silver-grey typography */
+  --brand-gold: #d9b84a; /* gold accent — the prototype's attachment icons */
+
+  /* ── Secondary roles: sRGB mixes of the six values above, nothing else (tests/unit/tokens.spec.ts) ── */
+  --brand-bg-forest: #053a1f; /* emerald 45% + bg — the primary button's lower shade */
+  --brand-glass-base: #04110a; /* emerald 10% + bg — card and glass fill */
+  --brand-emerald-bright: #61bc32; /* emerald 50% + lime — emerald lit by lime */
+  --brand-muted: #a5aaa6; /* silver 82% + bg — secondary text */
+  --brand-digit-top: #6ac330; /* lime 55% + emerald — numeral gradient */
+  --brand-digit-mid: #087a3f; /* emerald */
+  --brand-digit-low: #075d30; /* emerald 75% + bg */
+
+  /* ── Semantic states (outside the palette, approved with DEC-02) ── */
+  --state-danger: #e8836f;
+  --state-warning: #e9be55;
+  --state-success: var(--brand-lime);
+
+  /* ── Derived, alpha variants (always from the palette above) ─────── */
+  --brand-glass: color-mix(in srgb, var(--brand-glass-base) 58%, transparent);
+  --brand-glass-strong: color-mix(in srgb, var(--brand-glass-base) 78%, transparent);
+  /* glass edges are neutral, like the prototype's white glass borders (the yellow-green highlight is for accents) */
+  --brand-glass-edge: color-mix(in srgb, var(--brand-text-silver) 14%, transparent);
+  --brand-glass-sheen: color-mix(in srgb, var(--brand-text-silver) 9%, transparent);
+  --brand-glass-inner: color-mix(in srgb, var(--brand-text-silver) 11%, transparent);
+  --brand-glow: color-mix(in srgb, var(--brand-lime) 35%, transparent);
+  --brand-glow-soft: color-mix(in srgb, var(--brand-lime) 16%, transparent);
+  --brand-glow-emerald: color-mix(in srgb, var(--brand-emerald) 42%, transparent);
+  --brand-shadow: color-mix(in srgb, var(--brand-bg) 70%, transparent);
+  --brand-shadow-deep: color-mix(in srgb, var(--brand-bg) 88%, transparent);
+  --brand-scrim: color-mix(in srgb, var(--brand-bg) 72%, transparent);
+  --brand-particle: var(--brand-lime);
+
+  /* ── Neon glass (owner's correction of 2026-10-22): one recipe for the steps' cards and the «كيف نبدأ؟» button —
+     translucent dark green, lit from below by lime, a fine luminous rim instead of a border ── */
+  --neon-glass-fill: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--brand-glass-base) 72%, transparent),
+    color-mix(in srgb, var(--brand-bg) 56%, transparent)
+  );
+  --neon-glass-edge: color-mix(in srgb, var(--brand-text-silver) 9%, transparent);
+  --neon-glass-top: color-mix(in srgb, var(--brand-highlight) 9%, transparent);
+  --neon-rim: color-mix(in srgb, var(--brand-highlight) 62%, transparent);
+  --neon-rise: radial-gradient(
+    125% 90% at 50% 120%,
+    color-mix(in srgb, var(--brand-lime) 36%, transparent) 0%,
+    color-mix(in srgb, var(--brand-emerald) 22%, transparent) 42%,
+    transparent 72%
+  );
+  /* the chat's surfaces inside the portal: translucent green glass, never grey */
+  --chat-glass: color-mix(in srgb, var(--brand-glass-base) 26%, transparent);
+  --chat-surface: color-mix(in srgb, var(--brand-emerald) 14%, transparent);
+  --chat-surface-deep: color-mix(in srgb, var(--brand-glass-base) 64%, transparent);
+  --chat-edge: color-mix(in srgb, var(--brand-lime) 17%, transparent);
+  --chat-sheen: color-mix(in srgb, var(--brand-highlight) 10%, transparent);
+
+  /* ── Gradients ───────────────────────────────────────────────────── */
+  /* Every stop is ≥ 3:1 on --brand-bg (large text). */
+  --gradient-heading: linear-gradient(
+    180deg,
+    var(--brand-highlight) 0%,
+    var(--brand-text-silver) 34%,
+    var(--brand-lime) 72%,
+    var(--brand-emerald-bright) 100%
+  );
+  --gradient-wordmark: linear-gradient(
+    180deg,
+    var(--brand-highlight) 0%,
+    var(--brand-text-silver) 45%,
+    var(--brand-lime) 100%
+  );
+  --gradient-digits: linear-gradient(
+    180deg,
+    var(--brand-lime) 0%,
+    var(--brand-digit-top) 30%,
+    var(--brand-digit-mid) 68%,
+    var(--brand-digit-low) 100%
+  );
+  --gradient-sheen: linear-gradient(
+    100deg,
+    transparent 42%,
+    color-mix(in srgb, var(--brand-highlight) 55%, transparent) 50%,
+    transparent 58%
+  );
+
+  /* ── Type ────────────────────────────────────────────────────────── */
+  --font-sans: "Cairo", system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+
+  /* ── Shape, depth, motion ────────────────────────────────────────── */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-squircle: 28%;
+  --header-h: 64px;
+  --dur-fast: 180ms;
+  --dur-base: 320ms;
+  --dur-phrase: 900ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --parallax-max: 12px;
+
+  --z-background: 0;
+  --z-content: 1;
+  --z-header: 10;
+}
