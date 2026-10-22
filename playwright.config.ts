@@ -13,6 +13,8 @@ const crossEngine =
     ? [
         { name: "firefox-1440", use: { ...devices["Desktop Firefox"], viewport: { width: 1440, height: 900 } } },
         {
+          // Firefox cannot emulate isMobile; with hasTouch it is a touch-only phone (Gecko's touch simulation sends
+          // no pointer events for a mouse), so the mouse-only tests skip here as on the other phones (support.ts)
           name: "firefox-390",
           use: { ...devices["Desktop Firefox"], viewport: { width: 390, height: 844 }, hasTouch: true },
         },

@@ -7,6 +7,18 @@ const width = (info: TestInfo) => info.project.use.viewport?.width ?? 0;
 /** The full ≥1280 scene (five distinct phrase slots) driven by a mouse — decided by capability, not project name. */
 export const isFullDesktop = (info: TestInfo) => width(info) >= 1280 && !info.project.use.hasTouch;
 
+/**
+ * A mouse whose movement reaches the page as pointer events — what the parallax tests drive. Phones have none. The
+ * Chromium and WebKit phone profiles say so with isMobile; Firefox cannot emulate isMobile, and its touch emulation
+ * (hasTouch) is Gecko's responsive-design touch simulation, in which a mouse dispatches no pointer events at all
+ * (PointerEventHandler::DispatchPointerFromMouseOrTouch returns early when TouchEventsOverride is Enabled and the
+ * page is in the RDM pane; Playwright sets both). So firefox-390 is a touch-only phone like the other two.
+ */
+export const hasMousePointer = (info: TestInfo) => {
+  const { isMobile, hasTouch, browserName, defaultBrowserType } = info.project.use;
+  return !isMobile && !(hasTouch && (browserName ?? defaultBrowserType) === "firefox");
+};
+
 /** Wide screens for the empty-margin criterion P1-08 (1920 and 2560). */
 export const isWide = (info: TestInfo) => width(info) >= 1920;
 

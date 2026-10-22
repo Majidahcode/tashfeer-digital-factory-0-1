@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { openHome } from "./support";
+import { hasMousePointer, openHome } from "./support";
 
 /*
  * Owner's corrections of 2026-10-22 (afternoon): one continuous animated background for the whole page (§8), the
@@ -100,7 +100,7 @@ test("§8 it keeps moving on its own, with no pointer input", async ({ page }, i
 });
 
 test("§8 the pointer shifts the depth of the field, and never lights up where it is (no cursor halo)", async ({ page }, info) => {
-  test.skip(Boolean(info.project.use.isMobile), "no mouse on the phone profile (touch keeps the autonomous motion)");
+  test.skip(!hasMousePointer(info), "no mouse on the phone profiles (touch keeps the autonomous motion)");
   const vp = page.viewportSize()!;
   // brightness of the light field around a point, relative to the whole visible field
   const local = (x: number, y: number) =>

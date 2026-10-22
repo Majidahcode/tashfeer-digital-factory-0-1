@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { AMBIENT_PHRASES } from "@/domain/home-content";
-import { advance, autoIndex, isFullDesktop, openHome, openHomeFrozen, phraseStates } from "./support";
+import { advance, autoIndex, hasMousePointer, isFullDesktop, openHome, openHomeFrozen, phraseStates } from "./support";
 
 /** Four since 2026-10-22: the owner removed «منتجك ينبني قدامك في مصنع تشفير» (it repeated the headline). */
 const PHRASES = AMBIENT_PHRASES.length;
@@ -110,7 +110,7 @@ test("P1-11 pointer over a phrase reveals it within 400 ms without shifting the 
 });
 
 test("P1-12 pointer movement shifts only the parallax layers, by at most 12 px from rest", async ({ page }, info) => {
-  test.skip(Boolean(info.project.use.isMobile), "no mouse pointer on the touch profile");
+  test.skip(!hasMousePointer(info), "no mouse pointer on the phone profiles");
   await openHome(page);
   const snapshot = () =>
     page.evaluate(() =>
@@ -197,7 +197,7 @@ test.describe("P1-14 prefers-reduced-motion", () => {
         }),
       );
     const before = await layers();
-    if (!info.project.use.isMobile) {
+    if (hasMousePointer(info)) {
       const vp = page.viewportSize()!;
       await page.mouse.move(3, 3, { steps: 6 });
       await page.waitForTimeout(500);
