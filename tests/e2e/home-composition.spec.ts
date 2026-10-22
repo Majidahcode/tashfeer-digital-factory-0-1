@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { HERO } from "@/domain/home-content";
 import { FEATURES, openHome } from "./support";
 
@@ -191,6 +191,38 @@ test("the headline, its introduction and «كيف نبدأ؟» are one centred b
   expect(Math.abs(r.toggle), "«كيف نبدأ؟» is centred under them").toBeLessThan(3);
 });
 
+/**
+ * Opens or closes the disclosure with `act` and returns the CSS transitions this starts on the panel, once they have
+ * run to their end. They are read from the browser's own animation objects the moment the state flips (a
+ * MutationObserver on data-open, before any frame is drawn), and their end is awaited, not timed: WebKit in CI renders
+ * this page at a few frames a second, and a transition starts only on the next rendered frame (CI run 39827051351:
+ * after a close the transitions stayed pending for up to 1.4 s, so a 2 s budget for "hidden" failed on webkit-390).
+ */
+async function panelTransitions(page: Page, act: () => Promise<unknown>) {
+  await page.evaluate(() => {
+    const root = document.querySelector<HTMLElement>("[data-disclosure]")!;
+    const panel = root.querySelector<HTMLElement>("[data-disclosure-panel]")!;
+    (window as unknown as { panelRun: Promise<Array<{ property: string; duration: number }>> }).panelRun = new Promise(
+      (resolve) => {
+        const observer = new MutationObserver(() => {
+          observer.disconnect();
+          const transitions = panel.getAnimations().filter((a): a is CSSTransition => "transitionProperty" in a);
+          const timing = transitions.map((t) => ({
+            property: t.transitionProperty,
+            duration: Number(t.effect?.getComputedTiming().duration),
+          }));
+          void Promise.all(transitions.map((t) => t.finished.catch(() => null))).then(() => resolve(timing));
+        });
+        observer.observe(root, { attributes: true, attributeFilter: ["data-open"] });
+      },
+    );
+  });
+  await act();
+  return page.evaluate(
+    () => (window as unknown as { panelRun: Promise<Array<{ property: string; duration: number }>> }).panelRun,
+  );
+}
+
 test("«كيف نبدأ؟» is a real disclosure: hidden by default, opens and closes the original paragraphs", async ({ page }) => {
   const toggle = page.getByRole("button", { name: "كيف نبدأ؟" });
   const panel = page.locator("[data-disclosure-panel]");
@@ -203,24 +235,8 @@ test("«كيف نبدأ؟» is a real disclosure: hidden by default, opens and c
   expect((await panel.boundingBox())!.height).toBeLessThan(1);
 
   // it opens smoothly: the click starts a real transition of the panel's height (its grid row 0fr → 1fr), several
-  // hundred milliseconds long — read from the browser's own animation, so the check does not depend on frame rate
-  const opening = await page.evaluate(
-    () =>
-      new Promise<Array<{ property: string; duration: number }>>((resolve) => {
-        const panelEl = document.querySelector<HTMLElement>("[data-disclosure-panel]")!;
-        const seen: Array<{ property: string; duration: number }> = [];
-        panelEl.addEventListener("transitionrun", (e) => {
-          if (e.target !== panelEl) return;
-          const cs = getComputedStyle(panelEl);
-          const props = cs.transitionProperty.split(",").map((x) => x.trim());
-          const durs = cs.transitionDuration.split(",").map((x) => Number.parseFloat(x) * 1000);
-          seen.push({ property: e.propertyName, duration: durs[props.indexOf(e.propertyName)] ?? 0 });
-          if (e.propertyName === "grid-template-rows") resolve(seen);
-        });
-        setTimeout(() => resolve(seen), 3_000);
-        document.querySelector<HTMLButtonElement>("[data-disclosure-toggle]")!.click();
-      }),
-  );
+  // hundred milliseconds long (read from the browser's own transitions and awaited to their end, see panelTransitions)
+  const opening = await panelTransitions(page, () => toggle.evaluate((el: HTMLElement) => el.click()));
   const height = opening.find((t) => t.property === "grid-template-rows");
   expect(height, JSON.stringify(opening)).toBeTruthy();
   expect(height!.duration).toBeGreaterThanOrEqual(300);
@@ -229,13 +245,20 @@ test("«كيف نبدأ؟» is a real disclosure: hidden by default, opens and c
   await expect(paragraphs).toHaveText([...HERO.lede]); // the original wording, unchanged
   await expect(paragraphs.first()).toBeVisible();
   await expect(panel).not.toHaveAttribute("inert", "");
-  await expect.poll(async () => (await panel.boundingBox())!.height, { timeout: 3_000 }).toBeGreaterThan(100);
+  expect((await panel.boundingBox())!.height).toBeGreaterThan(100);
 
-  // keyboard: Enter closes, Space opens again
+  // keyboard: Enter closes — smoothly too (the row 1fr → 0fr), and once it has closed the paragraphs are hidden,
+  // inert and take no space again — then Space opens it again
   await toggle.focus();
-  await page.keyboard.press("Enter");
+  const closing = await panelTransitions(page, () => page.keyboard.press("Enter"));
   await expect(toggle).toHaveAttribute("aria-expanded", "false");
-  await expect(paragraphs.first()).toBeHidden({ timeout: 2_000 });
+  const collapse = closing.find((t) => t.property === "grid-template-rows");
+  expect(collapse, JSON.stringify(closing)).toBeTruthy();
+  expect(collapse!.duration).toBeGreaterThanOrEqual(300);
+  expect(collapse!.duration).toBeLessThanOrEqual(800);
+  await expect(paragraphs.first()).toBeHidden();
+  await expect(panel).toHaveAttribute("inert", "");
+  expect((await panel.boundingBox())!.height).toBeLessThan(1);
   await page.keyboard.press(" ");
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
   await expect(paragraphs.first()).toBeVisible();
