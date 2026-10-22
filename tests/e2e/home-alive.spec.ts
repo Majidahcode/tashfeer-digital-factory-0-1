@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { hasMousePointer, openHome } from "./support";
+import { framesRendered, hasMousePointer, openHome } from "./support";
 
 /*
  * Owner's corrections of 2026-10-22 (afternoon): one continuous animated background for the whole page (§8), the
@@ -125,10 +125,12 @@ test("§8 the pointer shifts the depth of the field, and never lights up where i
   const B = { x: Math.round(vp.width * 0.8), y: Math.round(vp.height * 0.55) };
   await page.mouse.move(B.x, B.y, { steps: 6 });
   await page.waitForTimeout(1_600);
+  await framesRendered(page); // measure what has been drawn since the pause (support.ts)
   const atAWhenAway = await local(A.x, A.y);
   const offsetAway = await page.locator("[data-ambient-background]").getAttribute("data-parallax");
   await page.mouse.move(A.x, A.y, { steps: 6 });
   await page.waitForTimeout(1_600);
+  await framesRendered(page);
   const atAWhenThere = await local(A.x, A.y);
   const offsetThere = await page.locator("[data-ambient-background]").getAttribute("data-parallax");
   expect(offsetThere, "the field shifted with the pointer").not.toBe(offsetAway);

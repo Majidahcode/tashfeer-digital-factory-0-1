@@ -41,6 +41,29 @@ export async function openHome(page: Page) {
 }
 
 /**
+ * Resolves once the page has rendered `count` more animation frames. A measurement of what the page draws — the
+ * background's canvases and the offset it draws with — waits for this after a pause, because a pause alone does not
+ * guarantee that anything was drawn: WebKit in CI rendered no frame in 1.6 s (run 39852571650). Two frames, because
+ * the background draws at most every other 60 Hz frame. Not for tests on a frozen clock, whose animation frames run
+ * only as page.clock advances.
+ */
+export async function framesRendered(page: Page, count = 2) {
+  await page.evaluate(
+    (n) =>
+      new Promise<void>((resolve) => {
+        let left = n;
+        const frame = () => {
+          left -= 1;
+          if (left <= 0) resolve();
+          else requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+      }),
+    count,
+  );
+}
+
+/**
  * Freeze time before the page loads: every timer (phrase cycle, rAF) then advances only through
  * page.clock.runFor, so the phrase-cycle assertions are deterministic. Timers registered on mount start at t = 0.
  */
