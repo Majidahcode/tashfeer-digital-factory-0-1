@@ -95,6 +95,7 @@ test("§8 it keeps moving on its own, with no pointer input", async ({ page }, i
   await expect(page.locator("[data-ambient-background]")).toHaveAttribute("data-ambient-motion", "full");
   const a = await read();
   await page.waitForTimeout(700);
+  await framesRendered(page); // compare with what has been drawn since the pause (support.ts)
   const b = await read();
   expect(b, `${info.project.name}: the sparks moved`).not.toBe(a);
 });

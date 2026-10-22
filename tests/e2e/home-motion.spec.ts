@@ -1,6 +1,15 @@
 import { expect, test, type Page } from "@playwright/test";
 import { AMBIENT_PHRASES } from "@/domain/home-content";
-import { advance, autoIndex, hasMousePointer, isFullDesktop, openHome, openHomeFrozen, phraseStates } from "./support";
+import {
+  advance,
+  autoIndex,
+  framesRendered,
+  hasMousePointer,
+  isFullDesktop,
+  openHome,
+  openHomeFrozen,
+  phraseStates,
+} from "./support";
 
 /** Four since 2026-10-22: the owner removed «منتجك ينبني قدامك في مصنع تشفير» (it repeated the headline). */
 const PHRASES = AMBIENT_PHRASES.length;
@@ -137,7 +146,8 @@ test("P1-12 pointer movement shifts only the parallax layers, by at most 12 px f
   let backgroundMoved = 0;
   for (const [x, y] of corners) {
     await page.mouse.move(x, y, { steps: 8 });
-    await page.waitForTimeout(1_500); // the smoothed pointer settles (lerp 0.08 per frame)
+    await page.waitForTimeout(1_500); // the smoothed pointer settles (time constant 0.2 s, pointer-parallax.ts)
+    await framesRendered(page); // measure what has been drawn since the pause (support.ts)
     const now = await snapshot();
     expect(now.length).toBe(rest.length);
     const worst = now.reduce(
