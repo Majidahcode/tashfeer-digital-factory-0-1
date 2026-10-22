@@ -47,13 +47,8 @@
   filter: drop-shadow(0 0 14px var(--brand-glow-soft));
 }
 
-/* ≥1280: five distinct slots in the bands above and below the scene content, all outside the portal's glow.
-   Top slots are offset in px from the header (not %), so the fade-in offset and parallax never reach it; the copy
-   column keeps room above its badge for s0. */
-.s0 {
-  top: 22px;
-  left: 2%;
-}
+/* ≥1280: one slot per phrase in the bands above and below the scene content, all outside the portal's glow.
+   The top slot is offset in px from the header (not %), so the fade-in offset and parallax never reach it. */
 .s1 {
   bottom: 1%;
   left: 30%; /* between the seated customer and Tashfeer's feet */
@@ -71,8 +66,8 @@
   left: 50%;
 }
 
-/* <1280: one in-flow slot (above the portal on tablets, between the copy and the portal on phones — placed by
-   the scene). All five phrases share it; ghosts are hidden so stacked phrases never show through each other. */
+/* <1280: one in-flow slot (above the copy on small laptops, after the steps on tablets and phones — placed by the
+   scene). All phrases share it; ghosts are hidden so stacked phrases never show through each other. */
 @media (max-width: 1279px) {
   .layer {
     position: relative;
@@ -87,7 +82,6 @@
     block-size: max-content;
     max-inline-size: 92%;
   }
-  .s0,
   .s1,
   .s2,
   .s3,
@@ -98,7 +92,6 @@
 
 @media (max-width: 899px) {
   .layer {
-    order: 2;
     block-size: 56px;
   }
 }

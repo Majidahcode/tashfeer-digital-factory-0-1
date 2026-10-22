@@ -18,6 +18,7 @@ html {
 }
 
 body {
+  position: relative; /* the containing block of the page-long background (AmbientBackground) */
   min-height: 100svh;
   margin: 0;
   background: var(--brand-bg);

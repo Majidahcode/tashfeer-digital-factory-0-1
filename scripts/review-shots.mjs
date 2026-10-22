@@ -5,7 +5,8 @@
  *   npm run review:shots [-- <outDir>]          # default: docs/review/phase-1
  *
  * Viewports from docs/ACCEPTANCE_TESTS.md §2 (+768×1024). Phones and tablets are captured full-page because
- * they scroll by design; desktops are captured at the viewport, which is what the scene must fill.
+ * they scroll by design (after scrolling through once, so the steps have powered on); desktops are captured at the
+ * viewport, which is what the scene must fill.
  * Prints one line per size: page height, whether it fits the viewport, horizontal overflow.
  */
 import { mkdir } from "node:fs/promises";
@@ -43,8 +44,21 @@ try {
     await page.locator("[data-ambient-motion]").waitFor({ state: "attached" });
     await page.evaluate(() => document.fonts.ready);
     await page.waitForTimeout(1400); // the first phrase has faded in; well before it fades out (3.6 s)
+    const fullPage = Boolean(s.mobile || s.fullPage);
+    if (fullPage) {
+      // scroll through the page like a visitor first: the 01–05 tiles power on as they enter the viewport, and a
+      // full-page capture never scrolls (they would all show their dark, not-yet-seen state)
+      const height = await page.evaluate(() => document.documentElement.scrollHeight);
+      for (let y = 0; y <= height; y += Math.round(s.height * 0.6)) {
+        await page.evaluate((top) => window.scrollTo(0, top), y);
+        await page.waitForTimeout(250);
+      }
+      await page.waitForTimeout(2600);
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.waitForTimeout(400);
+    }
     const file = path.join(OUT, `home-${s.name}.jpg`);
-    await page.screenshot({ path: file, type: "jpeg", quality: 85, fullPage: Boolean(s.mobile || s.fullPage) });
+    await page.screenshot({ path: file, type: "jpeg", quality: 85, fullPage });
     const m = await page.evaluate(() => ({
       docH: document.documentElement.scrollHeight,
       vh: innerHeight,

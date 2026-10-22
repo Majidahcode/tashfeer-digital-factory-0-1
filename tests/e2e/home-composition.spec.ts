@@ -1,12 +1,15 @@
 import { expect, test } from "@playwright/test";
+import { HERO } from "@/domain/home-content";
 import { FEATURES, openHome } from "./support";
 
 /*
- * Owner's visual-correction pass of 2026-10-22: the Neon palette as rendered, the characters' shared focus on the
- * portal, the «أنا» → Tashfeer pointer, one RTL alignment for the copy, and the 01–05 steps on every width.
+ * Owner's visual-correction passes of 2026-10-22: the Neon palette as rendered, the characters' shared focus on the
+ * portal, the «أنا» → Tashfeer pointer (diagonal at every width), the centred headline block, and the 01–05 steps
+ * on every width (a 2-2-1 pyramid on phones).
  */
 
-const narrow = (w: number) => w < 900;
+/** Below this width the phone layout applies (HomeScene.module.css). */
+const PHONE = 720;
 
 test.beforeEach(async ({ page }) => {
   await openHome(page);
@@ -67,7 +70,12 @@ test("Tashfeer and the customer both face the portal", async ({ page }) => {
   }
 });
 
-test("the «أنا» pointer ends at Tashfeer, points into him and crosses no text", async ({ page }) => {
+for (const state of ["closed", "open"] as const)
+test(`the «أنا» pointer ends at Tashfeer, arrives diagonally, and crosses nothing («كيف نبدأ؟» ${state})`, async ({ page }) => {
+  if (state === "open") {
+    await page.locator("[data-disclosure-toggle]").click();
+    await page.waitForTimeout(700); // the panel's opening transition; the pointer is redrawn as the scene grows
+  }
   // drawn after hydration, from the live layout
   await page.locator("[data-speaker-arrow] [data-arrow-line]").waitFor({ state: "attached" });
   const r = await page.evaluate(() => {
@@ -93,11 +101,17 @@ test("the «أنا» pointer ends at Tashfeer, points into him and crosses no te
       const y = end.y + (uy / n) * d;
       if (x >= robot.left && x <= robot.right && y >= robot.top && y <= robot.bottom) hits = true;
     }
-    // nothing it must not cross: every text block, the chat, the cards, the customer and her voice pill
+    // nothing it must not cross: every text block, the «كيف نبدأ؟» button, the portal and its chat, the cards, the
+    // customer and his voice pill, the ambient phrases
     const guarded = [
-      ...document.querySelectorAll("h1 [data-gradient-text]:not([data-speaker-label]), [data-scene-part=copy] p"),
-      ...document.querySelectorAll("[data-chat-shell], [data-feature-card], [data-seated-customer], [data-scene-part=customer] button"),
-    ].map((el) => ({ name: `${el.tagName}.${(el as HTMLElement).className}`.slice(0, 40), r: el.getBoundingClientRect() }));
+      ...document.querySelectorAll("h1 [data-gradient-text]:not([data-speaker-label]), [data-scene-part=copy] p, [data-disclosure-toggle]"),
+      ...document.querySelectorAll(
+        "[data-portal], [data-chat-shell], [data-feature-card], [data-seated-customer], [data-scene-part=customer] button, [data-phrase-index]",
+      ),
+    ]
+      .filter((el) => getComputedStyle(el).visibility !== "hidden")
+      .map((el) => ({ name: `${el.tagName}.${(el as HTMLElement).className}`.slice(0, 40), r: el.getBoundingClientRect() }))
+      .filter((g) => g.r.width > 0 && g.r.height > 0);
     const crossings: string[] = [];
     for (let i = 0; i <= 60; i++) {
       const p = at(i / 60);
@@ -106,12 +120,22 @@ test("the «أنا» pointer ends at Tashfeer, points into him and crosses no te
       }
     }
     const start = at(0);
+    // how it arrives (degrees below the horizontal) and how much it bends (largest distance from its chord ÷ chord)
+    const arrival = (Math.atan2(end.y - before.y, Math.abs(end.x - before.x)) * 180) / Math.PI;
+    const chord = Math.hypot(end.x - start.x, end.y - start.y);
+    let bend = 0;
+    for (let i = 1; i < 30; i++) {
+      const p = at(i / 30);
+      bend = Math.max(bend, Math.abs((p.x - start.x) * (end.y - start.y) - (p.y - start.y) * (end.x - start.x)) / chord);
+    }
     return {
       startNearLabel: Math.hypot(Math.max(label.left - start.x, 0, start.x - label.right), Math.max(label.top - start.y, 0, start.y - label.bottom)),
       endToRobot: Math.hypot(Math.max(robot.left - end.x, 0, end.x - robot.right), Math.max(robot.top - end.y, 0, end.y - robot.bottom)),
       hits,
       crossings: [...new Set(crossings)],
       tip: Boolean(document.querySelector("[data-speaker-arrow] [data-arrow-tip]")),
+      arrival,
+      bend: bend / chord,
     };
   });
   expect(r, "the pointer is drawn").not.toBeNull();
@@ -120,86 +144,229 @@ test("the «أنا» pointer ends at Tashfeer, points into him and crosses no te
   expect(r!.endToRobot, "it ends at Tashfeer").toBeLessThan(24);
   expect(r!.hits, "its arrowhead points into Tashfeer").toBe(true);
   expect(r!.crossings).toEqual([]);
+  // owner's correction §4: angled at every width — neither a flat sideways line nor a straight vertical drop
+  expect(r!.arrival, "it arrives diagonally").toBeGreaterThanOrEqual(30);
+  expect(r!.arrival, "it arrives diagonally").toBeLessThanOrEqual(80);
+  expect(r!.bend, "it is a curve, not a straight stroke").toBeGreaterThanOrEqual(0.05);
 });
 
-test("the copy reads right-to-left in one alignment, at a controlled measure", async ({ page }, info) => {
-  const w = info.project.use.viewport?.width ?? 0;
+test("the headline, its introduction and «كيف نبدأ؟» are one centred block, with the wording unchanged", async ({ page }) => {
+  // owner's correction §1: the headline's words exactly as approved (its lines are separate blocks: compare words)
+  const words = (await page.locator("h1").innerText()).split(/\s+/).filter(Boolean).join(" ");
+  expect(words).toBe("أنا مو بس أسوي لك منتجك الرقمي اللي بخيالك لا أبني منتجك قدام عينك");
   const r = await page.evaluate(() => {
-    const blocks = [
-      ...document.querySelectorAll<HTMLElement>("h1 [data-gradient-text]:not([data-speaker-label]), [data-scene-part=copy] p"),
-    ];
-    const container = document.querySelector("[data-scene-part=copy] [class*=copyText]")!.getBoundingClientRect();
-    const right = (el: Element) => {
+    const block = document.querySelector("[data-scene-part=copy] [class*=copyText]")!.getBoundingClientRect();
+    const mid = block.left + block.width / 2;
+    // every visible line, centre against the block's centre: the fragments of one line (the introduction's dot and
+    // its words) are merged into the line they form, and a wrapped element counts each of its lines
+    const centres = (el: Element) => {
       const range = document.createRange();
       range.selectNodeContents(el);
-      return Math.max(...[...range.getClientRects()].map((q) => q.right));
+      const lines: Array<{ top: number; bottom: number; left: number; right: number }> = [];
+      for (const q of [...range.getClientRects()].filter((r) => r.width > 0.5)) {
+        const line = lines.find((l) => q.top < l.bottom - 2 && q.bottom > l.top + 2);
+        if (line) {
+          line.left = Math.min(line.left, q.left);
+          line.right = Math.max(line.right, q.right);
+        } else lines.push({ top: q.top, bottom: q.bottom, left: q.left, right: q.right });
+      }
+      return lines.map((l) => (l.left + l.right) / 2 - mid);
     };
-    const rightEdges = blocks.map(right);
-    const isLede = (el: Element) => Boolean(el.closest("[class*=lede]"));
-    const spread = (xs: number[]) => Math.max(...xs) - Math.min(...xs);
-    const headEdges = blocks.filter((el) => !isLede(el)).map(right);
-    const ledeEdges = blocks.filter(isLede).map(right);
-    const lede = [...document.querySelectorAll<HTMLElement>("[data-scene-part=copy] [class*=lede] p")];
-    const gaps = lede.slice(1).map((p, i) => p.getBoundingClientRect().top - lede[i]!.getBoundingClientRect().bottom);
-    const fontSize = Number.parseFloat(getComputedStyle(lede[0]!).fontSize);
-    const widest = Math.max(...lede.map((p) => p.getBoundingClientRect().width));
+    // «أنا» counts where it is part of the block (≥ 900 px); on narrower screens it stands by Tashfeer instead
+    const lines = [...document.querySelectorAll("h1 [data-gradient-text]")].filter(
+      (el) => !el.matches("[data-speaker-label]") || getComputedStyle(el.closest("[class*=l1Row]")!).position !== "absolute",
+    );
+    const intro = document.querySelector("[data-scene-part=copy] [class*=intro]")!;
+    const toggle = document.querySelector("[data-disclosure-toggle]")!.getBoundingClientRect();
     return {
-      directions: [...new Set(blocks.map((el) => getComputedStyle(el).direction))],
-      alignments: [...new Set(blocks.map((el) => getComputedStyle(el).textAlign))],
-      rightSpread: spread(rightEdges),
-      headSpread: spread(headEdges),
-      ledeSpread: spread(ledeEdges),
-      flushRight: container.right - Math.max(...rightEdges),
-      gaps,
-      measureEm: widest / fontSize,
+      offsets: [...lines, intro].flatMap(centres),
+      toggle: toggle.left + toggle.width / 2 - mid,
+      directions: [...new Set([...lines, intro].map((el) => getComputedStyle(el).direction))],
+      align: [...new Set([...lines, intro].map((el) => getComputedStyle(el).textAlign))],
     };
   });
   expect(r.directions).toEqual(["rtl"]);
-  expect(r.alignments.every((a) => a === "start" || a === "right")).toBe(true);
-  // one right edge for the headline and the introduction, one for the paragraphs — the same edge, except at
-  // 600–899 where the paragraphs form a second column on the left
-  expect(r.headSpread, "headline and introduction start on one right edge").toBeLessThan(14);
-  expect(r.ledeSpread, "paragraphs start on one right edge").toBeLessThan(14);
-  if (w < 600 || w >= 900) expect(r.rightSpread, "every line starts on the same right edge").toBeLessThan(14);
-  expect(r.flushRight).toBeLessThan(14);
-  expect(Math.max(...r.gaps) - Math.min(...r.gaps), "the same space between paragraphs").toBeLessThan(1);
-  expect(r.measureEm, "lines are not stretched (about 60 Arabic letters at most)").toBeLessThanOrEqual(28);
+  expect(r.align).toEqual(["center"]);
+  for (const o of r.offsets) expect(Math.abs(o), "each line is centred on the block").toBeLessThan(3);
+  expect(Math.abs(r.toggle), "«كيف نبدأ؟» is centred under them").toBeLessThan(3);
 });
 
-test("the 01–05 steps are one coherent, ordered set at every width", async ({ page }, info) => {
+test("«كيف نبدأ؟» is a real disclosure: hidden by default, opens and closes the original paragraphs", async ({ page }) => {
+  const toggle = page.getByRole("button", { name: "كيف نبدأ؟" });
+  const panel = page.locator("[data-disclosure-panel]");
+  const paragraphs = panel.locator("p");
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(toggle).toHaveAttribute("aria-controls", (await panel.getAttribute("id"))!);
+  // closed: not shown, not read, not focusable
+  await expect(paragraphs.first()).toBeHidden();
+  await expect(panel).toHaveAttribute("inert", "");
+  expect((await panel.boundingBox())!.height).toBeLessThan(1);
+
+  // it opens smoothly: the click starts a real transition of the panel's height (its grid row 0fr → 1fr), several
+  // hundred milliseconds long — read from the browser's own animation, so the check does not depend on frame rate
+  const opening = await page.evaluate(
+    () =>
+      new Promise<Array<{ property: string; duration: number }>>((resolve) => {
+        const panelEl = document.querySelector<HTMLElement>("[data-disclosure-panel]")!;
+        const seen: Array<{ property: string; duration: number }> = [];
+        panelEl.addEventListener("transitionrun", (e) => {
+          if (e.target !== panelEl) return;
+          const cs = getComputedStyle(panelEl);
+          const props = cs.transitionProperty.split(",").map((x) => x.trim());
+          const durs = cs.transitionDuration.split(",").map((x) => Number.parseFloat(x) * 1000);
+          seen.push({ property: e.propertyName, duration: durs[props.indexOf(e.propertyName)] ?? 0 });
+          if (e.propertyName === "grid-template-rows") resolve(seen);
+        });
+        setTimeout(() => resolve(seen), 3_000);
+        document.querySelector<HTMLButtonElement>("[data-disclosure-toggle]")!.click();
+      }),
+  );
+  const height = opening.find((t) => t.property === "grid-template-rows");
+  expect(height, JSON.stringify(opening)).toBeTruthy();
+  expect(height!.duration).toBeGreaterThanOrEqual(300);
+  expect(height!.duration).toBeLessThanOrEqual(800);
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect(paragraphs).toHaveText([...HERO.lede]); // the original wording, unchanged
+  await expect(paragraphs.first()).toBeVisible();
+  await expect(panel).not.toHaveAttribute("inert", "");
+  await expect.poll(async () => (await panel.boundingBox())!.height, { timeout: 3_000 }).toBeGreaterThan(100);
+
+  // keyboard: Enter closes, Space opens again
+  await toggle.focus();
+  await page.keyboard.press("Enter");
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(paragraphs.first()).toBeHidden({ timeout: 2_000 });
+  await page.keyboard.press(" ");
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect(paragraphs.first()).toBeVisible();
+});
+
+test("open, the paragraphs read in a glass panel that covers nothing, at a readable measure", async ({ page }) => {
+  await page.locator("[data-disclosure-toggle]").click();
+  await page.waitForTimeout(800);
+  const r = await page.evaluate(() => {
+    const panel = document.querySelector("[data-disclosure-panel] [class*=glass]")!;
+    const p = panel.getBoundingClientRect();
+    const others = [
+      "[data-portal]",
+      "[data-chat-shell]",
+      "[data-tashfeer]",
+      "[data-seated-customer]",
+      "[data-scene-part=customer] button",
+      "[data-feature-card]",
+      "[data-hero-headline]",
+      "[data-scene-part=copy] [class*=intro]",
+      "[data-disclosure-toggle]",
+      "[data-site-header]",
+    ];
+    const overlaps: string[] = [];
+    for (const sel of others)
+      for (const el of document.querySelectorAll(sel)) {
+        const o = el.getBoundingClientRect();
+        if (o.width && o.height && p.left < o.right - 1 && p.right > o.left + 1 && p.top < o.bottom - 1 && p.bottom > o.top + 1)
+          overlaps.push(sel);
+      }
+    const paras = [...panel.querySelectorAll("p")];
+    const fontSize = Number.parseFloat(getComputedStyle(paras[0]!).fontSize);
+    const widest = Math.max(...paras.map((q) => q.getBoundingClientRect().width));
+    return {
+      overlaps,
+      measureEm: widest / fontSize,
+      align: [...new Set(paras.map((q) => getComputedStyle(q).textAlign))],
+      direction: getComputedStyle(paras[0]!).direction,
+      background: getComputedStyle(panel).backgroundImage,
+      overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    };
+  });
+  expect(r.overlaps).toEqual([]);
+  expect(r.measureEm, "lines are not stretched").toBeLessThanOrEqual(28);
+  expect(r.direction).toBe("rtl");
+  expect(r.align.every((a) => a === "start" || a === "right")).toBe(true);
+  expect(r.background).toContain("gradient"); // the neon glass fill
+  expect(r.overflowX).toBe(0);
+});
+
+test("the 01–05 steps: standalone glowing tiles, labels outside them, in order at every width (2-2-1 on phones)", async ({
+  page,
+}, info) => {
   const w = info.project.use.viewport?.width ?? 0;
   const r = await page.evaluate(() =>
     [...document.querySelectorAll<HTMLElement>("[data-feature-card]")].map((card) => {
-      const tile = card.querySelector<HTMLElement>("[class*=tile]")!.getBoundingClientRect();
-      const label = card.querySelector<HTMLElement>("[class*=label]")!.getBoundingClientRect();
-      const c = card.getBoundingClientRect();
+      const tileEl = card.querySelector<HTMLElement>("[class*=tile]")!;
+      const labelEl = card.querySelector<HTMLElement>("[class*=label]")!;
+      const tile = tileEl.getBoundingClientRect();
+      const label = labelEl.getBoundingClientRect();
+      const cs = getComputedStyle(card);
+      const accent = getComputedStyle(labelEl, "::after");
+      const shadows = cs.boxShadow === "none" ? [] : cs.boxShadow.split(/,(?![^(]*\))/);
       return {
         n: card.dataset.featureCard,
         text: card.textContent ?? "",
-        tile: { w: tile.width, h: tile.height, cx: tile.left + tile.width / 2, cy: tile.top + tile.height / 2 },
-        overlap: tile.left < label.right && tile.right > label.left && tile.top < label.bottom && tile.bottom > label.top,
+        tile: { w: tile.width, h: tile.height, cx: tile.left + tile.width / 2, cy: tile.top + tile.height / 2, bottom: tile.bottom },
+        label: { left: label.left, right: label.right, top: label.top, bottom: label.bottom, cx: label.left + label.width / 2 },
+        labelOutsideTile: !(tile.left < label.right && tile.right > label.left && tile.top < label.bottom && tile.bottom > label.top),
         gapTileLabel: Math.max(label.left - tile.right, tile.left - label.right, label.top - tile.bottom, tile.top - label.bottom),
-        card: { left: c.left, right: c.right, top: c.top, bottom: c.bottom },
+        // the step itself draws nothing: no fill, no border, no shadow — no outer card
+        card: {
+          background: `${cs.backgroundImage} ${cs.backgroundColor}`,
+          border: Number.parseFloat(cs.borderTopWidth) + Number.parseFloat(cs.borderBottomWidth),
+          visibleShadow: shadows.some((x) => !/rgba\(0, 0, 0, 0\)|transparent/.test(x)),
+        },
+        accent: {
+          content: accent.content,
+          w: Number.parseFloat(accent.width),
+          h: Number.parseFloat(accent.height),
+          image: accent.backgroundImage,
+        },
+        vw: innerWidth,
       };
     }),
   );
   expect(r.map((c) => c.n)).toEqual(["01", "02", "03", "04", "05"]);
   r.forEach((c, i) => expect(c.text).toContain(FEATURES[i]!));
-  // one tile size, labels beside or under their own tile, never on it
-  expect(new Set(r.map((c) => `${c.tile.w.toFixed(1)}×${c.tile.h.toFixed(1)}`)).size).toBe(1);
+  expect(new Set(r.map((c) => `${c.tile.w.toFixed(1)}×${c.tile.h.toFixed(1)}`)).size, "one tile size").toBe(1);
   for (const c of r) {
-    expect(c.overlap, `${c.n} label on its tile`).toBe(false);
-    expect(c.gapTileLabel, `${c.n} label next to its tile`).toBeLessThan(24);
+    expect(c.card.background, `${c.n}: no card behind the step`).toBe("none rgba(0, 0, 0, 0)");
+    expect(c.card.border, `${c.n}: no card border`).toBe(0);
+    expect(c.card.visibleShadow, `${c.n}: no card shadow`).toBe(false);
+    expect(c.labelOutsideTile, `${c.n}: the label is outside its tile`).toBe(true);
+    expect(c.gapTileLabel, `${c.n}: the label is next to its own tile`).toBeLessThan(24);
+    // a short, thin accent line in the identity colours under every label
+    expect(c.accent.content, `${c.n}: accent line`).toBe('""');
+    expect(c.accent.h).toBeGreaterThan(0);
+    expect(c.accent.h).toBeLessThanOrEqual(3);
+    expect(c.accent.w).toBeGreaterThan(10);
+    expect(c.accent.w).toBeLessThanOrEqual(40);
+    expect(c.accent.image).toContain("rgb(186, 255, 36)");
+    expect(c.label.left, `${c.n} label on screen`).toBeGreaterThanOrEqual(0);
+    expect(c.label.right).toBeLessThanOrEqual(c.vw);
   }
+  // labels never overlap one another or another step's tile
+  for (let i = 0; i < 5; i++)
+    for (let j = 0; j < 5; j++) {
+      if (i === j) continue;
+      const a = r[i]!.label;
+      const b = r[j]!.label;
+      if (i < j) expect(a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top, `labels ${r[i]!.n} × ${r[j]!.n}`).toBe(false);
+      const t = r[j]!.tile;
+      expect(a.left < t.cx + t.w / 2 && a.right > t.cx - t.w / 2 && a.top < t.cy + t.h / 2 && a.bottom > t.cy - t.h / 2, `label ${r[i]!.n} × tile ${r[j]!.n}`).toBe(false);
+    }
   if (w >= 1280) return; // desktop keeps the approved arc beside the ring
   const ys = r.map((c) => c.tile.cy);
   const xs = r.map((c) => c.tile.cx);
-  if (w < 600) {
-    // stacked: one per row, top to bottom, equal steps, aligned on one vertical line
-    for (let i = 1; i < 5; i++) expect(ys[i]! - ys[i - 1]!).toBeGreaterThan(20);
-    const steps = ys.slice(1).map((y, i) => y - ys[i]!);
-    expect(Math.max(...steps) - Math.min(...steps)).toBeLessThan(2);
-    expect(Math.max(...xs) - Math.min(...xs)).toBeLessThan(1);
+  if (w < PHONE) {
+    // the pyramid: 01 02 / 03 04 / 05 — each row read right to left, 05 centred under the pairs, even rows
+    expect(Math.abs(ys[0]! - ys[1]!)).toBeLessThan(1);
+    expect(Math.abs(ys[2]! - ys[3]!)).toBeLessThan(1);
+    expect(ys[2]!).toBeGreaterThan(ys[0]! + 40);
+    expect(ys[4]!).toBeGreaterThan(ys[2]! + 40);
+    expect(xs[0]!, "01 right of 02 (RTL)").toBeGreaterThan(xs[1]! + 40);
+    expect(xs[2]!, "03 right of 04 (RTL)").toBeGreaterThan(xs[3]! + 40);
+    expect(Math.abs(xs[0]! - xs[2]!), "the pairs stack in columns").toBeLessThan(1);
+    expect(Math.abs(xs[1]! - xs[3]!)).toBeLessThan(1);
+    expect(Math.abs(xs[4]! - (xs[0]! + xs[1]!) / 2), "05 centred under them").toBeLessThan(1.5);
+    expect(Math.abs(ys[2]! - ys[0]! - (ys[4]! - ys[2]!)), "even rows").toBeLessThan(1.5);
+    for (const c of r) expect(Math.abs(c.label.cx - c.tile.cx), `${c.n}: label centred under its tile`).toBeLessThan(2);
   } else {
     // one row: same line, right to left (RTL), equal spacing
     expect(Math.max(...ys) - Math.min(...ys)).toBeLessThan(1);
@@ -207,5 +374,4 @@ test("the 01–05 steps are one coherent, ordered set at every width", async ({ 
     const steps = xs.slice(1).map((x, i) => xs[i]! - x);
     expect(Math.max(...steps) - Math.min(...steps)).toBeLessThan(2);
   }
-  expect(narrow(w) || w < 1280).toBe(true);
 });

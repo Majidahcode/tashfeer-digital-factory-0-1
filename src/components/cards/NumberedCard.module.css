@@ -1,8 +1,26 @@
-/* Numbered glass tile modelled on the 01/02/03 reference: dark fill, lime/emerald light, luminous lower edge, no thick border. */
+/*
+ * A numbered step: the 01/02/03-reference tile (dark glass, lime light from below, a luminous lower rim, no thick
+ * border) — the step's only glowing element — and its label outside the tile, clean text with a short neon accent
+ * line under it. No card or panel around the two (owner's correction of 2026-10-22, 18:29).
+ *
+ * Layout knobs are custom properties the parent sets per breakpoint (HomeScene.module.css): beside the ring the
+ * label sits next to its tile; elsewhere under it, centred (--step-*).
+ *
+ * Power-on, on the tile itself, when ProcessSteps marks the step data-power="on" (staggered by --power-delay):
+ *   1. the tile is dark and understated (its number dimmed, still clearly readable);
+ *   2. a soft lime / yellow-green glow appears along its bottom edge;
+ *   3. light rises through the tile from bottom to top — a soft band sweeping up, the inner glow climbing in;
+ *   4. it settles into the tile's restrained resting glow, and the label's accent line lights up.
+ * Transform and opacity only, played once; the resting state does not flash. Off needs JavaScript, so it applies only
+ * where scripts run (scripting: enabled); reduced motion shows the resting state at once.
+ */
 .item {
   display: flex;
+  flex-direction: var(--step-dir, row);
   align-items: center;
-  gap: 14px;
+  justify-content: var(--step-justify, flex-start);
+  gap: var(--step-gap, 14px);
+  text-align: var(--step-align, start);
 }
 
 .tile {
@@ -14,18 +32,59 @@
   display: grid;
   place-items: center;
   border-radius: var(--radius-squircle);
-  background:
-    radial-gradient(120% 70% at 50% 118%, var(--brand-glow) 0%, transparent 62%),
-    linear-gradient(180deg, var(--brand-glass-base) 0%, var(--brand-bg) 72%);
+  background: linear-gradient(180deg, var(--brand-glass-base) 0%, var(--brand-bg) 72%);
+  box-shadow:
+    inset 0 1px 0 var(--brand-glass-inner),
+    0 0 0 1px var(--brand-glass-edge);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+/* the tile's lit lower rim and the glow it casts under itself */
+.tile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
   box-shadow:
     inset 0 -1.5px 0 color-mix(in srgb, var(--brand-highlight) 72%, transparent),
     inset 0 -14px 22px -14px var(--brand-glow),
-    inset 0 1px 0 var(--brand-glass-inner),
-    0 0 0 1px var(--brand-glass-edge),
     0 16px 26px -14px var(--brand-glow);
 }
 
+/* the tile's inner light, clipped to the squircle so it can rise from below its edge */
+.lit {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* resting inner glow, from the bottom */
+.lit::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 70% at 50% 118%, var(--brand-glow) 0%, transparent 62%);
+}
+
+/* the band of light that sweeps up through the tile once, while it powers on */
+.lit::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    0deg,
+    transparent 18%,
+    color-mix(in srgb, var(--brand-highlight) 24%, transparent) 50%,
+    transparent 82%
+  );
+  opacity: 0;
+}
+
 .num {
+  position: relative;
   direction: ltr;
   font-size: calc(var(--tile) * 0.44);
   font-weight: 800;
@@ -45,6 +104,154 @@
   font-weight: 600;
   line-height: 1.35;
   color: var(--brand-text-silver);
+  text-wrap: balance;
+  transition: color var(--dur-base) var(--ease-out);
+}
+
+/* a short, thin emerald → lime line under the label: it ties the text to its tile, never competes with it */
+.label::after {
+  content: "";
+  display: block;
+  inline-size: 26px;
+  block-size: 2px;
+  margin-block-start: 8px;
+  margin-inline: var(--step-accent-inline, 0 auto); /* RTL: under the label's start (beside the tile) */
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--brand-emerald), var(--brand-lime));
+  box-shadow: 0 0 6px var(--brand-glow-soft);
+  opacity: 0.85;
+}
+
+/* ── power-on ───────────────────────────────────────────────────────────────────────────────────────────────── */
+@media (scripting: enabled) {
+  .item:not([data-power="on"]) .tile::after,
+  .item:not([data-power="on"]) .lit::before,
+  .item:not([data-power="on"]) .label::after {
+    opacity: 0;
+  }
+  .item:not([data-power="on"]) .num {
+    opacity: 0.62; /* understated, still clearly readable */
+  }
+}
+
+/* 2. the bottom edge lights first */
+.item[data-power="on"] .tile::after {
+  animation: edge 700ms var(--ease-out) var(--power-delay, 0ms) both;
+}
+
+/* 3. light climbs through the tile */
+.item[data-power="on"] .lit::before {
+  animation: rise 1500ms cubic-bezier(0.22, 0.7, 0.2, 1) calc(var(--power-delay, 0ms) + 150ms) both;
+}
+
+.item[data-power="on"] .lit::after {
+  animation: sweep 1250ms cubic-bezier(0.3, 0.6, 0.3, 1) calc(var(--power-delay, 0ms) + 220ms) both;
+}
+
+.item[data-power="on"] .num {
+  animation: wake 1100ms var(--ease-out) calc(var(--power-delay, 0ms) + 260ms) both;
+}
+
+/* 4. settled: the label's accent follows */
+.item[data-power="on"] .label::after {
+  animation: accent 700ms var(--ease-out) calc(var(--power-delay, 0ms) + 900ms) both;
+}
+
+@keyframes edge {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(65%);
+  }
+  40% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes sweep {
+  from {
+    opacity: 0;
+    transform: translateY(85%);
+  }
+  25% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 0.8;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-85%);
+  }
+}
+
+@keyframes wake {
+  from {
+    opacity: 0.62;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes accent {
+  from {
+    opacity: 0;
+    transform: scaleX(0.2);
+  }
+  to {
+    opacity: 0.85;
+    transform: none;
+  }
+}
+
+/* ── response: pointer hover; a tap on touch screens (ProcessSteps sets data-pulse) ─────────────────────────── */
+@media (hover: hover) and (pointer: fine) {
+  .item:hover .tile {
+    transform: translateY(-2px);
+  }
+  .item:hover .label {
+    color: var(--brand-highlight);
+  }
+}
+
+.item[data-pulse] .tile {
+  animation: pulse 900ms var(--ease-out);
+}
+
+@keyframes pulse {
+  30% {
+    transform: translateY(-2px) scale(1.04);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item[data-power="on"] .tile::after,
+  .item[data-power="on"] .lit::before,
+  .item[data-power="on"] .lit::after,
+  .item[data-power="on"] .num,
+  .item[data-power="on"] .label::after,
+  .item[data-pulse] .tile {
+    animation: none;
+  }
+  .tile {
+    transition: none;
+  }
+  .item:hover .tile {
+    transform: none;
+  }
 }
 
 @media (forced-colors: active) {

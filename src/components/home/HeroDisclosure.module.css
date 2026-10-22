@@ -1,0 +1,156 @@
+/*
+ * «كيف نبدأ؟»: a compact neon-glass button (the steps' card recipe) and, under it, the paragraphs in a glass panel.
+ * The panel opens in the page flow (its grid row animates 0fr → 1fr), so it pushes what follows down and never covers
+ * the portal, the characters or the steps. No backdrop blur: the panel sits over the animated background, and a blur
+ * there would be recomputed on every frame — its translucent fill is enough to keep the text calm and readable.
+ */
+.root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  inline-size: 100%;
+}
+
+.toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-block-size: 44px;
+  padding: 8px 18px 8px 14px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.4;
+  color: var(--brand-highlight);
+  background: var(--neon-rise), var(--neon-glass-fill);
+  box-shadow:
+    inset 0 -1px 0 var(--neon-rim),
+    inset 0 1px 0 var(--neon-glass-top),
+    0 0 0 1px var(--neon-glass-edge),
+    0 12px 26px -16px var(--brand-glow);
+  cursor: pointer;
+  transition:
+    box-shadow var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .toggle:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 -1px 0 var(--neon-rim),
+      inset 0 1px 0 var(--neon-glass-top),
+      0 0 0 1px var(--chat-edge),
+      0 14px 30px -14px var(--brand-glow);
+  }
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--brand-lime);
+  outline-offset: 3px;
+}
+
+.chevron {
+  flex: none;
+  color: var(--brand-lime);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.root[data-open] .chevron {
+  transform: rotate(180deg);
+}
+
+/* the panel's row: 0fr closed, 1fr open; closed it is also invisible (and inert, set by the component) */
+.panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  inline-size: 100%;
+  visibility: hidden;
+  transition:
+    grid-template-rows 420ms var(--ease-out),
+    visibility 0s linear 420ms;
+}
+
+.root[data-open] .panel {
+  grid-template-rows: 1fr;
+  visibility: visible;
+  transition:
+    grid-template-rows 520ms var(--ease-out),
+    visibility 0s linear 0s;
+}
+
+.clip {
+  min-block-size: 0;
+  overflow: hidden;
+}
+
+.glass {
+  box-sizing: border-box;
+  max-inline-size: min(100%, 46ch);
+  margin: 12px auto 6px;
+  padding: 16px 20px 18px;
+  border-radius: var(--radius-lg);
+  text-align: start; /* RTL paragraphs read from the right edge, inside a centred panel */
+  background: var(--neon-glass-fill);
+  box-shadow:
+    inset 0 1px 0 var(--neon-glass-top),
+    inset 0 -1px 0 var(--chat-edge),
+    0 0 0 1px var(--neon-glass-edge);
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    opacity 260ms var(--ease-out),
+    transform 420ms var(--ease-out);
+}
+
+.root[data-open] .glass {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 420ms var(--ease-out) 90ms,
+    transform 520ms var(--ease-out) 60ms;
+}
+
+.glass p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.85;
+  color: var(--brand-text-silver);
+  text-wrap: pretty; /* no one-word last line */
+}
+
+.glass p + p {
+  margin-top: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toggle,
+  .chevron,
+  .panel,
+  .root[data-open] .panel,
+  .glass,
+  .root[data-open] .glass {
+    transition: none;
+  }
+  .glass {
+    transform: none;
+  }
+}
+
+/* without JavaScript the button cannot work: show the paragraphs instead */
+@media (scripting: none) {
+  .toggle {
+    display: none;
+  }
+  .panel {
+    grid-template-rows: 1fr;
+    visibility: visible;
+  }
+  .glass {
+    opacity: 1;
+    transform: none;
+  }
+}

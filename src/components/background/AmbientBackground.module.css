@@ -1,26 +1,29 @@
+/*
+ * One background for the whole page: it covers the body from the top of the page to its end (body is its containing
+ * block), so every section — portal, characters, headline, steps — sits on the same atmosphere, in full-page captures
+ * too. It never takes pointer events and never affects layout (strict containment).
+ */
 .root {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: var(--z-background);
   pointer-events: none;
   overflow: hidden;
+  contain: strict;
 }
 
-/* Static atmospheric light from the approved scene: lime from the lower left, emerald behind the portal. */
-.glows {
+/* both canvases are as long as the page (their height is set from the page's length, in 128 px steps) */
+.light,
+.sparks {
   position: absolute;
-  inset: -24px;
-  background:
-    radial-gradient(ellipse 48% 42% at 12% 100%, var(--brand-glow-soft), transparent 70%),
-    radial-gradient(ellipse 42% 50% at 70% 46%, var(--brand-glow-emerald), transparent 72%),
-    radial-gradient(ellipse 30% 24% at 88% 8%, var(--brand-glow-soft), transparent 70%);
-  will-change: transform;
-}
-
-.canvas {
-  position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  display: block;
   inline-size: 100%;
   block-size: 100%;
-  will-change: transform;
+}
+
+/* drawn at 1/8 resolution: the browser's smooth upscaling is what keeps the light fields soft */
+.light {
+  image-rendering: auto;
 }

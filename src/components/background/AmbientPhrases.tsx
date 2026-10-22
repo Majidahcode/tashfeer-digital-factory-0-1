@@ -16,7 +16,8 @@ import { subscribeParallax } from "@/lib/pointer-parallax";
 import styles from "./AmbientPhrases.module.css";
 
 const PHRASE_PARALLAX_PX = 6;
-const SLOTS = [styles.s0, styles.s1, styles.s2, styles.s3, styles.s4];
+/** ≥1280 slots, one per phrase, in AMBIENT_PHRASES order (the top-left slot went with the removed tagline). */
+const SLOTS = [styles.s1, styles.s2, styles.s3, styles.s4];
 
 type Props = { phrases: readonly string[]; className?: string };
 

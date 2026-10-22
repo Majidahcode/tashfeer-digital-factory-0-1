@@ -44,6 +44,29 @@
   --brand-scrim: color-mix(in srgb, var(--brand-bg) 72%, transparent);
   --brand-particle: var(--brand-lime);
 
+  /* ── Neon glass (owner's correction of 2026-10-22): one recipe for the steps' cards and the «كيف نبدأ؟» button —
+     translucent dark green, lit from below by lime, a fine luminous rim instead of a border ── */
+  --neon-glass-fill: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--brand-glass-base) 72%, transparent),
+    color-mix(in srgb, var(--brand-bg) 56%, transparent)
+  );
+  --neon-glass-edge: color-mix(in srgb, var(--brand-text-silver) 9%, transparent);
+  --neon-glass-top: color-mix(in srgb, var(--brand-highlight) 9%, transparent);
+  --neon-rim: color-mix(in srgb, var(--brand-highlight) 62%, transparent);
+  --neon-rise: radial-gradient(
+    125% 90% at 50% 120%,
+    color-mix(in srgb, var(--brand-lime) 36%, transparent) 0%,
+    color-mix(in srgb, var(--brand-emerald) 22%, transparent) 42%,
+    transparent 72%
+  );
+  /* the chat's surfaces inside the portal: translucent green glass, never grey */
+  --chat-glass: color-mix(in srgb, var(--brand-glass-base) 26%, transparent);
+  --chat-surface: color-mix(in srgb, var(--brand-emerald) 14%, transparent);
+  --chat-surface-deep: color-mix(in srgb, var(--brand-glass-base) 64%, transparent);
+  --chat-edge: color-mix(in srgb, var(--brand-lime) 17%, transparent);
+  --chat-sheen: color-mix(in srgb, var(--brand-highlight) 10%, transparent);
+
   /* ── Gradients ───────────────────────────────────────────────────── */
   /* Every stop is ≥ 3:1 on --brand-bg (large text). */
   --gradient-heading: linear-gradient(

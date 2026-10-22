@@ -1,6 +1,11 @@
 /*
  * Intake window inside the owner's portal ring. Phase 1 = visual shell; real intake arrives in Phase 3.
  *
+ * Glass (owner's correction of 2026-10-22): every surface is translucent dark green with a fine lime edge and a
+ * faint top highlight — no grey fills — so the chat belongs to the portal's light instead of sitting on it like a
+ * card. No backdrop blur: what shows through is the page's soft light field (the background leaves its sparks out
+ * of the chat), and a blur over an animated background would be recomputed on every frame.
+ *
  * The box is the ring's opening where the ring is under 50% opaque; rows sit at measured heights and widths of
  * that opening (src/lib/portal-geometry.ts sets --<row>-t/h/l/r as percentages of this box), so the chat follows
  * the ellipse instead of a rectangle. The content is drawn above the ring art (z 3) and its glass below (z 1), so
@@ -103,8 +108,10 @@
   font-size: calc(14 * var(--u));
   line-height: 1.55;
   text-wrap: balance; /* even lines in the narrow opening, no one-word last line */
-  background: var(--brand-glass-inner);
-  box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
+  background: var(--chat-surface);
+  box-shadow:
+    inset 0 1px 0 var(--chat-sheen),
+    inset 0 0 0 1px var(--chat-edge);
 }
 
 .note {
@@ -155,8 +162,10 @@
   font-size: calc(12 * var(--u));
   line-height: 1.2;
   color: var(--brand-text-silver);
-  background: var(--brand-glass-inner);
-  box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
+  background: var(--chat-surface);
+  box-shadow:
+    inset 0 1px 0 var(--chat-sheen),
+    inset 0 0 0 1px var(--chat-edge);
 }
 
 .tool svg {
@@ -176,8 +185,10 @@
   padding: calc(3 * var(--u)) calc(5 * var(--u));
   box-sizing: border-box;
   border-radius: calc(14 * var(--u));
-  background: var(--brand-glass-inner);
-  box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
+  background: var(--chat-surface-deep);
+  box-shadow:
+    inset 0 1px 0 var(--chat-sheen),
+    inset 0 0 0 1px var(--chat-edge);
 }
 
 .inputRow:focus-within {
@@ -215,7 +226,7 @@
   border: 0;
   border-radius: 50%;
   color: var(--brand-lime);
-  background: var(--brand-glass);
+  background: var(--chat-surface);
   box-shadow: inset 0 0 0 1px var(--brand-glow);
 }
 
@@ -251,9 +262,10 @@
     0 0 22px -6px var(--brand-glow);
 }
 
+/* disabled in this design preview, and visibly so — but still legible, not greyed out */
 .tool:disabled,
 .iconBtn:disabled,
 .enter:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.74;
 }

@@ -8,6 +8,8 @@ import { AMBIENT_PHRASES, FEATURES, HERO } from "@/domain/home-content";
 import { asset, assetUrl } from "@/lib/assets";
 import { GLASS_BOX, RING_ASPECT, RING_IMAGE, boxVars } from "@/lib/portal-geometry";
 import { ChatShell } from "./ChatShell";
+import { HeroDisclosure } from "./HeroDisclosure";
+import { ProcessSteps } from "./ProcessSteps";
 import { SpeakerArrow } from "./SpeakerArrow";
 import styles from "./HomeScene.module.css";
 
@@ -32,7 +34,7 @@ export function HomeScene() {
 
       <div className={styles.copy} data-scene-part="copy">
         <div className={styles.copyText}>
-          {/* three tiers, one reading order everywhere: headline → introductory statement → supporting paragraphs */}
+          {/* one centred block, one reading order everywhere: headline → introductory statement → «كيف نبدأ؟» */}
           <h1 id="hero-title" className={styles.headline} data-hero-headline="">
             {/* «أنا» is Tashfeer: SpeakerArrow draws its pointer to the robot; on narrow screens the word sits by him */}
             <span className={styles.l1Row}>
@@ -52,11 +54,8 @@ export function HomeScene() {
             {HERO.badge}
           </p>
 
-          <div className={styles.lede}>
-            {HERO.lede.map((p) => (
-              <p key={p}>{p}</p>
-            ))}
-          </div>
+          {/* the supporting paragraphs, hidden until asked for (owner's correction of 2026-10-22) */}
+          <HeroDisclosure label={HERO.more} paragraphs={HERO.lede} className={styles.more} />
         </div>
 
         <figure className={styles.customer} data-scene-part="customer">
@@ -116,11 +115,11 @@ export function HomeScene() {
 
       <SpeakerArrow />
 
-      <ol className={styles.features} aria-label="مراحل المصنع" data-scene-part="features">
+      <ProcessSteps className={styles.features} label="مراحل المصنع">
         {FEATURES.map((label, i) => (
           <NumberedCard key={label} index={i + 1} label={label} className={styles.feature} />
         ))}
-      </ol>
+      </ProcessSteps>
     </section>
   );
 }

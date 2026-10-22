@@ -10,9 +10,16 @@ export const isFullDesktop = (info: TestInfo) => width(info) >= 1280 && !info.pr
 /** Wide screens for the empty-margin criterion P1-08 (1920 and 2560). */
 export const isWide = (info: TestInfo) => width(info) >= 1920;
 
+/**
+ * Mutation checks only: a stylesheet injected right after load (E2E_MUTATION_CSS), to confirm that a test fails when
+ * the defect it guards against is put back. Never set in normal runs or CI.
+ */
+const MUTATION_CSS = process.env.E2E_MUTATION_CSS;
+
 /** Load the homepage and wait until client effects have run (the background stamps data-ambient-motion). */
 export async function openHome(page: Page) {
   await page.goto("/");
+  if (MUTATION_CSS) await page.addStyleTag({ content: MUTATION_CSS });
   await page.locator("[data-ambient-background][data-ambient-motion]").waitFor({ state: "attached" });
   // the «أنا» pointer is drawn from the live layout after hydration
   await page.locator("[data-speaker-arrow] [data-arrow-line]").waitFor({ state: "attached" });

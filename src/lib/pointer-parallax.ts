@@ -5,6 +5,8 @@ import type { Pointer } from "@/lib/particles";
 /**
  * One shared, smoothed pointer signal for background parallax layers.
  * - Values are normalised to [-1, 1]; layers convert them to a few pixels of offset.
+ * - Mouse and pen only: a finger is scrolling or tapping, not looking around (touch screens keep the autonomous
+ *   motion and the scroll depth instead).
  * - Disabled entirely under prefers-reduced-motion.
  * - Updates per layer element (not on :root) to avoid whole-document style recalculation.
  */
@@ -30,7 +32,7 @@ function frame() {
 }
 
 function onPointerMove(e: PointerEvent) {
-  if (prefersReducedMotion()) return;
+  if (prefersReducedMotion() || e.pointerType === "touch") return;
   target.x = (e.clientX / Math.max(1, window.innerWidth)) * 2 - 1;
   target.y = (e.clientY / Math.max(1, window.innerHeight)) * 2 - 1;
   if (!raf) raf = requestAnimationFrame(frame);

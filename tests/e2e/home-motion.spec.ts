@@ -1,5 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
+import { AMBIENT_PHRASES } from "@/domain/home-content";
 import { advance, autoIndex, isFullDesktop, openHome, openHomeFrozen, phraseStates } from "./support";
+
+/** Four since 2026-10-22: the owner removed «منتجك ينبني قدامك في مصنع تشفير» (it repeated the headline). */
+const PHRASES = AMBIENT_PHRASES.length;
 
 const STEP = 50;
 const TOLERANCE = 500;
@@ -23,10 +27,11 @@ async function nextChange(page: Page, now: number, expected: number) {
   return t;
 }
 
-test("P1-10 five phrases; with no pointer input the phrase changes every 5 s ± 0.5 s for ≥ 3 cycles", async ({ page }) => {
+test("P1-10 the ambient phrases; with no pointer input the phrase changes every 5 s ± 0.5 s for ≥ 3 cycles", async ({ page }) => {
   test.setTimeout(60_000);
   await openHomeFrozen(page);
-  await expect(page.locator("[data-phrase-index]")).toHaveCount(5);
+  await expect(page.locator("[data-phrase-index]")).toHaveCount(PHRASES);
+  await expect(page.locator("[data-phrase-index]")).toHaveText([...AMBIENT_PHRASES]);
   expect(await autoIndex(page)).toBe(0);
   expect((await phraseStates(page))[0]).toBe("revealed:auto");
 
@@ -35,7 +40,7 @@ test("P1-10 five phrases; with no pointer input the phrase changes every 5 s ± 
   for (let k = 1; k <= 4; k++) {
     now = await nextChange(page, now, k * 5000);
     changes.push(now);
-    expect(await autoIndex(page)).toBe(k);
+    expect(await autoIndex(page)).toBe(k % PHRASES);
   }
   const intervals = changes.map((at, i) => at - (i === 0 ? 0 : changes[i - 1]!));
   for (const ms of intervals) expect(Math.abs(ms - 5000)).toBeLessThanOrEqual(TOLERANCE);
@@ -43,7 +48,7 @@ test("P1-10 five phrases; with no pointer input the phrase changes every 5 s ± 
   // the newly active phrase is the only revealed one; it fades back to a ghost before the next change
   const states = await phraseStates(page);
   expect(states.filter((s) => s.startsWith("revealed"))).toEqual(["revealed:auto"]);
-  expect(states[4]).toBe("revealed:auto");
+  expect(states[4 % PHRASES]).toBe("revealed:auto");
   await advance(page, 4000);
   expect((await phraseStates(page)).every((s) => s === "ghost:-")).toBe(true);
 });
@@ -56,8 +61,20 @@ test("P1-11 pointer over a phrase reveals it within 400 ms without shifting the 
   expect(Math.abs(now - 5_000)).toBeLessThanOrEqual(STEP);
   expect(await autoIndex(page)).toBe(1);
 
-  // hover phrase 3 (neither the active one nor the next one)
+  // hover phrase 3 (neither the active one nor the next one); its fades are recorded as they start (CSS transitions
+  // run on real time, and a slow machine may finish one before it could be inspected)
   const target = page.locator('[data-phrase-index="3"]');
+  await target.evaluate((el) => {
+    const log: string[] = [];
+    (window as unknown as { fadeLog: string[] }).fadeLog = log;
+    el.addEventListener("transitionrun", (event) => {
+      const e = event as TransitionEvent;
+      const cs = getComputedStyle(el);
+      const props = cs.transitionProperty.split(",").map((x) => x.trim());
+      const durs = cs.transitionDuration.split(",").map((x) => Math.round(Number.parseFloat(x) * 1000));
+      log.push(`${e.propertyName} ${durs[props.indexOf(e.propertyName)] ?? 0}`);
+    });
+  });
   const box = (await target.boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   let revealedAfter = -1;
@@ -73,13 +90,10 @@ test("P1-11 pointer over a phrase reveals it within 400 ms without shifting the 
   now += revealedAfter;
   await expect(target).toHaveAttribute("data-state", "revealed");
   // the visible fade starts at that moment (CSS transitions run on the compositor clock, not the fake one)
-  const fades = await target.evaluate((el) =>
-    el
-      .getAnimations()
-      .map((a) => (a instanceof CSSTransition ? `${a.transitionProperty} ${String(a.effect?.getTiming().duration)}` : ""))
-      .filter(Boolean),
-  );
-  expect(fades).toContain("opacity 900");
+  // (transition events are dispatched with the next rendered frame: wait for it rather than read at once)
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as { fadeLog: string[] }).fadeLog), { timeout: 3_000 })
+    .toContain("opacity 900");
 
   // the next automatic change still lands on the original 5 s grid (10 s), while the pointer stays put
   now = await nextChange(page, now, 10_000);
@@ -113,7 +127,14 @@ test("P1-12 pointer movement shifts only the parallax layers, by at most 12 px f
     [2, 2],
     [vp.width - 3, vp.height - 3],
   ] as const;
-  let glowMoved = 0;
+  // the background draws its parallax into its canvases; it reports the offset it applies to the nearest depth
+  const drawnOffset = async () => {
+    const v = (await page.locator("[data-ambient-background]").getAttribute("data-parallax")) ?? "0 0";
+    const [x, y] = v.split(" ").map(Number);
+    return { x: x ?? 0, y: y ?? 0 };
+  };
+  const offset0 = await drawnOffset();
+  let backgroundMoved = 0;
   for (const [x, y] of corners) {
     await page.mouse.move(x, y, { steps: 8 });
     await page.waitForTimeout(1_500); // the smoothed pointer settles (lerp 0.08 per frame)
@@ -129,20 +150,18 @@ test("P1-12 pointer movement shifts only the parallax layers, by at most 12 px f
       { d: 0, key: "" },
     );
     expect(worst.d, worst.key).toBeLessThanOrEqual(12);
-    // everything outside the two parallax layers (glow, phrases) stays exactly where it was
+    // everything outside the parallax layers (the phrases' layer) stays exactly where it was
     const contentMoved = now.filter((s, i) => {
       const r = rest[i];
       return s && r && !s.layer && Math.max(Math.abs(s.x - r.x), Math.abs(s.y - r.y)) > 0.5;
     });
     expect(contentMoved.map((s) => s!.key)).toEqual([]);
-    const glowIdx = await page.evaluate(() =>
-      [...document.querySelectorAll("body *")].indexOf(document.querySelector('[data-parallax-layer="glow"]')!),
-    );
-    const g = now[glowIdx];
-    const g0 = rest[glowIdx];
-    if (g && g0) glowMoved = Math.max(glowMoved, Math.abs(g.x - g0.x), Math.abs(g.y - g0.y));
+    const o = await drawnOffset();
+    const d = Math.max(Math.abs(o.x - offset0.x), Math.abs(o.y - offset0.y));
+    expect(Math.max(Math.abs(o.x), Math.abs(o.y)), "the background's depth shift is bounded").toBeLessThanOrEqual(12);
+    backgroundMoved = Math.max(backgroundMoved, d);
   }
-  expect(glowMoved, "the pointer reached the page (parallax is live)").toBeGreaterThan(1);
+  expect(backgroundMoved, "the pointer reached the background (its parallax is live)").toBeGreaterThan(1);
 });
 
 test("P1-13 on touch, tapping the phrase reveals one (no hover dependency)", async ({ page }, info) => {
@@ -151,6 +170,7 @@ test("P1-13 on touch, tapping the phrase reveals one (no hover dependency)", asy
   await advance(page, 4_000); // the automatic phrase has faded: nothing is revealed
   expect((await phraseStates(page)).every((s) => s === "ghost:-")).toBe(true);
 
+  await page.locator("[data-ambient-phrases]").scrollIntoViewIfNeeded(); // after the steps on phones and tablets
   const layer = (await page.locator("[data-ambient-phrases]").boundingBox())!;
   await page.touchscreen.tap(layer.x + layer.width / 2, layer.y + layer.height / 2);
   await advance(page, 50);
@@ -198,9 +218,22 @@ test.describe("P1-14 prefers-reduced-motion", () => {
 
     await expect(page.locator("h1")).toContainText("أبني منتجك قدام عينك");
     await expect(page.locator("[data-feature-card]")).toHaveCount(5);
-    await expect(page.locator("[data-phrase-index]")).toHaveCount(5);
+    await expect(page.locator("[data-phrase-index]")).toHaveCount(PHRASES);
     await expect(page.locator("[data-chat-shell]")).toBeVisible();
     await expect(page.locator("[data-tashfeer]")).toBeVisible();
+
+    // the steps are lit from the start, without the power-on animation; the background is one still frame
+    const cards = page.locator("[data-feature-card]");
+    for (let i = 0; i < 5; i++) await expect(cards.nth(i)).toHaveAttribute("data-power", "on");
+    const running = await page.evaluate(() =>
+      document
+        .getAnimations()
+        .filter((a) => (a.effect as KeyframeEffect | null)?.target?.closest?.("[data-feature-card]"))
+        .filter((a) => a.playState === "running").length,
+    );
+    expect(running).toBe(0);
+    const glow = await cards.first().evaluate((el) => getComputedStyle(el.querySelector("[class*=lit]")!, "::before").opacity);
+    expect(glow).toBe("1");
   });
 
   test("the phrase cycle still runs (opacity only)", async ({ page }) => {

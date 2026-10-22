@@ -10,6 +10,8 @@ export const HERO = {
     "عطني أفكار تشبه فكرتك.. صور، فيديو، روابط.. عشان أوصل لأقرب تصور لفكرتك.",
     "بس تضغط «ادخل»، بتدخل معي في هالنافذة وتشوفني أنا كيف رح أبني منتجك قدام عينك.",
   ] as const,
+  /** The owner's label for the disclosure that holds the lede (2026-10-22): the paragraphs are hidden by default. */
+  more: "كيف نبدأ؟",
 };
 
 /** Master prompt D/R4 — exact labels and order. */
@@ -21,9 +23,11 @@ export const FEATURES = [
   "الإنتاج الفعلي",
 ] as const;
 
-/** Master prompt R5 — initial ambient phrases. */
+/**
+ * Master prompt R5 — initial ambient phrases. The owner removed «منتجك ينبني قدامك في مصنع تشفير» on 2026-10-22: it
+ * repeated the headline's message as an extra tagline under the scene.
+ */
 export const AMBIENT_PHRASES = [
-  "منتجك ينبني قدامك في مصنع تشفير",
   "موقعك قديم ودك تجدده؟",
   "تطبيقك صاير بطيء وما يواكب الدنيا؟",
   "خذ راحتك واشرح فكرتك بصوتك",

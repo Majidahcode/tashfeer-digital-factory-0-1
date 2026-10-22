@@ -7,6 +7,7 @@ const PATHS = {
   mic: "M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z M6 11a6 6 0 0 0 12 0 M12 17v4",
   send: "M4 12l16-8-6 16-3-7z",
   cloud: "M7 18a5 5 0 0 1-.5-10 6 6 0 0 1 11.5 1.5A4 4 0 0 1 17 18z M12 11v6 M9.5 13.5L12 11l2.5 2.5",
+  chevron: "M6 9.5l6 6 6-6",
 } as const;
 
 export type IconName = keyof typeof PATHS;

@@ -93,6 +93,12 @@ test("P1-05 the header pairs the approved brand-mark image with the real-text wo
   expect(Math.min(img!.y + img!.height, word!.y + word!.height) - Math.max(img!.y, word!.y)).toBeGreaterThan(0);
   await expect(header.locator("svg")).toHaveCount(0);
   await expect(page.getByText(/AI\s*DIGITAL\s*FACTORY/i)).toHaveCount(0);
+  // owner's correction §6 (2026-10-22): the brand is the mark and «تشفير» only — no descriptor — a little smaller
+  await expect(brand).toHaveText("تشفير");
+  await expect(header).not.toContainText("مصنع التحول الرقمي");
+  const size = await brand.locator("[data-gradient-text]").evaluate((el) => Number.parseFloat(getComputedStyle(el).fontSize));
+  expect(size).toBeLessThan(28);
+  expect(size).toBeGreaterThanOrEqual(22);
 });
 
 test("P1-06 five numbered cards in order, emoji-free, visible and unclipped", async ({ page }) => {
@@ -202,7 +208,15 @@ test("P1-09 visible text: controls ≥ 12 px, paragraphs ≥ 14 px, nothing smal
   expect(texts.filter((t) => t.size < 12 || (t.para && t.size < 14))).toEqual([]);
 });
 
-test("P1-16 ambient phrases never overlap the headline, chat, cards, header, controls or characters", async ({ page }) => {
+for (const state of ["closed", "open"] as const)
+test(`P1-16 ambient phrases never overlap the headline, chat, cards, header, controls or characters («كيف نبدأ؟» ${state})`, async ({
+  page,
+}) => {
+  if (state === "open") {
+    await page.locator("[data-disclosure-toggle]").click();
+    await expect(page.locator("[data-disclosure-panel] p").first()).toBeVisible();
+    await page.waitForTimeout(700); // the panel's opening transition
+  }
   // Margins = full travel of a phrase plus 4 px of air: ±6 px horizontal parallax; vertically ±3.6 px parallax
   // and the 6 px fade-in offset (a phrase measured now may sit 6 px higher or lower in its other state).
   const hits = await page.evaluate(() => {
@@ -220,12 +234,14 @@ test("P1-16 ambient phrases never overlap the headline, chat, cards, header, con
       "a[href]:not(.skip-link)",
       "textarea",
       "[data-scene-part='copy'] p",
+      "[data-disclosure-toggle]",
       "[data-tashfeer]",
       "[data-scene-part='customer'] img",
     ];
     const out: string[] = [];
     for (const sel of guarded) {
       for (const el of document.querySelectorAll(sel)) {
+        if (getComputedStyle(el).visibility === "hidden") continue; // the closed panel's paragraphs
         const t = el.getBoundingClientRect();
         if (t.width === 0 || t.height === 0) continue;
         for (const p of phrases) {
@@ -361,7 +377,7 @@ test("clip-to-text lettering paints every glyph whole, Arabic dots and hamza inc
     }
     return { out, checked };
   });
-  expect(result.checked).toBeGreaterThanOrEqual(10); // wordmark, 4 headline lines, 5 phrases (+ the cards' digits)
+  expect(result.checked).toBeGreaterThanOrEqual(10); // wordmark, 4 headline lines, 4 phrases, the cards' 5 digits
   expect(result.out).toEqual([]);
 });
 
@@ -393,12 +409,11 @@ test("the portal with its chat is the dominant element of the first screen", asy
   }
 });
 
-test("narrow screens lead with the portal: portal → Tashfeer & customer → headline → text → cards", async ({ page }, info) => {
+test("narrow screens lead with the portal: portal → Tashfeer & customer → headline → «كيف نبدأ؟» → cards", async ({ page }, info) => {
   test.skip((info.project.use.viewport?.width ?? 0) >= 900, "stacked layout is below 900 px");
   const tops = await page.evaluate(() => {
     const top = (sel: string) => document.querySelector(sel)!.getBoundingClientRect().top + scrollY;
     const bottom = (sel: string) => document.querySelector(sel)!.getBoundingClientRect().bottom + scrollY;
-    const right = (sel: string) => document.querySelector(sel)!.getBoundingClientRect().right;
     return {
       header: bottom("[data-site-header]"),
       portal: top("[data-portal]"),
@@ -406,18 +421,19 @@ test("narrow screens lead with the portal: portal → Tashfeer & customer → he
       robot: top("[data-tashfeer]"),
       customer: top("[data-scene-part=customer]"),
       headline: top("[data-hero-headline]"),
-      headlineRight: right("[data-hero-headline]"),
-      lede: top("[data-scene-part=copy] [class*=lede]"),
-      ledeRight: right("[data-scene-part=copy] [class*=lede]"),
+      intro: top("[data-scene-part=copy] [class*=intro]"),
+      more: top("[data-disclosure-toggle]"),
       features: top("[data-scene-part=features]"),
+      phrases: top("[data-ambient-phrases]"),
     };
   });
   expect(tops.portal - tops.header, "the portal comes right after the header").toBeLessThan(40);
   // the characters are arranged around the portal's lower half, before the copy
   expect(Math.min(tops.robot, tops.customer)).toBeGreaterThanOrEqual(tops.portal + (tops.portalBottom - tops.portal) / 2 - 1);
   expect(Math.max(tops.robot, tops.customer)).toBeLessThan(tops.headline);
-  // the headline is read before the paragraphs: above them, or (600–899, two columns) level with them on the right
-  if (tops.ledeRight < tops.headlineRight - 40) expect(Math.abs(tops.headline - tops.lede)).toBeLessThan(2);
-  else expect(tops.headline).toBeLessThan(tops.lede);
-  expect(tops.lede).toBeLessThan(tops.features);
+  expect(tops.headline).toBeLessThan(tops.intro);
+  expect(tops.intro).toBeLessThan(tops.more);
+  expect(tops.more).toBeLessThan(tops.features);
+  // the ambient phrases close the page: never a tagline between the scene and the copy (owner's correction §3)
+  expect(tops.phrases).toBeGreaterThan(tops.features);
 });
