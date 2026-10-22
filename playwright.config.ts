@@ -27,7 +27,9 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : [["list"]],
+  // In CI, "github" also turns every failure (title, error, location) into a check-run annotation: visible on the PR
+  // and readable through the GitHub API without downloading the job log or the report artifact.
+  reporter: process.env.CI ? [["list"], ["github"], ["html", { open: "never" }]] : [["list"]],
   use: {
     baseURL,
     locale: "ar-SA",
