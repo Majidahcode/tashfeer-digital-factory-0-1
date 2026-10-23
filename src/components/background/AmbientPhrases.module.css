@@ -1,18 +1,28 @@
 /*
- * Phrase slots are safe zones of the homepage scene (they must never cover the headline, chat, cards or controls —
- * verified by e2e test P1-16). Coordinates are physical (the scene uses a visual LTR grid like the approved prototype).
+ * The ambient phrases: one layer over the whole scene, from the header to the page's end, where each phrase is placed
+ * in free space by AmbientPhrases.tsx (src/lib/phrase-placement.ts) — never on the copy, the portal and its glow, the
+ * characters, the arrow, the steps or a control (e2e P1-16). Inline left/top are physical px in the layer.
  */
 .layer {
+  /* how this layout places the phrases (1 = yes), read by AmbientPhrases.tsx whenever it measures — so the
+     breakpoints live here only */
+  --phrase-ghosts: 1; /* the waiting phrases are drawn, faintly: each keeps a place of its own */
+  --phrase-floor: 1; /* above the composition's lowest part — never a footer strip — while that leaves room */
+  --phrase-rows: 0; /* the copy block and the steps own their whole rows: no phrase beside a line of copy */
+  --phrase-stack: 0; /* a phrase may break into two balanced lines to fit a narrow space */
+
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  overflow: clip; /* the fade-in offset must never extend the page (it added a 1px scroll at 1280×800) */
+  overflow: clip; /* nothing it draws can extend the page */
   will-change: transform;
 }
 
 .phrase {
   position: absolute;
+  left: 0;
+  top: 0;
   direction: rtl;
   inline-size: max-content;
   max-inline-size: min(34ch, 36vw);
@@ -21,9 +31,8 @@
   line-height: 1.5;
   text-align: center;
   /* the dots under a yeh can reach the bottom of this line box (see GradientText): the padding strip carries the
-     fill's last stop under it as a safety margin; the negative margin keeps bottom-anchored slots where they were */
+     fill's last stop under it as a safety margin */
   padding-bottom: 0.15em;
-  margin-bottom: -0.15em;
   background-image: linear-gradient(var(--brand-emerald-bright), var(--brand-emerald-bright)), var(--gradient-heading);
   background-origin: padding-box, content-box;
   background-size: 100% calc(0.15em + 1px), 100% 100%;
@@ -41,69 +50,63 @@
     filter var(--dur-phrase) var(--ease-out);
 }
 
+/* two balanced lines, at the width AmbientPhrases measured for them (--stack-w, inline) */
+.phrase[data-shape="stack"] {
+  inline-size: var(--stack-w);
+  text-wrap: balance;
+}
+
+/* not placed yet (or no room left in this layout): not shown */
+.phrase[data-slot="none"] {
+  visibility: hidden;
+}
+
 .phrase[data-state="revealed"] {
   opacity: 0.92;
   transform: none;
   filter: drop-shadow(0 0 14px var(--brand-glow-soft));
 }
 
-/* ≥1280: one slot per phrase in the bands above and below the scene content, all outside the portal's glow.
-   The top slot is offset in px from the header (not %), so the fade-in offset and parallax never reach it. */
-.s1 {
-  bottom: 1%;
-  left: 30%; /* between the seated customer and Tashfeer's feet */
-}
-.s2 {
-  bottom: 2.5%;
-  right: 1.5%;
-}
-.s3 {
-  top: 22px;
-  right: 2%;
-}
-.s4 {
-  bottom: 1%;
-  left: 50%;
+/* after an appearance it fades out completely before moving: a phrase never travels in sight */
+.phrase[data-relocating] {
+  opacity: 0;
 }
 
-/* ≥1440 the portal's band reaches lower (HomeScene.module.css), into the band under it where this phrase sat; it
-   moves under the steps instead, 20 px below the last one (the scene's --air-top and --ring-h place them) */
-@media (min-width: 1440px) {
-  .s4 {
-    top: calc(var(--air-top) + 0.9 * var(--ring-h) + 20px);
-    bottom: auto;
-    left: auto;
-    right: var(--pad-x);
-  }
-}
-
-/* <1280: one in-flow slot (above the copy on small laptops, after the steps on tablets and phones — placed by the
-   scene). All phrases share it; ghosts are hidden so stacked phrases never show through each other. */
-@media (max-width: 1279px) {
+/* below 1440 the waiting phrases (ghosts) are not shown, only the appearing one: a laptop's composition leaves about
+   as many free spaces as there are phrases, and waiting phrases holding them would pin each phrase to one place */
+@media (max-width: 1439px) {
   .layer {
-    position: relative;
-    inset: auto;
-    block-size: 40px;
-    inline-size: 100%;
+    --phrase-ghosts: 0;
   }
+
   .phrase {
     opacity: 0;
-    inset: 0;
-    margin: auto;
-    block-size: max-content;
-    max-inline-size: 92%;
-  }
-  .s1,
-  .s2,
-  .s3,
-  .s4 {
-    inset: 0;
   }
 }
 
+/* phones and tablets: the copy and the steps fill their rows; a phrase takes the space beside the portal, in two
+   lines when it is narrow (tablets), or the bays between those rows (phones) — never wider than the screen */
 @media (max-width: 899px) {
   .layer {
-    block-size: 56px;
+    --phrase-floor: 0;
+    --phrase-rows: 1;
+    --phrase-stack: 1;
+  }
+
+  .phrase {
+    max-inline-size: calc(100vw - 48px);
+  }
+}
+
+/* phones: one smaller line, only in the bays between the scene, the copy and the steps (HomeScene.module.css) — two
+   lines would fit only between the two characters, which is their scene, not free space */
+@media (max-width: 719px) {
+  .layer {
+    --phrase-stack: 0;
+  }
+
+  .phrase {
+    font-size: 14px;
   }
 }
 

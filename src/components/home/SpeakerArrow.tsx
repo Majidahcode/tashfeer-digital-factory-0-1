@@ -11,7 +11,10 @@ import styles from "./SpeakerArrow.module.css";
  * panel opening).
  */
 
-/** What the line must never cross (each measured only while it is visible). */
+/**
+ * What the line must never cross (each measured only while it is visible). The ambient phrases are not among them:
+ * they move, so it is they that keep clear of the line (src/lib/phrase-placement.ts), not the line of them.
+ */
 const GUARDS = [
   "h1 [data-gradient-text]:not([data-speaker-label])",
   "[data-scene-part=copy] p",
@@ -21,7 +24,6 @@ const GUARDS = [
   "[data-feature-card]",
   "[data-seated-customer]",
   "[data-scene-part=customer] button",
-  "[data-phrase-index]",
 ].join(", ");
 
 /**

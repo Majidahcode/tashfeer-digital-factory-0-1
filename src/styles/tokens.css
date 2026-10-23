@@ -66,6 +66,13 @@
   --chat-surface-deep: color-mix(in srgb, var(--brand-glass-base) 64%, transparent);
   --chat-edge: color-mix(in srgb, var(--brand-lime) 17%, transparent);
   --chat-sheen: color-mix(in srgb, var(--brand-highlight) 10%, transparent);
+  /* the scrollbars (owner's correction of 2026-10-23): a near-black track with a hair of emerald at its edges, a slim
+     translucent dark-emerald thumb; emerald lit by lime when hovered, a restrained lime while dragged or scrolling */
+  --scrollbar-track: var(--brand-bg);
+  --scrollbar-edge: color-mix(in srgb, var(--brand-emerald) 24%, transparent);
+  --scrollbar-thumb: color-mix(in srgb, var(--brand-emerald) 64%, transparent);
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--brand-emerald-bright) 85%, transparent);
+  --scrollbar-thumb-active: color-mix(in srgb, var(--brand-lime) 72%, transparent);
 
   /* ── Gradients ───────────────────────────────────────────────────── */
   /* Every stop is ≥ 3:1 on --brand-bg (large text). */

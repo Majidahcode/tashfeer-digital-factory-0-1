@@ -30,10 +30,11 @@ export function HomeScene() {
       data-scene=""
       style={{ "--ring-aspect": RING_ASPECT.toFixed(4) } as CSSProperties}
     >
-      <AmbientPhrases phrases={AMBIENT_PHRASES} className={styles.phrases} />
+      {/* one layer over the whole scene: the phrases appear in its free space, top to bottom (AmbientPhrases) */}
+      <AmbientPhrases phrases={AMBIENT_PHRASES} />
 
       <div className={styles.copy} data-scene-part="copy">
-        <div className={styles.copyText}>
+        <div className={styles.copyText} data-copy-text="">
           {/* one centred block, one reading order everywhere: headline → introductory statement → «كيف نبدأ؟» */}
           <h1 id="hero-title" className={styles.headline} data-hero-headline="">
             {/* «أنا» is Tashfeer: SpeakerArrow draws its pointer to the robot; on narrow screens the word sits by him */}

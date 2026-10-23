@@ -28,6 +28,67 @@ body {
   overflow-x: clip;
 }
 
+/* ── The page's scrollbar (owner's correction of 2026-10-23) ─────────────────────────────────────────────────────
+   A near-black track that is the page's own ground, a slim translucent dark-emerald thumb with soft ends, lit by lime
+   when hovered, dragged or while the page scrolls (html[data-scrolling], ScrollActivity.tsx). Two mechanisms, never
+   both on one browser: Blink and WebKit style the ::-webkit-scrollbar parts (the only ones with hover and drag states);
+   Firefox, which has no such parts, gets the standard properties (Blink would ignore its pseudo-elements if those were
+   set too). No blur: a scrollbar cannot render one. Mobile browsers keep their native overlay scrollbars. */
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+  html[data-scrolling] {
+    scrollbar-color: var(--scrollbar-thumb-active) var(--scrollbar-track);
+  }
+}
+
+html::-webkit-scrollbar {
+  inline-size: 10px;
+  block-size: 10px;
+  background: var(--scrollbar-track);
+}
+
+html::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  box-shadow:
+    inset 1px 0 0 var(--scrollbar-edge),
+    inset -1px 0 0 var(--scrollbar-edge);
+}
+
+html::-webkit-scrollbar-thumb {
+  border: 2px solid transparent; /* the 6 px pill floats in the 10 px track */
+  border-radius: 999px;
+  background: var(--scrollbar-thumb) padding-box;
+  min-block-size: 40px;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover) padding-box;
+}
+
+html[data-scrolling]::-webkit-scrollbar-thumb,
+html::-webkit-scrollbar-thumb:active {
+  background: var(--scrollbar-thumb-active) padding-box;
+}
+
+html::-webkit-scrollbar-corner {
+  background: var(--scrollbar-track);
+}
+
+/* Blink keeps the root scrollbar's parts as first drawn when only an attribute changes (measured: the thumb stayed
+   emerald with html[data-scrolling] set). While the page scrolls, the root's overflow therefore switches to its own
+   equivalent — scroll: the scrollbar is there anyway, so nothing moves — which redraws the parts, lime. Fine pointers
+   only: on touch screens the scrollbars are the system's overlays, and a touch scroll must not be disturbed. */
+@supports selector(::-webkit-scrollbar) {
+  @media (hover: hover) and (pointer: fine) {
+    html[data-scrolling] {
+      overflow-y: scroll;
+    }
+  }
+}
+
 :focus-visible {
   outline: 2px solid var(--brand-lime);
   outline-offset: 3px;

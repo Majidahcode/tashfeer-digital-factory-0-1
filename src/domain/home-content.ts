@@ -24,13 +24,13 @@ export const FEATURES = [
 ] as const;
 
 /**
- * Master prompt R5 — initial ambient phrases. The owner removed «منتجك ينبني قدامك في مصنع تشفير» on 2026-10-22: it
- * repeated the headline's message as an extra tagline under the scene.
+ * Master prompt R5 — the ambient phrases. The owner removed «منتجك ينبني قدامك في مصنع تشفير» on 2026-10-22 (it
+ * repeated the headline), and on 2026-10-23 named these three as the set («خذ راحتك واشرح فكرتك بصوتك» left it).
+ * «بطيء» keeps the spelling of the owner's approved prototype (01-reference/current-tashfeer-prototype.html).
  */
 export const AMBIENT_PHRASES = [
   "موقعك قديم ودك تجدده؟",
   "تطبيقك صاير بطيء وما يواكب الدنيا؟",
-  "خذ راحتك واشرح فكرتك بصوتك",
   "من الفكرة إلى منتج رقمي حقيقي",
 ] as const;
 

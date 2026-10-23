@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import "@fontsource/cairo/400.css";
 import "@fontsource/cairo/600.css";
 import "@fontsource/cairo/800.css";
+import { ScrollActivity } from "@/components/background/ScrollActivity";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,6 +19,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           تخطَّ إلى المحتوى
         </a>
         {children}
+        <ScrollActivity />
       </body>
     </html>
   );

@@ -99,6 +99,7 @@
   gap: 8px;
   border-radius: calc(12 * var(--u));
   scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent; /* the page scrollbar's emerald, on the chat's glass */
 }
 
 .log:focus-visible {

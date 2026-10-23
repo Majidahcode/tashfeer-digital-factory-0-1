@@ -11,7 +11,10 @@ import {
   phraseStates,
 } from "./support";
 
-/** Four since 2026-10-22: the owner removed «منتجك ينبني قدامك في مصنع تشفير» (it repeated the headline). */
+/**
+ * Three since 2026-10-23, the owner's set: «منتجك ينبني قدامك في مصنع تشفير» left on 2026-10-22 (it repeated the
+ * headline), «خذ راحتك واشرح فكرتك بصوتك» on 2026-10-23.
+ */
 const PHRASES = AMBIENT_PHRASES.length;
 
 const STEP = 50;
@@ -63,16 +66,21 @@ test("P1-10 the ambient phrases; with no pointer input the phrase changes every 
 });
 
 test("P1-11 pointer over a phrase reveals it within 400 ms without shifting the automatic schedule", async ({ page }, info) => {
-  test.skip(!isFullDesktop(info), "pointer + distinct phrase slots exist on ≥1280 only");
+  test.skip(!isFullDesktop(info), "a mouse on the full ≥1280 scene only");
   test.setTimeout(60_000);
   await openHomeFrozen(page);
   let now = await nextChange(page, 0, 5_000);
   expect(Math.abs(now - 5_000)).toBeLessThanOrEqual(STEP);
   expect(await autoIndex(page)).toBe(1);
+  // phrase 0 has had its turn: neither the active one nor the next one. Where waiting phrases are drawn it moves after
+  // its turn (by 5.6 s at the latest, AmbientPhrases): hover it once it is where it waits.
+  await advance(page, 1_000);
+  now += 1_000;
 
-  // hover phrase 3 (neither the active one nor the next one); its fades are recorded as they start (CSS transitions
-  // run on real time, and a slow machine may finish one before it could be inspected)
-  const target = page.locator('[data-phrase-index="3"]');
+  // its fades are recorded as they start (CSS transitions run on real time, and a slow machine may finish one before
+  // it could be inspected)
+  const target = page.locator('[data-phrase-index="0"]');
+  await expect(target).not.toHaveAttribute("data-slot", "none");
   await target.evaluate((el) => {
     const log: string[] = [];
     (window as unknown as { fadeLog: string[] }).fadeLog = log;
@@ -174,19 +182,22 @@ test("P1-12 pointer movement shifts only the parallax layers, by at most 12 px f
   expect(backgroundMoved, "the pointer reached the background (its parallax is live)").toBeGreaterThan(1);
 });
 
-test("P1-13 on touch, tapping the phrase reveals one (no hover dependency)", async ({ page }, info) => {
+test("P1-13 on touch, tapping a phrase's place reveals it (no hover dependency)", async ({ page }, info) => {
   test.skip(!info.project.use.hasTouch, "touch profiles only");
   await openHomeFrozen(page);
   await advance(page, 4_000); // the automatic phrase has faded: nothing is revealed
   expect((await phraseStates(page)).every((s) => s === "ghost:-")).toBe(true);
 
-  await page.locator("[data-ambient-phrases]").scrollIntoViewIfNeeded(); // after the steps on phones and tablets
-  const layer = (await page.locator("[data-ambient-phrases]").boundingBox())!;
-  await page.touchscreen.tap(layer.x + layer.width / 2, layer.y + layer.height / 2);
+  // phrase 2 (neither the current one nor the next) waits in its place — not drawn on touch screens, still there
+  const target = page.locator('[data-phrase-index="2"]');
+  await expect(target).not.toHaveAttribute("data-slot", "none");
+  await target.scrollIntoViewIfNeeded();
+  const b = (await target.boundingBox())!;
+  await page.touchscreen.tap(b.x + b.width / 2, b.y + b.height / 2);
   await advance(page, 50);
   const states = await phraseStates(page);
   expect(states.filter((s) => s === "revealed:touch")).toHaveLength(1);
-  expect(states.indexOf("revealed:touch")).toBe(1); // the phrase after the current one (0)
+  expect(states[2]).toBe("revealed:touch");
 
   await advance(page, 2_700);
   expect((await phraseStates(page)).filter((s) => s.endsWith(":touch"))).toHaveLength(0);

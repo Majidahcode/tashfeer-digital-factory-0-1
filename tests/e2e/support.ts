@@ -4,7 +4,7 @@ export const FEATURES = ["فهم احتياجاتك", "تحليل المشروع
 
 const width = (info: TestInfo) => info.project.use.viewport?.width ?? 0;
 
-/** The full ≥1280 scene (five distinct phrase slots) driven by a mouse — decided by capability, not project name. */
+/** The full ≥1280 scene driven by a mouse — decided by capability, not project name. */
 export const isFullDesktop = (info: TestInfo) => width(info) >= 1280 && !info.project.use.hasTouch;
 
 /**
@@ -37,6 +37,34 @@ export async function openHome(page: Page) {
   await page.locator("[data-speaker-arrow] [data-arrow-line]").waitFor({ state: "attached" });
   await page.evaluate(async () => {
     await document.fonts.ready;
+  });
+  // the ambient phrases have measured the layout and taken their places (AmbientPhrases' data-placement)
+  await page.locator("[data-ambient-phrases]:not([data-placement=pending])").waitFor({ state: "attached" });
+}
+
+/**
+ * The ambient phrases as drawn at rest — without their layer's pointer parallax, whose ±6 px travel the margins around
+ * them already include (P1-16) — and only those that have a place (an unplaced one is not drawn).
+ */
+export async function restingPhrases(page: Page) {
+  return page.evaluate(() => {
+    const layer = document.querySelector("[data-ambient-phrases]")!;
+    const t = getComputedStyle(layer).transform;
+    const m = t && t !== "none" ? new DOMMatrix(t) : new DOMMatrix();
+    return [...document.querySelectorAll<HTMLElement>("[data-phrase-index]")]
+      .filter((el) => getComputedStyle(el).visibility !== "hidden")
+      .map((el) => {
+        const r = el.getBoundingClientRect();
+        return {
+          i: Number(el.dataset.phraseIndex),
+          state: el.dataset.state ?? "",
+          slot: el.dataset.slot ?? "none",
+          left: r.left - m.e,
+          top: r.top - m.f,
+          right: r.right - m.e,
+          bottom: r.bottom - m.f,
+        };
+      });
   });
 }
 

@@ -143,6 +143,19 @@
   z-index: 0;
 }
 
+/* ≥1280 (owner's correction of 2026-10-23): the customer belongs to the copy — centred under the headline and
+   «كيف نبدأ؟», no longer pinned to the screen's edge — and larger: about 0.6 of the ring's height wide (seated, he
+   is then ≈ 0.7 of Tashfeer's standing height), as wide as the copy column allows. His chair stands on Tashfeer's
+   floor line (the scene's bottom air plus the robot's 2 % lift, measured from the copy cell's bottom, which sits
+   6 px above the screen's edge). The image keeps its own aspect ratio (block-size: auto). */
+@media (min-width: 1280px) {
+  .customer {
+    justify-self: center;
+    margin: 24px 0 calc(var(--air-bottom) + var(--ring-h) * 0.02 - 6px);
+    inline-size: min(100%, calc(var(--ring-h) * 0.6));
+  }
+}
+
 .customerImg {
   display: block;
   inline-size: 100%;
@@ -153,10 +166,12 @@
   mask-image: linear-gradient(180deg, var(--brand-highlight) 88%, transparent);
 }
 
+/* the voice pill sits on the chair's base, bottom-left: at 20 % from the top it covered the customer's head (his face
+   is the image's 2–28 % band; owner's correction of 2026-10-23). Below 900 px it stands above him (see there). */
 .mic {
   position: absolute;
-  left: 6%;
-  top: 20%;
+  left: 2%;
+  bottom: 5%;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -350,13 +365,7 @@
     margin-bottom: 0;
   }
 
-  /* the ambient phrase has its own band above the copy, outside the portal's glow */
-  .phrases {
-    grid-column: 1;
-    grid-row: 1;
-    align-self: start;
-  }
-
+  /* a band of air above the copy, outside the portal's glow (one of the places the ambient phrases appear) */
   .copyText {
     padding-top: calc(var(--phrase-row-h) + 24px);
   }
@@ -397,7 +406,7 @@
   }
 }
 
-/* ── <900: the portal first; Tashfeer and the customer around it; then the copy, phrases and cards ─────────── */
+/* ── <900: the portal first; Tashfeer and the customer around it; then the copy and the cards ─────────────── */
 @media (max-width: 899px) {
   .scene {
     --pad-x: 12px;
@@ -515,11 +524,6 @@
     font-size: 29px;
   }
 
-  /* the ambient phrases close the page, after the steps — under the scene they read as an extra tagline */
-  .phrases {
-    order: 6;
-  }
-
   /* a pyramid (owner's corrections §7 and 18:29): 01 and 02, then 03 and 04, then 05 centred under them — RTL, so
      each row reads right to left. No cards: each tile stands on its own with its label and accent line under it;
      the space around them does the grouping. Equal columns, equal rows. */
@@ -550,6 +554,24 @@
 
   .feature > span:first-child {
     --tile: 56px;
+  }
+}
+
+/* <720, phones (owner's correction of 2026-10-23): the scene, the copy and the steps fill the screen's width, so the
+   ambient phrases get three bays of air between them — under the characters, between «كيف نبدأ؟» and the steps, and
+   after the steps — each 64 px: one 23 px line with the air it keeps (src/lib/phrase-placement.ts: 16 px above,
+   22 px below) and 3 px to spare. */
+@media (max-width: 719px) {
+  .scene {
+    padding-bottom: 64px;
+  }
+
+  .copyText {
+    margin-top: 48px; /* + the scene's 16 px gap */
+  }
+
+  .features {
+    margin-top: 48px;
   }
 }
 

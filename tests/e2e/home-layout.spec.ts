@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import manifest from "@/generated/asset-manifest.json";
-import { FEATURES, isWide, openHome } from "./support";
+import { FEATURES, isWide, openHome, restingPhrases } from "./support";
 
 const RING_SRC = manifest.assets["portal-ring"].src;
 
@@ -218,13 +218,14 @@ test(`P1-16 ambient phrases never overlap the headline, chat, cards, header, con
     await page.waitForTimeout(700); // the panel's opening transition
   }
   // Margins = full travel of a phrase plus 4 px of air: ±6 px horizontal parallax; vertically ±3.6 px parallax
-  // and the 6 px fade-in offset (a phrase measured now may sit 6 px higher or lower in its other state).
-  const hits = await page.evaluate(() => {
+  // and the 6 px fade-in offset (a phrase measured now may sit 6 px higher or lower in its other state). So the
+  // phrases are measured at rest — without the parallax the click above may have caused — or the travel would count
+  // twice. A phrase with no place in this layout is not drawn (visibility: hidden) and is not measured.
+  const phrases = await restingPhrases(page);
+  expect(phrases.length).toBeGreaterThan(0);
+  const hits = await page.evaluate((phrases) => {
     const MX = 10;
     const MY = 14;
-    const phrases = [...document.querySelectorAll<HTMLElement>("[data-phrase-index]")]
-      .map((el) => ({ i: el.dataset.phraseIndex, r: el.getBoundingClientRect() }))
-      .filter((p) => p.r.width > 0);
     const guarded = [
       "h1[data-hero-headline]",
       "[data-chat-shell]",
@@ -245,13 +246,13 @@ test(`P1-16 ambient phrases never overlap the headline, chat, cards, header, con
         const t = el.getBoundingClientRect();
         if (t.width === 0 || t.height === 0) continue;
         for (const p of phrases) {
-          if (p.r.left - MX < t.right && p.r.right + MX > t.left && p.r.top - MY < t.bottom && p.r.bottom + MY > t.top)
+          if (p.left - MX < t.right && p.right + MX > t.left && p.top - MY < t.bottom && p.bottom + MY > t.top)
             out.push(`phrase ${p.i} × ${sel}`);
         }
       }
     }
     return [...new Set(out)];
-  });
+  }, phrases);
   expect(hits).toEqual([]);
 });
 
@@ -286,7 +287,7 @@ test("the owner's ring is what renders, and nothing important sits on it or on t
     const rules: Array<[string, Element[], number]> = [
       ["chat control", controls, 0.5],
       ["card", [...document.querySelectorAll("[data-feature-card] > *")], 0.5],
-      ["phrase", [...document.querySelectorAll("[data-phrase-index]")], 0.3],
+      ["phrase", [...document.querySelectorAll("[data-phrase-index]")].filter((el) => getComputedStyle(el).visibility !== "hidden"), 0.3],
     ];
     const out: string[] = [];
     for (const [what, els, max] of rules) {
@@ -377,7 +378,7 @@ test("clip-to-text lettering paints every glyph whole, Arabic dots and hamza inc
     }
     return { out, checked };
   });
-  expect(result.checked).toBeGreaterThanOrEqual(10); // wordmark, 4 headline lines, 4 phrases, the cards' 5 digits
+  expect(result.checked).toBeGreaterThanOrEqual(10); // wordmark, 4 headline lines, 3 phrases, the cards' 5 digits
   expect(result.out).toEqual([]);
 });
 
@@ -434,6 +435,7 @@ test("narrow screens lead with the portal: portal → Tashfeer & customer → he
   expect(tops.headline).toBeLessThan(tops.intro);
   expect(tops.intro).toBeLessThan(tops.more);
   expect(tops.more).toBeLessThan(tops.features);
-  // the ambient phrases close the page: never a tagline between the scene and the copy (owner's correction §3)
-  expect(tops.phrases).toBeGreaterThan(tops.features);
+  // the ambient phrases' layer spans the whole scene: they appear in the bays between its parts, not only after the
+  // steps (owner's correction of 2026-10-23; e2e home-placement)
+  expect(tops.phrases).toBeLessThanOrEqual(tops.portal);
 });
