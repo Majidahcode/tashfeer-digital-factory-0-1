@@ -66,6 +66,17 @@
   left: 50%;
 }
 
+/* ≥1440 the portal's band reaches lower (HomeScene.module.css), into the band under it where this phrase sat; it
+   moves under the steps instead, 20 px below the last one (the scene's --air-top and --ring-h place them) */
+@media (min-width: 1440px) {
+  .s4 {
+    top: calc(var(--air-top) + 0.9 * var(--ring-h) + 20px);
+    bottom: auto;
+    left: auto;
+    right: var(--pad-x);
+  }
+}
+
 /* <1280: one in-flow slot (above the copy on small laptops, after the steps on tablets and phones — placed by the
    scene). All phrases share it; ghosts are hidden so stacked phrases never show through each other. */
 @media (max-width: 1279px) {

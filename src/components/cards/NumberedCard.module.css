@@ -11,10 +11,14 @@
  *   2. a soft lime / yellow-green glow appears along its bottom edge;
  *   3. light rises through the tile from bottom to top — a soft band sweeping up, the inner glow climbing in;
  *   4. it settles into the tile's restrained resting glow, and the label's accent line lights up.
- * Transform and opacity only, played once; the resting state does not flash. Off needs JavaScript, so it applies only
- * where scripts run (scripting: enabled); reduced motion shows the resting state at once.
+ * Then it repeats every 10 s (owner's correction of 2026-10-23): the tile dims to near its dark state — the number
+ * still clearly readable — and powers on again the same way, one cycle after the first, so the steps keep their
+ * stagger and light in a soft wave rather than one flash. The label's accent line lights once and stays.
+ * Transform and opacity only; no flashing. Off needs JavaScript, so it applies only where scripts run (scripting:
+ * enabled); reduced motion shows the resting state at once and never repeats.
  */
 .item {
+  --power-cycle: 10s;
   display: flex;
   flex-direction: var(--step-dir, row);
   align-items: center;
@@ -134,22 +138,30 @@
   }
 }
 
-/* 2. the bottom edge lights first */
+/* 2. the bottom edge lights first — then, each cycle, the tile's own repeat (cycle-*, below) takes over */
 .item[data-power="on"] .tile::after {
-  animation: edge 700ms var(--ease-out) var(--power-delay, 0ms) both;
+  animation:
+    edge 700ms var(--ease-out) var(--power-delay, 0ms) both,
+    cycle-edge var(--power-cycle) linear calc(var(--power-delay, 0ms) + var(--power-cycle)) infinite;
 }
 
 /* 3. light climbs through the tile */
 .item[data-power="on"] .lit::before {
-  animation: rise 1500ms cubic-bezier(0.22, 0.7, 0.2, 1) calc(var(--power-delay, 0ms) + 150ms) both;
+  animation:
+    rise 1500ms cubic-bezier(0.22, 0.7, 0.2, 1) calc(var(--power-delay, 0ms) + 150ms) both,
+    cycle-glow var(--power-cycle) linear calc(var(--power-delay, 0ms) + var(--power-cycle)) infinite;
 }
 
 .item[data-power="on"] .lit::after {
-  animation: sweep 1250ms cubic-bezier(0.3, 0.6, 0.3, 1) calc(var(--power-delay, 0ms) + 220ms) both;
+  animation:
+    sweep 1250ms cubic-bezier(0.3, 0.6, 0.3, 1) calc(var(--power-delay, 0ms) + 220ms) both,
+    cycle-band var(--power-cycle) linear calc(var(--power-delay, 0ms) + var(--power-cycle)) infinite;
 }
 
 .item[data-power="on"] .num {
-  animation: wake 1100ms var(--ease-out) calc(var(--power-delay, 0ms) + 260ms) both;
+  animation:
+    wake 1100ms var(--ease-out) calc(var(--power-delay, 0ms) + 260ms) both,
+    cycle-num var(--power-cycle) linear calc(var(--power-delay, 0ms) + var(--power-cycle)) infinite;
 }
 
 /* 4. settled: the label's accent follows */
@@ -214,6 +226,112 @@
   to {
     opacity: 0.85;
     transform: none;
+  }
+}
+
+/* ── the 10 s repeat, per layer (1 % = 100 ms) ─────────────────────────────────────────────────────────────────
+   0–0.6 s the tile dims to near dark, holds 0.3 s, then the power-on above replays with its own offsets and
+   easings (edge 0.9 s, rise 1.05 s, band 1.12 s, number 1.16 s); it has settled by 2.6 s and rests until 10 s. */
+@keyframes cycle-edge {
+  0% {
+    opacity: 1;
+    animation-timing-function: ease-in-out;
+  }
+  6% {
+    opacity: 0.15;
+  }
+  9% {
+    opacity: 0.15;
+    animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  16% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes cycle-glow {
+  0% {
+    opacity: 1;
+    transform: none;
+    animation-timing-function: ease-in-out;
+  }
+  6% {
+    opacity: 0.1;
+    transform: none;
+  }
+  9.4% {
+    opacity: 0;
+    transform: none;
+  }
+  9.5% {
+    opacity: 0;
+    transform: translateY(65%);
+  }
+  10.5% {
+    opacity: 0;
+    transform: translateY(65%);
+    animation-timing-function: cubic-bezier(0.22, 0.7, 0.2, 1);
+  }
+  16.5% {
+    opacity: 1;
+  }
+  25.5% {
+    transform: none;
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes cycle-band {
+  0% {
+    opacity: 0;
+    transform: translateY(85%);
+  }
+  11.2% {
+    opacity: 0;
+    transform: translateY(85%);
+    animation-timing-function: cubic-bezier(0.3, 0.6, 0.3, 1);
+  }
+  14.3% {
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.3, 0.6, 0.3, 1);
+  }
+  19.95% {
+    opacity: 0.8;
+    animation-timing-function: cubic-bezier(0.3, 0.6, 0.3, 1);
+  }
+  23.7% {
+    opacity: 0;
+    transform: translateY(-85%);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-85%);
+  }
+}
+
+@keyframes cycle-num {
+  0% {
+    opacity: 1;
+    animation-timing-function: ease-in-out;
+  }
+  6% {
+    opacity: 0.62; /* the dark state's number: understated, still clearly readable */
+  }
+  11.6% {
+    opacity: 0.62;
+    animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  22.6% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
   }
 }
 

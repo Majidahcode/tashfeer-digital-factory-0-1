@@ -240,15 +240,22 @@
   z-index: 1;
 }
 
-.ring {
+/* the ring image's box (band + glow); on wide desktops it also trims the faint end of the lower glow (see ≥1440) */
+.ringClip {
   position: absolute;
   left: var(--img-l);
   top: var(--img-t);
   inline-size: var(--img-w);
   block-size: var(--img-h);
-  max-inline-size: none;
   z-index: 2;
   pointer-events: none;
+}
+
+.ring {
+  display: block;
+  inline-size: 100%;
+  block-size: auto; /* the image's own aspect ratio: never stretched */
+  max-inline-size: none;
 }
 
 /* the chat's glass: fills the ring's opening (measured mask), framed by the ring's own inner glow above it */
@@ -295,6 +302,30 @@
 .feature:nth-child(2),
 .feature:nth-child(4) {
   transform: translateX(calc(var(--ring-h) * -0.01));
+}
+
+/* ── ≥1440: wide desktops give the portal more of the screen (owner's correction of 2026-10-23) ───────────────
+   Here the portal is limited by the screen's height, never its width, and its band must stay whole under the
+   header: the only room left is the 9.5 % of its height kept under it for the lower glow. That glow is faint past
+   4.5 % (opacity ≤ 0.2, brightness ≤ 0.04), so only that first part is kept: its end fades out over the last 3 %
+   (no edge) and the band grows by ≈ 6 % — the chat, Tashfeer, the customer and the steps with it. */
+@media (min-width: 1440px) {
+  .scene {
+    --air-top: 6px;
+    --glow-below: 0.045;
+    --ring-h: min(
+      calc((100svh - var(--header-h) - var(--air-top)) / (1 + var(--glow-below))),
+      calc((100vw - 2 * var(--pad-x) - 2 * var(--gap-x) - var(--copy-min) - var(--cards-min)) / var(--stage-k)),
+      1000px
+    );
+  }
+
+  .ringClip {
+    block-size: calc((1 + var(--glow-below)) * 100% - var(--img-t));
+    overflow: clip;
+    -webkit-mask-image: linear-gradient(180deg, var(--brand-highlight) calc(100% - 0.03 * var(--ring-h)), transparent);
+    mask-image: linear-gradient(180deg, var(--brand-highlight) calc(100% - 0.03 * var(--ring-h)), transparent);
+  }
 }
 
 /* ── 900–1279: copy | portal, cards as a row underneath ─────────────────────────────────────────────────────── */

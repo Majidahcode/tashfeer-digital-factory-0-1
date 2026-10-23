@@ -99,16 +99,18 @@ export function HomeScene() {
             style={{ ...boxVars("glass", GLASS_BOX), "--hole-mask": assetUrl("portal-hole-mask") } as CSSProperties}
           />
           {/* served as-is (lossless WebP of the derived ring): the optimizer's AVIF smeared its fine sparks */}
-          <Image
-            src={ring.src}
-            width={ring.width}
-            height={ring.height}
-            alt=""
-            className={styles.ring}
-            unoptimized
-            priority
-            data-portal-ring=""
-          />
+          <div className={styles.ringClip}>
+            <Image
+              src={ring.src}
+              width={ring.width}
+              height={ring.height}
+              alt=""
+              className={styles.ring}
+              unoptimized
+              priority
+              data-portal-ring=""
+            />
+          </div>
           <ChatShell />
         </div>
       </div>

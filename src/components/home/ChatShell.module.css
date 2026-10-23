@@ -11,11 +11,14 @@
  * the ellipse instead of a rectangle. The content is drawn above the ring art (z 3) and its glass below (z 1), so
  * the ring's inner glow frames the glass but never covers a control.
  *
- * --u is one pixel at the smallest ring (content box ≈ 235 px wide, a 390 px phone) and grows with the ring, up to
- * ×1.35: every size below is a multiple of it, so the composition is identical at every size and never below the
- * readable minimums (12 px controls, 14 px paragraphs).
+ * Two scales (owner's correction of 2026-10-23): the controls' sizes are multiples of --u, one pixel at the smallest
+ * ring (content box ≈ 235 px wide, a 390 px phone) growing with the ring up to ×1.35; the text is a fixed, compact
+ * messaging-app hierarchy that does not grow with the ring — 14 px for the conversation and the text field (15 px on
+ * the largest rings), 13 px for secondary copy — never below the readable minimums (12 px controls, 14 px paragraphs).
  */
 .chat {
+  --text-main: 14px;
+  --text-small: 13px;
   position: absolute;
   left: var(--content-l);
   top: var(--content-t);
@@ -33,6 +36,14 @@
   margin: 0;
 }
 
+/* the large desktop rings: the conversation and the field read one size up, the field shows two lines */
+@container (min-width: 360px) {
+  .chat > * {
+    --text-main: 15px;
+  }
+}
+
+/* ── header: the avatar alone, like a messaging app ─────────────────────────────────────────────────────────── */
 .head {
   top: var(--head-t);
   height: var(--head-h);
@@ -41,48 +52,42 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: calc(6 * var(--u));
 }
 
 .avatar {
-  inline-size: calc(26 * var(--u));
-  block-size: calc(26 * var(--u));
+  position: relative;
   flex: none;
+  inline-size: min(calc(34 * var(--u)), 40px);
+  block-size: min(calc(34 * var(--u)), 40px);
+}
+
+.avatarImg {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
   border-radius: 50%;
   object-fit: cover;
   background: var(--brand-bg);
-  box-shadow: 0 0 0 1px var(--brand-glass-edge), 0 0 12px -2px var(--brand-glow);
+  box-shadow:
+    0 0 0 1px var(--brand-glass-edge),
+    0 0 12px -2px var(--brand-glow);
 }
 
-.name {
-  margin: 0;
-  font-size: calc(15 * var(--u));
-  font-weight: 800;
-  line-height: 1.2;
-  color: var(--brand-highlight);
+/* the presence dot: grey, as for a contact who is not connected — the assistant is not live yet. Its meaning is
+   spelled out for assistive technology and in the avatar's tooltip, and in the conversation when the visitor uses
+   the chat (ChatShell.tsx) */
+.presence {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-end: 0;
+  inline-size: 24%;
+  block-size: 24%;
+  border-radius: 50%;
+  background: var(--brand-muted);
+  box-shadow: 0 0 0 2px var(--brand-bg);
 }
 
-.statusRow {
-  top: var(--status-t);
-  height: var(--status-h);
-  left: var(--status-l);
-  right: var(--status-r);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.status {
-  padding: calc(2 * var(--u)) calc(9 * var(--u));
-  border-radius: 999px;
-  font-size: calc(12 * var(--u));
-  font-weight: 600;
-  line-height: 1.4;
-  white-space: nowrap;
-  color: var(--brand-highlight);
-  background: var(--brand-glow-soft);
-}
-
+/* ── conversation ───────────────────────────────────────────────────────────────────────────────────────────── */
 .log {
   top: var(--log-t);
   height: var(--log-h);
@@ -91,7 +96,7 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: calc(5 * var(--u));
+  gap: 8px;
   border-radius: calc(12 * var(--u));
   scrollbar-width: thin;
 }
@@ -103,10 +108,10 @@
 
 .bubble {
   margin: 0;
-  padding: calc(6 * var(--u)) calc(10 * var(--u));
+  padding: 8px 12px;
   border-radius: calc(12 * var(--u));
-  font-size: calc(14 * var(--u));
-  line-height: 1.55;
+  font-size: var(--text-main);
+  line-height: 1.6;
   text-wrap: balance; /* even lines in the narrow opening, no one-word last line */
   background: var(--chat-surface);
   box-shadow:
@@ -114,13 +119,16 @@
     inset 0 0 0 1px var(--chat-edge);
 }
 
+/* a system line, as messaging apps show them: small, centred, no bubble */
 .note {
-  margin: 0;
-  font-size: calc(14 * var(--u));
+  font-size: var(--text-small);
   line-height: 1.5;
+  text-align: center;
+  text-wrap: balance;
   color: var(--state-warning);
 }
 
+/* ── composer ───────────────────────────────────────────────────────────────────────────────────────────────── */
 .inputRow {
   top: var(--input-t);
   height: var(--input-h);
@@ -148,14 +156,14 @@
 .textarea {
   flex: 1;
   min-inline-size: 0;
-  block-size: calc(34 * var(--u));
-  padding: calc(6 * var(--u)) calc(4 * var(--u));
+  block-size: calc(1.5em + 12px); /* one line */
+  padding: 6px 4px;
   border: 0;
   outline: 0;
   resize: none;
   overflow: hidden;
   font: inherit;
-  font-size: calc(14 * var(--u));
+  font-size: var(--text-main);
   line-height: 1.5;
   color: var(--brand-highlight);
   background: transparent;
@@ -165,17 +173,34 @@
   color: var(--brand-muted);
 }
 
+@container (min-width: 360px) {
+  .inputRow {
+    align-items: flex-end;
+  }
+  .textarea {
+    block-size: calc(3em + 12px); /* two lines: the large rings give the field the room */
+    overflow-y: auto;
+  }
+}
+
 .iconBtn {
   flex: none;
   inline-size: calc(28 * var(--u));
   block-size: calc(28 * var(--u));
   display: grid;
   place-items: center;
+  padding: 0;
   border: 0;
   border-radius: 50%;
   color: var(--brand-lime);
   background: var(--chat-surface);
   box-shadow: inset 0 0 0 1px var(--brand-glow);
+}
+
+@container (min-width: 360px) {
+  .iconBtn {
+    margin-block-end: 3px;
+  }
 }
 
 .iconBtn svg {
@@ -235,7 +260,7 @@
   border: 0;
   border-radius: calc(12 * var(--u));
   font: inherit;
-  font-size: calc(13 * var(--u));
+  font-size: var(--text-small);
   font-weight: 800;
   line-height: 1.5;
   color: var(--brand-highlight);
@@ -246,10 +271,11 @@
     0 0 14px -4px var(--brand-glow);
 }
 
-/* disabled in this design preview, and visibly so — but still legible, not greyed out */
-.tool:disabled,
-.iconBtn:disabled,
-.enter:disabled {
+/* not available in this design preview, and visibly so — but still legible, not greyed out. They stay focusable and
+   respond: using one explains, in the conversation, what is not enabled yet (ChatShell.tsx) */
+.tool[aria-disabled="true"],
+.iconBtn[aria-disabled="true"],
+.enter[aria-disabled="true"] {
   cursor: not-allowed;
   opacity: 0.74;
 }

@@ -90,12 +90,17 @@ test("the intake is an honest design preview: nothing pretends to send, upload o
   for (const label of ["الوصف", "روابط", "ملفات", "فيديو", "صور"]) await expect(chat.getByRole("button", { name: label })).toBeDisabled();
   await expect(chat.getByRole("button", { name: /تسجيل صوتي/ })).toBeDisabled();
   await expect(page.getByRole("button", { name: /تحدّث الآن/ })).toBeDisabled();
-  await expect(chat).toContainText("معاينة تصميم — غير مفعّل");
+  // the preview status is stated in the chat's header for assistive technology (owner's correction of 2026-10-23: no
+  // longer as a visible label), and explained in the conversation as soon as the chat is used
+  await expect(chat.locator("[data-chat-status]")).toHaveText("معاينة تصميم — غير مفعّل");
+  const note = chat.getByRole("status");
+  await expect(note).toHaveCount(0);
 
   const box = chat.getByLabel("وصف المشروع");
   // a real click: fails if the ring art drawn over the chat intercepts the pointer
   await box.click();
   await expect(box).toBeFocused();
+  await expect(note, "explained before anything is typed").toHaveText("معاينة تصميم: الإرسال والمرفقات والصوت غير مفعّلة بعد.");
   await box.fill("أبي موقع لمطعمي");
   await box.press("Enter");
   await expect(chat.getByRole("status")).toHaveText("معاينة تصميم: الإرسال والمرفقات والصوت غير مفعّلة بعد.");

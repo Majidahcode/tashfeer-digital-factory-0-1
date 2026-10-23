@@ -11,7 +11,8 @@ const PULSE_MS = 900;
 
 /**
  * The 01–05 steps (owner's correction §7). Each card starts dark and powers on — a soft yellow-green glow rising
- * from its bottom — the first time it enters the viewport; cards that enter together are staggered. A tap on a
+ * from its bottom — the first time it enters the viewport; cards that enter together are staggered. From then on
+ * the CSS repeats the power-on every 10 s, keeping the stagger (NumberedCard.module.css). A tap on a
  * touch screen briefly brightens the tapped card (hover and keyboard focus are handled in CSS). Reduced motion: all
  * cards are lit from the start. Without JavaScript the CSS shows them lit.
  *

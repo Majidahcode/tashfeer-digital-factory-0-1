@@ -139,7 +139,10 @@ test("§8 the pointer shifts the depth of the field, and never lights up where i
   expect(atAWhenThere - atAWhenAway, `relative brightness under the cursor: ${atAWhenAway.toFixed(3)} → ${atAWhenThere.toFixed(3)}`).toBeLessThan(0.12);
 });
 
-test("§7 the tiles power on from the bottom, staggered, once — the number readable throughout", async ({ page }) => {
+test("§7 the tiles power on from the bottom, staggered, then repeat every 10 s — the number readable throughout", async ({
+  page,
+}) => {
+  // owner's correction of 2026-10-23: the power-on repeats every 10 s (it used to play once)
   const cards = page.locator("[data-feature-card]");
   const steps = page.locator("[data-scene-part=features]");
   // not yet seen (below the fold, or before the observer has run): dark, the number dimmed but legible — read in one
@@ -162,48 +165,130 @@ test("§7 the tiles power on from the bottom, staggered, once — the number rea
   await expect(cards.last()).toHaveAttribute("data-power", "on");
   const r = await page.evaluate(() => {
     const items = [...document.querySelectorAll<HTMLElement>("[data-feature-card]")];
+    const ty = (t: unknown) => (typeof t === "string" && t !== "none" ? Number(/translateY\((-?[\d.]+)%\)/.exec(t)?.[1] ?? 0) : 0);
     return items.map((el) => {
-      const anims = document.getAnimations().filter((a) => (a.effect as KeyframeEffect | null)?.target === el.querySelector("[class*=lit]"));
+      const anims = el.getAnimations({ subtree: true }) as CSSAnimation[];
       const desc = (name: string) => {
-        const a = anims.find((x) => (x as CSSAnimation).animationName.includes(name));
+        const a = anims.find((x) => x.animationName.endsWith(name));
         if (!a) return null;
-        const frames = (a.effect as KeyframeEffect).getKeyframes();
-        const ty = (t: string | undefined) => (t && t !== "none" ? Number(/translateY\((-?[\d.]+)%\)/.exec(t)?.[1] ?? 0) : 0);
+        const effect = a.effect as KeyframeEffect;
+        const frames = effect.getKeyframes();
+        const timing = effect.getTiming();
+        const values = (prop: string) => frames.filter((f) => prop in f).map((f) => f[prop]);
+        const ys = values("transform").map(ty);
         return {
-          fromY: ty(frames[0]?.transform as string | undefined),
-          toY: ty(frames[frames.length - 1]?.transform as string | undefined),
-          iterations: (a.effect as KeyframeEffect).getTiming().iterations,
+          fromY: ys[0] ?? 0,
+          toY: ys.at(-1) ?? 0,
+          lowestY: Math.max(0, ...ys), // how far below its rest the light starts
+          opacity: values("opacity").map(Number),
+          iterations: timing.iterations,
+          duration: timing.duration,
+          delay: timing.delay,
         };
       };
-      return { delay: el.style.getPropertyValue("--power-delay"), rise: desc("rise"), sweep: desc("sweep") };
+      return {
+        delay: el.style.getPropertyValue("--power-delay"),
+        rise: desc("_rise"),
+        sweep: desc("_sweep"),
+        accent: desc("_accent"),
+        cycle: { edge: desc("_cycle-edge"), glow: desc("_cycle-glow"), band: desc("_cycle-band"), num: desc("_cycle-num") },
+      };
     });
   });
   for (const c of r) {
-    // the inner light rises from below the tile's bottom edge to rest; the band sweeps from the bottom to the top
+    // the first power-on: the inner light rises from below the tile's bottom edge to rest; the band sweeps from the
+    // bottom to the top; played once
     expect(c.rise!.fromY).toBeGreaterThan(0);
     expect(c.rise!.toY).toBe(0);
     expect(c.sweep!.fromY).toBeGreaterThan(0);
     expect(c.sweep!.toY).toBeLessThan(0);
-    expect(c.rise!.iterations, "played once, no flashing").toBe(1);
+    expect(c.rise!.iterations).toBe(1);
     expect(c.sweep!.iterations).toBe(1);
+    // then the tile itself repeats it every 10 s, from one cycle after its first power-on (so the stagger is kept):
+    // it dims near its dark state, the light rises from below again and the band sweeps up, and it rests again
+    const startsAt = Number.parseFloat(c.delay) + 10_000;
+    for (const layer of Object.values(c.cycle)) {
+      expect(layer, "every layer of the tile repeats").not.toBeNull();
+      expect(layer!.duration).toBe(10_000);
+      expect(layer!.iterations).toBe(Infinity);
+      expect(layer!.delay).toBe(startsAt);
+    }
+    type Layer = NonNullable<typeof c.rise>;
+    const { edge, glow, band, num } = c.cycle as { edge: Layer; glow: Layer; band: Layer; num: Layer };
+    expect(edge.opacity[0]).toBe(1);
+    expect(edge.opacity.at(-1)).toBe(1);
+    expect(Math.min(...edge.opacity), "the lit rim dims").toBeLessThanOrEqual(0.2);
+    expect(glow.opacity[0]).toBe(1);
+    expect(glow.opacity.at(-1)).toBe(1);
+    expect(Math.min(...glow.opacity), "the inner light goes dark").toBeLessThanOrEqual(0.1);
+    expect(band.opacity[0]).toBe(0);
+    expect(band.opacity.at(-1)).toBe(0);
+    expect(Math.max(...band.opacity), "the band of light passes once per cycle").toBe(1);
+    // a rise from below the bottom edge back to rest, and a sweep from the bottom to the top, as in the first power-on
+    expect(glow.lowestY).toBeGreaterThan(0);
+    expect(glow.toY).toBe(0);
+    expect(band.fromY).toBeGreaterThan(0);
+    expect(band.toY).toBeLessThan(0);
+    // the number stays clearly readable throughout
+    expect(Math.min(...num.opacity)).toBeGreaterThanOrEqual(0.6);
+    // the label's accent line is lit once and stays
+    expect(c.accent!.iterations).toBe(1);
   }
   // staggered: steps that light together do not all start at the same moment
   expect(new Set(r.map((c) => c.delay)).size).toBeGreaterThan(1);
 
-  // settled: lit, steady, number at full strength (wait for the power-on itself, not a fixed time)
-  await cards.evaluateAll((els) =>
-    Promise.all(els.flatMap((el) => el.getAnimations({ subtree: true }).map((a) => a.finished.catch(() => null)))),
+  // settled after the first power-on: lit, steady, number at full strength (wait for the power-on itself, not a fixed
+  // time — the repeats never finish, so only the one-shot animations are awaited)
+  const settled = await cards.evaluateAll((els) =>
+    Promise.all(
+      els.flatMap((el) =>
+        el
+          .getAnimations({ subtree: true })
+          .filter((a) => a.effect?.getTiming().iterations !== Infinity)
+          .map((a) => a.finished.catch(() => null)),
+      ),
+    ).then(() =>
+      els.map((el) => ({
+        edge: getComputedStyle(el.querySelector("[class*=tile]")!, "::after").opacity,
+        glow: getComputedStyle(el.querySelector("[class*=lit]")!, "::before").opacity,
+        sweep: getComputedStyle(el.querySelector("[class*=lit]")!, "::after").opacity,
+        num: getComputedStyle(el.querySelector("[class*=num]")!).opacity,
+        // the repeats are scheduled, not yet playing: nothing moves between two cycles
+        waiting: el
+          .getAnimations({ subtree: true })
+          .filter((a) => a.effect?.getTiming().iterations === Infinity)
+          .every((a) => Number(a.currentTime) < Number(a.effect!.getTiming().delay)),
+      })),
+    ),
   );
-  const after = await cards.evaluateAll((els) =>
-    els.map((el) => ({
-      edge: getComputedStyle(el.querySelector("[class*=tile]")!, "::after").opacity,
-      glow: getComputedStyle(el.querySelector("[class*=lit]")!, "::before").opacity,
-      sweep: getComputedStyle(el.querySelector("[class*=lit]")!, "::after").opacity,
-      num: getComputedStyle(el.querySelector("[class*=num]")!).opacity,
-      running: el.getAnimations({ subtree: true }).filter((a) => a.playState === "running").length,
-    })),
-  );
-  for (const a of after) expect(a).toEqual({ edge: "1", glow: "1", sweep: "0", num: "1", running: 0 });
+  for (const a of settled) expect(a).toEqual({ edge: "1", glow: "1", sweep: "0", num: "1", waiting: true });
+
+  // the repeat as the browser renders it: the first tile's state 0.8 s into its first and its second repeat (dark,
+  // number still readable) and 3 s in (rest again) — read from the running animations, frozen at those times
+  const states = await cards.first().evaluate((el) => {
+    const anims = el.getAnimations({ subtree: true }).filter((a) => a.effect?.getTiming().iterations === Infinity);
+    const start = Number(anims[0]!.effect!.getTiming().delay);
+    const at = (ms: number) => {
+      for (const a of anims) {
+        a.pause();
+        a.currentTime = start + ms;
+      }
+      return {
+        edge: Number(getComputedStyle(el.querySelector("[class*=tile]")!, "::after").opacity),
+        glow: Number(getComputedStyle(el.querySelector("[class*=lit]")!, "::before").opacity),
+        num: Number(getComputedStyle(el.querySelector("[class*=num]")!).opacity),
+      };
+    };
+    const out = { first: at(800), firstLit: at(3000), second: at(10_800), secondLit: at(13_000) };
+    for (const a of anims) a.play();
+    return out;
+  });
+  for (const dark of [states.first, states.second]) {
+    expect(dark.edge).toBeLessThanOrEqual(0.2);
+    expect(dark.glow).toBeLessThanOrEqual(0.1);
+    expect(dark.num).toBeGreaterThanOrEqual(0.6);
+  }
+  for (const lit of [states.firstLit, states.secondLit]) expect(lit).toEqual({ edge: 1, glow: 1, num: 1 });
 });
 
 test("§7 a tap on a touch screen briefly brightens the tapped tile", async ({ page }, info) => {
