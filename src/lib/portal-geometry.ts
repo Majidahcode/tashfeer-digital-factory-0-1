@@ -46,17 +46,17 @@ export function openingSpan(y0: number, y1: number, margin = 0.012): [number, nu
 /**
  * Chat rows, top → bottom, as band-height ranges. Sized for the smallest ring (≈ 366 px wide on a 390 px phone)
  * at the minimum readable sizes; every control scales with the ring (cqi) above that, so the composition is the
- * same at every size. The rows follow the ellipse: the narrow top holds the name, the widest band the conversation,
- * the attachments and the text field; the narrowing bottom only the Enter button.
+ * same at every size. The rows follow the ellipse like a messaging app: the narrow top holds the name, the widest
+ * band the conversation (most of the height) and the text field right under it; the narrowing bottom the compact
+ * attachment icons, then Enter.
  */
 export const CHAT_ROWS = {
   head: [0.226, 0.272],
   status: [0.278, 0.313],
-  log: [0.318, 0.47],
-  pick: [0.474, 0.5],
-  tools: [0.503, 0.583],
-  input: [0.59, 0.668],
-  enter: [0.676, 0.746],
+  log: [0.318, 0.594],
+  input: [0.601, 0.675],
+  tools: [0.685, 0.734],
+  enter: [0.745, 0.789],
 } as const;
 
 export type ChatRow = keyof typeof CHAT_ROWS;

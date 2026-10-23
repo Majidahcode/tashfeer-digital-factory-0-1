@@ -16,7 +16,9 @@ const TOOL_ICONS: readonly IconName[] = ["doc", "link", "file", "video", "image"
  * controls that need Phase 3 are disabled, and pressing Enter says so instead of faking a reply.
  *
  * It lives inside the portal ring: positioned over the ring's opening and drawn above the ring art, with each row
- * at a measured height and width of the opening (src/lib/portal-geometry.ts).
+ * at a measured height and width of the opening (src/lib/portal-geometry.ts). Like a messaging app, the
+ * conversation takes most of the height and the text field sits right under it; the attachment types are compact
+ * icons (each named for assistive technology and in its tooltip) and Enter a compact button.
  */
 export function ChatShell({ className }: { className?: string }) {
   const [notice, setNotice] = useState(false);
@@ -55,17 +57,6 @@ export function ChatShell({ className }: { className?: string }) {
         )}
       </div>
 
-      <p className={styles.pick}>{CHAT.pick}</p>
-
-      <div className={styles.tools} role="group" aria-label="أنواع المرفقات — غير مفعّلة في معاينة التصميم">
-        {CHAT.tools.map((label, i) => (
-          <button key={label} type="button" className={styles.tool} disabled>
-            <Icon name={TOOL_ICONS[i] ?? "file"} size={16} />
-            <span>{label}</span>
-          </button>
-        ))}
-      </div>
-
       <div className={styles.inputRow}>
         <label htmlFor="intake-text" className="sr-only">
           وصف المشروع
@@ -85,6 +76,15 @@ export function ChatShell({ className }: { className?: string }) {
         <button type="button" className={styles.iconBtn} disabled aria-label="تسجيل صوتي — غير مفعّل بعد">
           <Icon name="mic" size={16} />
         </button>
+      </div>
+
+      <div className={styles.tools} role="group" aria-label="أنواع المرفقات — غير مفعّلة في معاينة التصميم">
+        {CHAT.tools.map((label, i) => (
+          <button key={label} type="button" className={styles.tool} disabled title={label}>
+            <Icon name={TOOL_ICONS[i] ?? "file"} size={16} />
+            <span className="sr-only">{label}</span>
+          </button>
+        ))}
       </div>
 
       <div className={styles.footer}>

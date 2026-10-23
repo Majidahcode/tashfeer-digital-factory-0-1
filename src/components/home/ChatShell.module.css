@@ -121,59 +121,6 @@
   color: var(--state-warning);
 }
 
-.pick {
-  display: none; /* only where the opening is wide enough (large rings) */
-  top: var(--pick-t);
-  height: var(--pick-h);
-  left: var(--pick-l);
-  right: var(--pick-r);
-  font-size: 14px;
-  line-height: 1.5;
-  text-align: center;
-  white-space: nowrap;
-  color: var(--brand-muted);
-}
-
-@container (min-width: 330px) {
-  .pick {
-    display: block;
-  }
-}
-
-.tools {
-  top: var(--tools-t);
-  height: var(--tools-h);
-  left: var(--tools-l);
-  right: var(--tools-r);
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  align-items: center;
-  gap: calc(4 * var(--u));
-}
-
-.tool {
-  display: grid;
-  justify-items: center;
-  gap: calc(2 * var(--u));
-  padding: calc(5 * var(--u)) 0 calc(4 * var(--u));
-  border: 0;
-  border-radius: calc(10 * var(--u));
-  font: inherit;
-  font-size: calc(12 * var(--u));
-  line-height: 1.2;
-  color: var(--brand-text-silver);
-  background: var(--chat-surface);
-  box-shadow:
-    inset 0 1px 0 var(--chat-sheen),
-    inset 0 0 0 1px var(--chat-edge);
-}
-
-.tool svg {
-  inline-size: calc(16 * var(--u));
-  block-size: calc(16 * var(--u));
-  color: var(--brand-gold); /* as in the approved prototype (.t5 .ic) */
-}
-
 .inputRow {
   top: var(--input-t);
   height: var(--input-h);
@@ -186,9 +133,10 @@
   box-sizing: border-box;
   border-radius: calc(14 * var(--u));
   background: var(--chat-surface-deep);
+  /* the one place to type: the deepest glass, and an edge as bright as the microphone's ring */
   box-shadow:
     inset 0 1px 0 var(--chat-sheen),
-    inset 0 0 0 1px var(--chat-edge);
+    inset 0 0 0 1px var(--brand-glow);
 }
 
 .inputRow:focus-within {
@@ -219,8 +167,8 @@
 
 .iconBtn {
   flex: none;
-  inline-size: calc(30 * var(--u));
-  block-size: calc(30 * var(--u));
+  inline-size: calc(28 * var(--u));
+  block-size: calc(28 * var(--u));
   display: grid;
   place-items: center;
   border: 0;
@@ -231,8 +179,44 @@
 }
 
 .iconBtn svg {
-  inline-size: calc(16 * var(--u));
-  block-size: calc(16 * var(--u));
+  inline-size: calc(15 * var(--u));
+  block-size: calc(15 * var(--u));
+}
+
+/* the attachment types: one row of small icon buttons, each named by its hidden label (and its tooltip) — light
+   enough to sit under the text field without competing with it or the conversation */
+.tools {
+  top: var(--tools-t);
+  height: var(--tools-h);
+  left: var(--tools-l);
+  right: var(--tools-r);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(6 * var(--u));
+}
+
+.tool {
+  position: relative;
+  /* 28 units — smaller only on phones narrower than 390 px, whose ring cannot fit five of them (the row's width and
+     height scale together, so the button stays round) */
+  inline-size: min(calc(28 * var(--u)), calc((100% - 24 * var(--u)) / 5));
+  block-size: min(calc(28 * var(--u)), 100%);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--chat-surface);
+  box-shadow:
+    inset 0 1px 0 var(--chat-sheen),
+    inset 0 0 0 1px var(--chat-edge);
+}
+
+.tool svg {
+  inline-size: calc(15 * var(--u));
+  block-size: calc(15 * var(--u));
+  color: var(--brand-gold); /* as in the approved prototype (.t5 .ic) */
 }
 
 .footer {
@@ -245,21 +229,21 @@
   justify-content: center;
 }
 
+/* a compact action button: the same emerald and lime edge, sized like the controls around it */
 .enter {
-  min-inline-size: calc(104 * var(--u));
-  padding: calc(5 * var(--u)) calc(22 * var(--u));
+  padding: calc(3 * var(--u)) calc(14 * var(--u));
   border: 0;
   border-radius: calc(12 * var(--u));
   font: inherit;
-  font-size: calc(15 * var(--u));
+  font-size: calc(13 * var(--u));
   font-weight: 800;
-  line-height: 1.6;
+  line-height: 1.5;
   color: var(--brand-highlight);
   background: linear-gradient(180deg, var(--brand-emerald), var(--brand-bg-forest));
   box-shadow:
     inset 0 1px 0 var(--brand-glass-inner),
     0 0 0 1px var(--brand-glow),
-    0 0 22px -6px var(--brand-glow);
+    0 0 14px -4px var(--brand-glow);
 }
 
 /* disabled in this design preview, and visibly so — but still legible, not greyed out */
