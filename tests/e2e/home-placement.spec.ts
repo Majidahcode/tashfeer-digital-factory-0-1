@@ -150,8 +150,10 @@ test("large screens: the customer sits under the headline and «كيف نبدأ�
   expect(m.r.top).toBeGreaterThanOrEqual(m.toggle.bottom + 12);
   expect(Math.abs((m.r.left + m.r.right) / 2 - (m.column.left + m.column.right) / 2)).toBeLessThanOrEqual(4);
   expect(m.r.left).toBeGreaterThanOrEqual(16);
-  // large, in the image's own proportions
-  expect(m.r.height).toBeGreaterThanOrEqual(0.3 * m.vh);
+  // large, in the image's own proportions: as wide as the copy column allows, ≥ 28 % of the screen's height (30 % before
+  // the owner's wider reference portal, which leaves the copy column at its minimum width at 1280 and 1440)
+  expect(m.r.height).toBeGreaterThanOrEqual(0.28 * m.vh);
+  expect(m.r.width).toBeGreaterThanOrEqual(Math.min(m.column.width, 0.6 * m.portal.height) - 1);
   expect(Math.abs(m.r.width / m.r.height - m.natural)).toBeLessThan(0.01);
   // the whole face shows: nothing over it, the voice pill below it, clear of Tashfeer and the portal
   expect(m.covered).toEqual([]);

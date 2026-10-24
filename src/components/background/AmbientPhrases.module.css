@@ -84,6 +84,14 @@
   }
 }
 
+/* landscape tablets and small laptops (900–1279): beside the owner's wide reference portal the copy column is at its
+   narrowest, and its free spaces are short — a phrase may take two lines there, so that the three phrases fit at once */
+@media (max-width: 1279px) {
+  .layer {
+    --phrase-stack: 1;
+  }
+}
+
 /* phones and tablets: the copy and the steps fill their rows; a phrase takes the space beside the portal, in two
    lines when it is narrow (tablets), or the bays between those rows (phones) — never wider than the screen */
 @media (max-width: 899px) {

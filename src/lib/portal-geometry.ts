@@ -1,5 +1,5 @@
 /**
- * Layout geometry of the owner's portal ring, measured on the asset itself (scripts/derive-portal-ring.py → manifest).
+ * Layout geometry of the owner's portal, measured on the asset itself (scripts/derive-portal-reference.py → manifest).
  * Every fraction is relative to the ring's *band box* — the visible ring, without its glow.
  */
 import type { CSSProperties } from "react";
@@ -29,9 +29,11 @@ const ROWS = g.content.rows as unknown as Row[];
 
 /**
  * Safe horizontal span of the opening between band heights y0…y1 (fractions of the band width): the narrowest point
- * of the measured contour in that range, minus a small margin. Returns null where the contour is closed.
+ * of the measured contour in that range, minus a margin. The contour is where the ring is 25 % opaque — inside its
+ * soft inner glow, not at the band — so with the margin every control keeps clear air around it. Returns null where
+ * the contour is closed.
  */
-export function openingSpan(y0: number, y1: number, margin = 0.012): [number, number] | null {
+export function openingSpan(y0: number, y1: number, margin = 0.015): [number, number] | null {
   let left = 0;
   let right = 1;
   for (const [y, l, r] of ROWS) {
@@ -44,19 +46,22 @@ export function openingSpan(y0: number, y1: number, margin = 0.012): [number, nu
 }
 
 /**
- * Chat rows, top → bottom, as band-height ranges. Sized for the smallest ring (≈ 366 px wide on a 390 px phone)
- * at the minimum readable sizes; every control scales with the ring (cqi) above that, so the composition is the
- * same at every size. The rows follow the ellipse like a messaging app: the narrow top holds the avatar, the widest
- * band the conversation (most of the height) and the text field right under it; the narrowing bottom the compact
- * attachment icons, then Enter. The conversation starts where the opening is wide enough for it (0.318).
+ * Chat rows, top → bottom, as band-height ranges [top, bottom], with an optional range [from, to] whose narrowest
+ * span sets the row's width. Sized for the smallest ring (≈ 366 px wide on a 390 px phone) at the minimum readable
+ * sizes; every control scales with the ring (cqi) above that, so the composition is the same at every size. Like a
+ * messaging app: the avatar alone in the opening's narrow top, then the conversation — most of the height, its
+ * messages gathered at the bottom, right above the text field, no wider than it (so its width is taken from where it
+ * holds messages down to the field's row: the empty top of the conversation may reach into the narrower part) — then
+ * the text field, the compact attachment icons and Enter in the narrowing bottom. Measured for the owner's reference
+ * portal (2026-10-23).
  */
 export const CHAT_ROWS = {
-  head: [0.236, 0.302],
-  log: [0.318, 0.594],
-  input: [0.601, 0.675],
-  tools: [0.685, 0.734],
-  enter: [0.745, 0.789],
-} as const;
+  head: [0.165, 0.237],
+  log: [0.245, 0.584, 0.36, 0.676],
+  input: [0.592, 0.676],
+  tools: [0.684, 0.748],
+  enter: [0.756, 0.812],
+} as const satisfies Record<string, readonly number[]>;
 
 export type ChatRow = keyof typeof CHAT_ROWS;
 
@@ -65,8 +70,9 @@ const pct = (v: number) => `${(v * 100).toFixed(3)}%`;
 /** CSS custom properties placing each chat row inside the content box (percentages of that box). */
 export function chatRowVars(): CSSProperties {
   const vars: Record<string, string> = {};
-  for (const [name, [y0, y1]] of Object.entries(CHAT_ROWS)) {
-    const span = openingSpan(y0, y1) ?? [0.5, 0.5];
+  for (const [name, row] of Object.entries(CHAT_ROWS)) {
+    const [y0 = 0, y1 = 0, w0 = y0, w1 = y1] = row as readonly number[];
+    const span = openingSpan(w0, w1) ?? [0.5, 0.5];
     vars[`--${name}-t`] = pct((y0 - CONTENT_BOX.top) / CONTENT_BOX.height);
     vars[`--${name}-h`] = pct((y1 - y0) / CONTENT_BOX.height);
     vars[`--${name}-l`] = pct((span[0] - CONTENT_BOX.left) / CONTENT_BOX.width);

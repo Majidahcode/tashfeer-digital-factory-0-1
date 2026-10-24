@@ -25,8 +25,11 @@ export type Box = Point & Size;
 export const MARGIN_X = 12;
 export const MARGIN_TOP = 16;
 export const MARGIN_BOTTOM = 22;
-/** Distance kept from the layer's sides (beyond the parallax travel) and from its top and bottom. */
-export const EDGE_X = 16;
+/**
+ * Distance kept from the layer's sides — the phrase's parallax travel (±6 px) and 6 px more, so that it never touches
+ * the screen's edge — and from its top and bottom.
+ */
+export const EDGE_X = 12;
 export const EDGE_TOP = 8;
 export const EDGE_BOTTOM = 12;
 /** Phrases never sit closer than this to one another. */
@@ -190,17 +193,21 @@ export type PickOptions<T extends Box = Box> = {
   avoidRegions?: readonly number[];
   /** within the drawn region, the candidates to use when there are any (e.g. one line rather than two) */
   prefer?: (c: T) => boolean;
+  /** where the last phrase was seen: within the drawn region, the half of the places farther from it is used */
+  from?: Rect;
   /** seeded randomness for this appearance */
   seed: number;
 };
 
 /**
  * One appearance's place among the candidates (boxes the free space allows, possibly of different shapes):
- * deterministic in `seed`. In order of precedence it keeps clear of `others`; prefers places inside the view; keeps to
+ * deterministic in `seed`. In order of precedence it keeps clear of `others`; prefers places inside the view (unless
+ * the view holds only the region where the last phrase was seen); keeps to
  * regions other than the ones to avoid, preferring regions with a place clear of `soft`; draws a band — another band
  * than the first region to avoid, when there is one, so that the phrases travel up and down the page — then a region
  * of that band (so a band with free space across the screen's width is not favoured over one with a single opening);
- * and inside the region takes a place clear of `soft` and `prefer`red when there is one. Null when there is no room.
+ * and inside the region takes a place clear of `soft` and `prefer`red when there is one, in the half of the region
+ * farther `from` where the last phrase was seen. Null when there is no room.
  */
 export function pickPosition<T extends Box>(candidates: readonly T[], o: PickOptions<T>): T | null {
   const gapped = (rects: readonly Rect[]) => rects.map((q) => inflate(q, PHRASE_GAP, PHRASE_GAP));
@@ -213,7 +220,11 @@ export function pickPosition<T extends Box>(candidates: readonly T[], o: PickOpt
   if (!clear.length) return null;
   const view = o.view;
   const inView = view ? clear.filter((c) => c.y >= view.y0 && c.y + c.h <= view.y1) : clear;
-  const pool = inView.length ? inView : clear;
+  // in view first — unless every place in view is in the region where the last phrase was just seen: then anywhere,
+  // rather than the same place again (a phone's first screen can hold a single bay)
+  const last = o.avoidRegions?.[0];
+  const freshInView = last === undefined || inView.some((c) => regionOf(c, o.width) !== last);
+  const pool = inView.length && freshInView ? inView : clear;
   const byRegion = new Map<number, T[]>();
   for (const c of pool) {
     const k = regionOf(c, o.width);
@@ -249,5 +260,15 @@ export function pickPosition<T extends Box>(candidates: readonly T[], o: PickOpt
   };
   let list = narrow(byRegion.get(region)!, calm);
   if (o.prefer) list = narrow(list, o.prefer);
+  const from = o.from;
+  if (from && list.length > 1) {
+    // each appearance travels visibly: the farther half of the region from where the last one was seen
+    const fx = (from.x0 + from.x1) / 2;
+    const fy = (from.y0 + from.y1) / 2;
+    const dist = (c: T) => Math.hypot(c.x + c.w / 2 - fx, c.y + c.h / 2 - fy);
+    const sorted = list.map(dist).sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)]!;
+    list = list.filter((c) => dist(c) >= median);
+  }
   return list[Math.floor(rng() * list.length)]!;
 }

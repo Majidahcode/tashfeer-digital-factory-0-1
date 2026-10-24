@@ -141,6 +141,21 @@ test("places in view first; then a region other than the last ones seen, and ano
   expect(pickPosition([top], { width: 1280, others: [], avoidRegions: [regionOf(top, 1280)], seed: 3 })).toEqual(top);
 });
 
+test("when the view holds only the region where the last phrase was seen, the next one goes elsewhere", () => {
+  // a phone's first screen with a single bay in it, and one further down the page
+  const near = box(20, 300, 180);
+  const far = box(20, 900, 180);
+  const view = { y0: 0, y1: 780 };
+  for (let s = 0; s < 30; s++) {
+    // nothing seen yet: the view comes first
+    expect(pickPosition([near, far], { width: 390, others: [], view, seed: s })).toEqual(near);
+    // the last phrase was just seen in that bay: not the same place again, even out of view
+    expect(pickPosition([near, far], { width: 390, others: [], view, avoidRegions: [regionOf(near, 390)], seed: s })).toEqual(far);
+    // and back into view after that
+    expect(pickPosition([near, far], { width: 390, others: [], view, avoidRegions: [regionOf(far, 390)], seed: s })).toEqual(near);
+  }
+});
+
 test("with two bands, appearances alternate between them; a band is drawn before its columns", () => {
   // the top band has three openings across the screen, the bottom band one
   const top = [box(40, 20), box(860, 20), box(1660, 20)];

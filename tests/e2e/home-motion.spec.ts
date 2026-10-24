@@ -118,8 +118,10 @@ test("P1-11 pointer over a phrase reveals it within 400 ms without shifting the 
   expect(await autoIndex(page)).toBe(2);
   await expect(target).toHaveAttribute("data-reveal-source", "pointer");
 
-  // leaving: the phrase is held briefly, then fades back to a ghost
-  await page.mouse.move(2, Math.round((await page.viewportSize())!.height / 2));
+  // leaving — to the middle of the conversation, where no phrase is ever placed (the screen's left edge can be within
+  // the hover slop of a phrase waiting beside the copy): the phrase is held briefly, then fades back to a ghost
+  const away = (await page.locator("[data-chat-shell] [role=log]").boundingBox())!;
+  await page.mouse.move(away.x + away.width / 2, away.y + away.height / 2);
   await advance(page, 400);
   await expect(target).toHaveAttribute("data-reveal-source", "pointer");
   await advance(page, 1_200);

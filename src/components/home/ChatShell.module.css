@@ -11,14 +11,15 @@
  * the ellipse instead of a rectangle. The content is drawn above the ring art (z 3) and its glass below (z 1), so
  * the ring's inner glow frames the glass but never covers a control.
  *
- * Two scales (owner's correction of 2026-10-23): the controls' sizes are multiples of --u, one pixel at the smallest
- * ring (content box ≈ 235 px wide, a 390 px phone) growing with the ring up to ×1.35; the text is a fixed, compact
- * messaging-app hierarchy that does not grow with the ring — 14 px for the conversation and the text field (15 px on
- * the largest rings), 13 px for secondary copy — never below the readable minimums (12 px controls, 14 px paragraphs).
+ * Two scales (owner's corrections of 2026-10-23): the controls' sizes are multiples of --u, one pixel at the smallest
+ * ring (content box ≈ 235 px wide, a 390 px phone) growing with the ring up to ×1.35, and capped where a messaging app
+ * stops (round controls ≤ 32 px, icons ≤ 16 px, the avatar ≤ 40 px); the text is a fixed, compact messaging-app
+ * hierarchy that does not grow with the ring — 14 px for the conversation and the text field at every size, 12 px for
+ * secondary copy — the readable minimums of P1-09 (14 px paragraphs, 12 px controls).
  */
 .chat {
   --text-main: 14px;
-  --text-small: 13px;
+  --text-small: 12px;
   position: absolute;
   left: var(--content-l);
   top: var(--content-t);
@@ -34,13 +35,6 @@
   --u: clamp(1px, 0.4255cqi, 1.35px);
   position: absolute;
   margin: 0;
-}
-
-/* the large desktop rings: the conversation and the field read one size up, the field shows two lines */
-@container (min-width: 360px) {
-  .chat > * {
-    --text-main: 15px;
-  }
 }
 
 /* ── header: the avatar alone, like a messaging app ─────────────────────────────────────────────────────────── */
@@ -107,12 +101,22 @@
   outline-offset: 2px;
 }
 
+/* the messages gather at the bottom, right above the text field, as in a messaging app (an auto margin rather than
+   justify-content: flex-end, which would make an overflowing conversation's first messages unreachable) */
+.log > :first-child {
+  margin-block-start: auto;
+}
+
 .bubble {
+  align-self: flex-start; /* the assistant's message, on the conversation's start side */
+  inline-size: fit-content;
+  max-inline-size: min(100%, 26em); /* lines of at most ≈ 50 characters, however wide the portal */
   margin: 0;
   padding: 8px 12px;
   border-radius: calc(12 * var(--u));
+  border-start-start-radius: calc(4 * var(--u)); /* a message from the avatar above, as messaging apps draw it */
   font-size: var(--text-main);
-  line-height: 1.6;
+  line-height: 1.55;
   text-wrap: balance; /* even lines in the narrow opening, no one-word last line */
   background: var(--chat-surface);
   box-shadow:
@@ -186,8 +190,8 @@
 
 .iconBtn {
   flex: none;
-  inline-size: calc(28 * var(--u));
-  block-size: calc(28 * var(--u));
+  inline-size: min(calc(28 * var(--u)), 32px);
+  block-size: min(calc(28 * var(--u)), 32px);
   display: grid;
   place-items: center;
   padding: 0;
@@ -205,8 +209,8 @@
 }
 
 .iconBtn svg {
-  inline-size: calc(15 * var(--u));
-  block-size: calc(15 * var(--u));
+  inline-size: min(calc(15 * var(--u)), 16px);
+  block-size: min(calc(15 * var(--u)), 16px);
 }
 
 /* the attachment types: one row of small icon buttons, each named by its hidden label (and its tooltip) — light
@@ -224,10 +228,11 @@
 
 .tool {
   position: relative;
-  /* 28 units — smaller only on phones narrower than 390 px, whose ring cannot fit five of them (the row's width and
-     height scale together, so the button stays round) */
-  inline-size: min(calc(28 * var(--u)), calc((100% - 24 * var(--u)) / 5));
-  block-size: min(calc(28 * var(--u)), 100%);
+  /* 28 units up to 30 px — smaller only where the opening's narrowing bottom cannot fit five of them (phones); always
+     round: its height follows its width */
+  inline-size: min(calc(28 * var(--u)), 30px, calc((100% - 24 * var(--u)) / 5));
+  block-size: auto;
+  aspect-ratio: 1;
   display: grid;
   place-items: center;
   padding: 0;
@@ -240,8 +245,8 @@
 }
 
 .tool svg {
-  inline-size: calc(15 * var(--u));
-  block-size: calc(15 * var(--u));
+  inline-size: min(calc(15 * var(--u)), 16px);
+  block-size: min(calc(15 * var(--u)), 16px);
   color: var(--brand-gold); /* as in the approved prototype (.t5 .ic) */
 }
 

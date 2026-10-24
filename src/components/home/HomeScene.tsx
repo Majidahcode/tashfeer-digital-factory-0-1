@@ -28,7 +28,13 @@ export function HomeScene() {
       className={styles.scene}
       aria-labelledby="hero-title"
       data-scene=""
-      style={{ "--ring-aspect": RING_ASPECT.toFixed(4) } as CSSProperties}
+      style={
+        {
+          "--ring-aspect": RING_ASPECT.toFixed(4),
+          // how far the ring image's glow reaches below its band (× ring height), measured on the asset
+          "--glow-img": (RING_IMAGE.top + RING_IMAGE.height - 1).toFixed(4),
+        } as CSSProperties
+      }
     >
       {/* one layer over the whole scene: the phrases appear in its free space, top to bottom (AmbientPhrases) */}
       <AmbientPhrases phrases={AMBIENT_PHRASES} />

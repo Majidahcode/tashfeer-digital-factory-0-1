@@ -139,6 +139,8 @@ type Geometry = {
   /** the waiting phrases are drawn (--phrase-ghosts): each keeps a place clear of the others even while it waits */
   ghosts: boolean;
   free: FreeSpace | null;
+  /** each phrase's places in the free space, before the floor rule (candidatesFor applies it) */
+  places: (Slot[] | null)[];
   candidates: (Slot[] | null)[];
 };
 
@@ -186,9 +188,11 @@ type Props = { phrases: readonly string[]; className?: string };
  *   follow the layout: measured again whenever it changes, and a phrase whose place is no longer clear moves at once.
  * - Where the waiting phrases are drawn, faintly (--phrase-ghosts, from 1440 up, where there is room for it), each
  *   keeps a place of its own: after each appearance it fades out completely and moves, unseen, to where it will
- *   appear next; a faint phrase in the way fades out and moves too. Below 1440 waiting phrases are not drawn, so each
- *   appearance simply takes a new place when it comes, and a phrase waiting there moves out of the way — that is how
- *   a laptop's few free spaces, or a phone's bays, take every phrase in turn.
+ *   appear next; a faint phrase in the way fades out and moves too. Below 1440 waiting phrases are not drawn, so at
+ *   each turn they first take places of their own (the most constrained first) and the appearing phrase takes a new
+ *   place among those left — that is how a laptop's few free spaces, or a phone's bays, take every phrase in turn
+ *   without leaving one without room.
+ * - Each appearance lands in the farther half of its region from where the last one was seen, so it visibly travels.
  */
 export function AmbientPhrases({ phrases, className }: Props) {
   const layerRef = useRef<HTMLDivElement>(null);
@@ -214,8 +218,9 @@ export function AmbientPhrases({ phrases, className }: Props) {
   const geo = useRef<Geometry | null>(null);
   const glowRef = useRef<Glow | null>(null);
   const appearances = useRef<number[]>(phrases.map(() => 0));
-  /** regions (regionOf) where the latest phrases were seen, newest first */
+  /** regions (regionOf) where the latest phrases were seen, newest first; and the latest one's box */
   const lastSeen = useRef<number[]>([]);
+  const lastBox = useRef<Rect | null>(null);
   const beforeRevealRef = useRef<(i: number) => void>(() => {});
   const planRef = useRef<(i: number) => Plan | null>(() => null);
   const applyRef = useRef<(i: number, plan: Plan | null) => void>(() => {});
@@ -262,20 +267,35 @@ export function AmbientPhrases({ phrases, className }: Props) {
      * Every place the free space allows this phrase, in each shape this layout allows — on a coarser lattice on wide
      * screens, where the free space is large and a few pixels change nothing.
      */
+    const placesFor = (g: Geometry, i: number): Slot[] =>
+      (g.places[i] ??= (() => {
+        const free = freeSpace(g);
+        const wide = g.width >= 1280;
+        const out: Slot[] = [];
+        for (const shape of ["line", "stack"] as const) {
+          const size = g.shapes[i]?.[shape];
+          if (!size?.w) continue;
+          for (const p of free.positions(size, wide ? 8 : 4, wide ? 4 : 2))
+            out.push({ x: p.x, y: p.y, w: size.w, h: size.h, shape, stackW: size.stackW });
+        }
+        return out;
+      })());
+
+    /**
+     * Where this phrase may go: its places above the floor while that space leaves room — as many regions as there are
+     * phrases among them all, and two for this one, so that it still moves from one appearance to the next — and
+     * otherwise every place, the strip below too (a short screen).
+     */
     const candidatesFor = (g: Geometry, i: number): Slot[] => {
-      const free = freeSpace(g);
-      const wide = g.width >= 1280;
-      const out: Slot[] = [];
-      for (const shape of ["line", "stack"] as const) {
-        const size = g.shapes[i]?.[shape];
-        if (!size?.w) continue;
-        for (const p of free.positions(size, wide ? 8 : 4, wide ? 4 : 2))
-          out.push({ x: p.x, y: p.y, w: size.w, h: size.h, shape, stackW: size.stackW });
-      }
+      const out = placesFor(g, i);
       const floor = g.floor;
       if (floor === null) return out;
-      const above = out.filter((c) => withAir(rectOf(c)).y1 <= floor);
-      return new Set(above.map((c) => regionOf(c, g.width))).size >= count ? above : out;
+      const aboveOf = (list: Slot[]) => list.filter((c) => withAir(rectOf(c)).y1 <= floor);
+      const regions = (list: Slot[]) => new Set(list.map((c) => regionOf(c, g.width)));
+      const all = new Set<number>();
+      for (let j = 0; j < count; j++) for (const k of regions(aboveOf(placesFor(g, j)))) all.add(k);
+      const above = aboveOf(out);
+      return all.size >= count && regions(above).size >= 2 ? above : out;
     };
 
     /**
@@ -332,13 +352,17 @@ export function AmbientPhrases({ phrases, className }: Props) {
       const slot = pickPosition(candidates, {
         width: g.width,
         others,
-        // drawn waiting phrases are left in peace when possible; undrawn ones make way freely (the variety is the point)
-        soft: g.ghosts ? soft : [],
+        // waiting phrases are left in peace when possible — drawn ones, so that nothing moves in sight; undrawn ones, so
+        // that a place one of them needs is not taken while another would do (a laptop or tablet has few places);
+        // where there is no other place, they make way
+        soft,
         view: view(),
         // a new layout spreads the phrases out; an appearance goes somewhere other than where the last ones were seen
         avoidRegions: mode === "strict" ? current.flatMap((q) => (q ? [regionOf(q, g.width)] : [])) : lastSeen.current,
         // one line wherever one line fits; two lines only for a space too narrow for it
         prefer: (c) => c.shape === "line",
+        // an appearance lands well away from where the last one was seen
+        from: mode === "strict" ? undefined : (lastBox.current ?? undefined),
         seed: seedFor(g.width, g.height, i, n),
       });
       if (!slot) return null;
@@ -413,17 +437,37 @@ export function AmbientPhrases({ phrases, className }: Props) {
         shapes: shapes.sizes,
         ghosts: knob(layer, "--phrase-ghosts"),
         free: null,
+        places: phrases.map(() => null),
         candidates: phrases.map(() => null),
       };
       geo.current = g;
       setMeasured(true);
-      // a phrase keeps its place while that place stays clear (resized to its new measure); otherwise it moves now
+      // a phrase keeps its place while that place stays clear (resized to its new measure); the others move now — the
+      // one with the fewest places first, so that a phrase that fits almost anywhere does not take another's only room
+      const homeless: number[] = [];
       for (let i = 0; i < count; i++) {
         const s = slotsRef.current[i];
         const size = s ? g.shapes[i]?.[s.shape] : undefined;
         const next = s && size ? { ...s, w: size.w, h: size.h, stackW: size.stackW } : null;
-        if (!s || !next || !fits(g, i, next)) setSlot(i, choose(i, "strict")?.slot ?? null);
-        else if (next.w !== s.w || next.h !== s.h || next.stackW !== s.stackW) setSlot(i, next);
+        if (!s || !next || !fits(g, i, next)) {
+          homeless.push(i);
+          slotsRef.current[i] = null; // its old place no longer holds anyone back
+        } else if (next.w !== s.w || next.h !== s.h || next.stackW !== s.stackW) setSlot(i, next);
+      }
+      const room = (i: number) => (g.candidates[i] ??= candidatesFor(g, i)).length;
+      homeless.sort((a, b) => room(a) - room(b) || a - b);
+      for (const i of homeless) setSlot(i, choose(i, "strict")?.slot ?? null);
+      // one still without a place (the places the others kept leave it none): start afresh — the phrase in sight stays
+      // where it is, the most constrained go first — and keep that only if it places more phrases
+      if (slotsRef.current.some((s) => !s)) {
+        const before = slotsRef.current.slice();
+        const order = [...Array(count).keys()]
+          .filter((i) => !(isShown(i) && before[i]))
+          .sort((a, b) => room(a) - room(b) || a - b);
+        for (const i of order) slotsRef.current[i] = null;
+        for (const i of order) slotsRef.current[i] = choose(i, "strict")?.slot ?? null;
+        if (slotsRef.current.filter(Boolean).length <= before.filter(Boolean).length) slotsRef.current = before;
+        setSlots([...slotsRef.current]);
       }
     };
 
@@ -431,9 +475,30 @@ export function AmbientPhrases({ phrases, className }: Props) {
     beforeRevealRef.current = (i) => {
       const g = geo.current;
       if (!g) return;
-      if (!g.ghosts || !inView(i)) apply(i, choose(i, "reveal"));
+      if (!g.ghosts) {
+        // the waiting phrases are not drawn here: they take places first — the most constrained first, as on a new
+        // layout — and the phrase whose turn it is then takes a new place among those left, so that a layout with few
+        // places (a laptop's, a tablet's) never leaves one of them without room
+        const room = (j: number) => (g.candidates[j] ??= candidatesFor(g, j)).length;
+        const order = [...Array(count).keys()]
+          .filter((j) => j !== i && !isShown(j))
+          .sort((a, b) => room(a) - room(b) || a - b);
+        const saved = slotsRef.current.slice();
+        const placed = (list: (Slot | null)[]) => order.filter((j) => list[j]).length;
+        slotsRef.current[i] = null; // the place it leaves is free for the others
+        for (const j of order) slotsRef.current[j] = null;
+        for (const j of order) slotsRef.current[j] = choose(j, "strict")?.slot ?? null;
+        if (placed(slotsRef.current) < placed(saved)) for (const j of order) slotsRef.current[j] = saved[j] ?? null;
+        const plan = choose(i, "reveal");
+        slotsRef.current[i] = saved[i] ?? null; // until the plan is applied: stays where it was if there is no room
+        setSlots([...slotsRef.current]);
+        apply(i, plan);
+      } else if (!inView(i)) apply(i, choose(i, "reveal"));
       const s = slotsRef.current[i];
-      if (s) lastSeen.current = [regionOf(s, g.width), ...lastSeen.current].slice(0, 2);
+      if (s) {
+        lastSeen.current = [regionOf(s, g.width), ...lastSeen.current].slice(0, 2);
+        lastBox.current = rectOf(s);
+      }
     };
     // after it: where waiting phrases are drawn, it moves (unseen) to where it will appear next
     planRef.current = (i) => (geo.current?.ghosts ? choose(i, "move") : null);

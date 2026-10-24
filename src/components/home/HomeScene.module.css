@@ -11,7 +11,8 @@
  * One centred copy block everywhere (headline, introduction, «كيف نبدأ؟»); the page's single background is
  * AmbientBackground, behind all of it.
  *
- * --ring-aspect (band width ÷ height) comes from the asset's measured geometry (inline style, HomeScene.tsx).
+ * --ring-aspect (band width ÷ height) and --glow-img (the image's reach below the band ÷ ring height) come from the
+ * asset's measured geometry (inline style, HomeScene.tsx).
  */
 .scene {
   --pad-x: clamp(16px, 2vw, 56px);
@@ -21,7 +22,7 @@
   --robot-k: 0.6; /* Tashfeer's height ÷ ring height */
   --robot-ar: 0.3844; /* robot image width ÷ height (346 × 900) */
   --air-top: 14px; /* the glow above the ring passes softly under the translucent header */
-  --glow-below: 0.096; /* the ring image extends this far below its band (× ring height), measured on the asset */
+  --glow-below: var(--glow-img, 0.165); /* the ring image's reach below its band (× ring height): HomeScene.tsx */
   --stage-k: calc(var(--ring-aspect) + var(--robot-k) * var(--robot-ar) + 0.015);
   --ring-h: min(
     calc((100svh - var(--header-h) - var(--air-top)) / (1 + var(--glow-below))),
@@ -319,11 +320,22 @@
   transform: translateX(calc(var(--ring-h) * -0.01));
 }
 
-/* ── ≥1440: wide desktops give the portal more of the screen (owner's correction of 2026-10-23) ───────────────
-   Here the portal is limited by the screen's height, never its width, and its band must stay whole under the
-   header: the only room left is the 9.5 % of its height kept under it for the lower glow. That glow is faint past
-   4.5 % (opacity ≤ 0.2, brightness ≤ 0.04), so only that first part is kept: its end fades out over the last 3 %
-   (no edge) and the band grows by ≈ 6 % — the chat, Tashfeer, the customer and the steps with it. */
+/* 1280–1439: the owner's reference portal is wide, so here it is limited by the screen's width and shorter than the
+   screen allows; the steps keep 11 % of its height free above and below them (rather than 10 %) — just enough for an
+   ambient phrase over the first step and under the last one, above the composition's floor */
+@media (min-width: 1280px) and (max-width: 1439px) {
+  .features {
+    margin-top: calc(var(--ring-h) * 0.11);
+    block-size: calc(var(--ring-h) * 0.78);
+  }
+}
+
+/* ── ≥1440: wide desktops give the portal more of the screen (owner's corrections of 2026-10-23) ──────────────
+   Its band stays whole under the header, with only 4.5 % of its height kept under it: the portal is as large as
+   the screen's height allows (1920, 2560), or as the room between the copy and the steps allows (1440, where the
+   owner's wide reference portal is limited by the width instead). Its glow is never faded or trimmed: it is
+   clipped only at the screen's bottom edge, where the first screen ends — whole wherever it fits above that edge
+   (1440), running off it where it does not (the lower glow reaches 16.5 % of the band's height). Nothing scrolls. */
 @media (min-width: 1440px) {
   .scene {
     --air-top: 6px;
@@ -335,11 +347,10 @@
     );
   }
 
+  /* from the image's top (above the band: --img-t is negative) down to the screen's bottom edge, at most the image */
   .ringClip {
-    block-size: calc((1 + var(--glow-below)) * 100% - var(--img-t));
+    block-size: min(var(--img-h), calc(100svh - var(--header-h) - var(--air-top) - var(--img-t)));
     overflow: clip;
-    -webkit-mask-image: linear-gradient(180deg, var(--brand-highlight) calc(100% - 0.03 * var(--ring-h)), transparent);
-    mask-image: linear-gradient(180deg, var(--brand-highlight) calc(100% - 0.03 * var(--ring-h)), transparent);
   }
 }
 
@@ -412,10 +423,12 @@
     --pad-x: 12px;
     --band-w: min(calc(100vw - 2 * var(--pad-x)), 430px);
     --ring-h: calc(var(--band-w) / var(--ring-aspect));
-    --robot-k: 0.32; /* the portal, Tashfeer and the customer fit a phone's first screen */
     --cust-w: min(46vw, 200px);
     --pill-h: 44px;
-    --chars-h: calc(var(--ring-h) * var(--robot-k)); /* characters' band under the ring */
+    /* characters' band under the ring: Tashfeer's height follows the screen's width, not the ring's shape (0.515 of
+       the band's width — his size under the previous, taller ring — so the portal, Tashfeer and the customer still
+       fit a phone's first screen) */
+    --chars-h: calc(var(--band-w) * 0.515);
     /* Tashfeer stands under the ring's left edge, the customer sits under its right edge (on a phone those are the
        screen's edges; on a small tablet in this layout they stay by the ring instead of drifting to the sides) */
     --robot-left: max(calc(var(--pad-x) + 2px), calc((100vw - var(--band-w)) / 2 + 2px));
@@ -581,28 +594,37 @@
 @media (min-width: 720px) and (max-width: 899px) {
   .scene {
     --band-w: min(calc(100vw - 340px), 440px);
-    --robot-k: 0.385;
+    /* set by the width, as on phones: 0.6 of the band's width — his size beside the previous, taller ring, less 3 %,
+       so that he still stands beside the lower half of the owner's wider, shorter reference portal */
+    --robot-h: calc(var(--band-w) * 0.6);
     --cust-w: min(26vw, 200px); /* narrow enough that the chair clears the ring's lower-right curve */
     --chars-h: 0px;
     --cust-end: calc(-1 * var(--pad-x)); /* the customer at the screen's edge, beside the ring */
   }
 
   .scene {
-    --robot-w: calc(var(--ring-h) * var(--robot-k) * var(--robot-ar));
+    --robot-w: calc(var(--robot-h) * var(--robot-ar));
     --robot-x: max(calc(var(--pad-x) + 6px), calc(50% - var(--band-w) / 2 - var(--robot-w) - 6px));
   }
 
   .robot {
     left: var(--robot-x);
-    block-size: calc(var(--ring-h) * var(--robot-k));
+    block-size: var(--robot-h);
   }
 
   /* «أنا» above and to the left of Tashfeer's head, left of the ring: SpeakerArrow arcs onto his head diagonally
      (a word straight above him made a vertical, straight arrow — owner's correction §4) */
   .headline > .l1Row {
-    top: calc(6px + var(--ring-h) * (1 - var(--robot-k)) - 100px);
+    top: calc(6px + var(--ring-h) - var(--robot-h) - 100px);
     left: max(calc(var(--pad-x) + 26px), calc(var(--robot-x) - 30px));
     transform: translateX(-50%);
+  }
+
+  /* a bay of air under the characters, as on phones: 66 px with the scene's gap — one line of an ambient phrase with
+     the air it keeps. Beside the owner's wide, short reference portal there is little room left for the phrases;
+     this lets them appear lower on the page as well */
+  .copyText {
+    margin-top: 50px;
   }
 
   /* one row of five steps (RTL: 01 on the right): tile above its label, equal columns */

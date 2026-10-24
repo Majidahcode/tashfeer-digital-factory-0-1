@@ -97,7 +97,7 @@ async function main() {
     }
     const originalSha = sha256(await readFile(original));
     if (originalSha !== prov.sourceSha256) {
-      errors.push(`${a.id}: ${prov.source} changed since the derivative was made — run: python3 -I scripts/derive-portal-ring.py`);
+      errors.push(`${a.id}: ${prov.source} changed since the derivative was made — run: python3 -I ${prov.script ?? "scripts/derive-portal-ring.py"}`);
     }
     const buf = await readFile(src);
     const info = await describe(buf, a.id, a.expect);
@@ -107,7 +107,7 @@ async function main() {
       ...info,
       sha256: sha256(buf),
       source: a.from,
-      derivedFrom: { source: prov.source, sha256: prov.sourceSha256, by: "scripts/derive-portal-ring.py" },
+      derivedFrom: { source: prov.source, sha256: prov.sourceSha256, by: prov.script ?? "scripts/derive-portal-ring.py" },
       ...(a.id === "portal-ring" ? { geometry: portalGeometry(prov) } : {}),
     };
   }
