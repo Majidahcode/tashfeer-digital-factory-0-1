@@ -13,7 +13,7 @@ async function toAgents(page: Page) {
   const chat = page.locator("[data-chat-shell]");
   await chat.getByLabel("وصف المشروع").fill(IDEA);
   await chat.getByRole("button", { name: "ادخل" }).click();
-  await expect(page).toHaveURL(/\/agents$/);
+  await expect(page).toHaveURL(/\/agents\/?$/);
   await page.locator("[data-agents-screen]").waitFor();
 }
 
@@ -107,7 +107,7 @@ test("the project survives navigation and a reload: back to the idea keeps the t
   await expect(page).toHaveURL(/\/$/);
   await expect(page.locator("[data-chat-shell]").getByLabel("وصف المشروع")).toHaveValue(IDEA);
   await page.locator("[data-chat-shell]").getByRole("button", { name: "ادخل" }).click();
-  await expect(page).toHaveURL(/\/agents$/);
+  await expect(page).toHaveURL(/\/agents\/?$/);
   await expect.poll(() => team(page)).toEqual(chosen);
 });
 
@@ -126,4 +126,54 @@ test("the strip's cards stay clear of the summary and of Tashfeer; nothing scrol
   expect(r.summary).toBe(false);
   expect(r.tashfeer).toBe(false);
   expect(r.sideways).toBeLessThanOrEqual(0);
+});
+
+test("after a reload an attachment is kept by name only and marked «تحتاج إعادة إرفاق»; the idea and the team stay", async ({ page }) => {
+  await openHome(page);
+  const chat = page.locator("[data-chat-shell]");
+  await chat.getByLabel("وصف المشروع").fill(IDEA);
+  const chooser = page.waitForEvent("filechooser");
+  await chat.getByRole("button", { name: "ملفات" }).click();
+  await (await chooser).setFiles({ name: "المتطلبات.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4") });
+  const chip = chat.locator("[data-chat-attachments] li");
+  await expect(chip).toHaveCount(1);
+  await expect(chip).not.toHaveAttribute("data-stale", "");
+  await chat.getByRole("button", { name: "ادخل" }).click();
+  await page.locator("[data-agents-screen]").waitFor();
+  await expect(page.locator("[data-summary-stale]")).toHaveCount(0);
+  await page.locator("[data-select-none]").click();
+  const c = Number(await page.locator("[data-agent-carousel]").getAttribute("data-center"));
+  await page.locator("[data-agent-card]").nth(c).click();
+  const chosen = await team(page);
+
+  await page.reload();
+  await page.locator("[data-agents-screen]").waitFor();
+  await expect(page.locator("[data-summary-stale]")).toContainText("تحتاج إعادة إرفاق");
+  await expect.poll(() => team(page)).toEqual(chosen);
+  await page.locator("[data-back-to-idea]").click();
+  await expect(chat.getByLabel("وصف المشروع")).toHaveValue(IDEA);
+  await expect(chip).toHaveAttribute("data-stale", "");
+  await expect(chip).toContainText("تحتاج إعادة إرفاق");
+});
+
+test("the agents without an image show their specialty and icon, never a file name", async ({ page }) => {
+  await page.goto("/agents");
+  const slots = page.locator("[data-agent-placeholder]");
+  await expect(slots).toHaveCount(3);
+  for (const t of await slots.allTextContents()) {
+    expect(t).not.toMatch(/[a-z]+-[a-z]+|\.png|\.webp/i);
+    expect(t).toContain("قيد الإعداد");
+  }
+  await expect(slots.first().locator("svg")).toHaveCount(1);
+});
+
+test("only the strip's edges fade: every visible card is at full strength", async ({ page }) => {
+  await page.goto("/agents");
+  await page.locator("[data-agents-screen]").waitFor();
+  const o = await page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>("[data-agent-card]")]
+      .filter((e) => getComputedStyle(e).visibility !== "hidden")
+      .map((e) => Number(getComputedStyle(e).opacity)),
+  );
+  expect(Math.min(...o)).toBe(1);
 });

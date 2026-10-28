@@ -12,28 +12,116 @@ export type Agent = {
   ar: string;
   en: string;
   spec: string;
+  /** the placeholder's icon, for an agent whose image is not supplied yet */
+  icon?: "roadmap" | "checklist" | "gauge";
 };
 
 export const AGENTS: readonly Agent[] = [
-  { id: "pm", asset: "product-manager", ar: "مدير المنتج", en: "Product Manager", spec: "إدارة المنتج وتحديد النطاق" },
-  { id: "research", asset: "research", ar: "الباحث", en: "Research Agent", spec: "بحث السوق والمراجع" },
-  { id: "req", asset: "requirements-analyst", ar: "محلل المتطلبات", en: "Requirements Analyst", spec: "تحليل المتطلبات" },
-  { id: "ux", asset: "ux-ui", ar: "مصمم UX/UI", en: "UX/UI Designer", spec: "تجربة المستخدم والواجهات" },
-  { id: "arch", asset: "software-architect", ar: "معماري البرمجيات", en: "Software Architect", spec: "البنية التقنية" },
-  { id: "db", asset: "database", ar: "قاعدة البيانات", en: "Database Agent", spec: "نمذجة البيانات" },
-  { id: "back", asset: "backend", ar: "المطور الخلفي", en: "Backend Developer", spec: "الخدمات والمنطق الخلفي" },
-  { id: "front", asset: "frontend", ar: "المطور الأمامي", en: "Frontend Developer", spec: "تطوير الواجهة" },
-  { id: "qa", asset: "qa", ar: "اختبار الجودة", en: "QA Agent", spec: "ضمان الجودة" },
-  { id: "sec", asset: "cybersecurity", ar: "الأمن السيبراني", en: "Cybersecurity Agent", spec: "أمن المعلومات" },
-  { id: "perf", asset: "performance", ar: "الأداء", en: "Performance Agent", spec: "تحسين الأداء" },
-  { id: "ops", asset: "devops", ar: "العمليات", en: "DevOps Agent", spec: "التشغيل والنشر" },
+  {
+    id: "pm",
+    asset: "product-manager",
+    ar: "مدير المنتج",
+    en: "Product Manager",
+    spec: "إدارة المنتج وتحديد النطاق",
+    icon: "roadmap",
+  },
+  {
+    id: "research",
+    asset: "research",
+    ar: "الباحث",
+    en: "Research Agent",
+    spec: "بحث السوق والمراجع",
+  },
+  {
+    id: "req",
+    asset: "requirements-analyst",
+    ar: "محلل المتطلبات",
+    en: "Requirements Analyst",
+    spec: "تحليل المتطلبات",
+    icon: "checklist",
+  },
+  {
+    id: "ux",
+    asset: "ux-ui",
+    ar: "مصمم UX/UI",
+    en: "UX/UI Designer",
+    spec: "تجربة المستخدم والواجهات",
+  },
+  {
+    id: "arch",
+    asset: "software-architect",
+    ar: "معماري البرمجيات",
+    en: "Software Architect",
+    spec: "البنية التقنية",
+  },
+  {
+    id: "db",
+    asset: "database",
+    ar: "قاعدة البيانات",
+    en: "Database Agent",
+    spec: "نمذجة البيانات",
+  },
+  {
+    id: "back",
+    asset: "backend",
+    ar: "المطور الخلفي",
+    en: "Backend Developer",
+    spec: "الخدمات والمنطق الخلفي",
+  },
+  {
+    id: "front",
+    asset: "frontend",
+    ar: "المطور الأمامي",
+    en: "Frontend Developer",
+    spec: "تطوير الواجهة",
+  },
+  {
+    id: "qa",
+    asset: "qa",
+    ar: "اختبار الجودة",
+    en: "QA Agent",
+    spec: "ضمان الجودة",
+  },
+  {
+    id: "sec",
+    asset: "cybersecurity",
+    ar: "الأمن السيبراني",
+    en: "Cybersecurity Agent",
+    spec: "أمن المعلومات",
+  },
+  {
+    id: "perf",
+    asset: "performance",
+    ar: "الأداء",
+    en: "Performance Agent",
+    spec: "تحسين الأداء",
+    icon: "gauge",
+  },
+  {
+    id: "ops",
+    asset: "devops",
+    ar: "العمليات",
+    en: "DevOps Agent",
+    spec: "التشغيل والنشر",
+  },
 ];
 
 export type AgentImage = { src: string; width: number; height: number } | null;
 
 export function agentImage(a: Agent): AgentImage {
-  const entry = manifest.agents[a.asset] as { status: string; src?: string; width?: number; height?: number };
-  return entry.status === "available" && entry.src ? { src: entry.src, width: entry.width ?? 1024, height: entry.height ?? 1536 } : null;
+  const entry = manifest.agents[a.asset] as {
+    status: string;
+    src?: string;
+    width?: number;
+    height?: number;
+  };
+  return entry.status === "available" && entry.src
+    ? {
+        src: entry.src,
+        width: entry.width ?? 1024,
+        height: entry.height ?? 1536,
+      }
+    : null;
 }
 
 export type Analysis = {
@@ -46,7 +134,8 @@ export type Analysis = {
   suggested: string[];
 };
 
-export const EXAMPLE_IDEA = "منصة حجز مواعيد لعيادة، يحجز فيها العملاء ويدفعون مسبقًا.";
+export const EXAMPLE_IDEA =
+  "منصة حجز مواعيد لعيادة، يحجز فيها العملاء ويدفعون مسبقًا.";
 
 /**
  * A deterministic reading of the idea (the prototype's rules; no assistant is connected): the product type, who it
@@ -56,8 +145,12 @@ export const EXAMPLE_IDEA = "منصة حجز مواعيد لعيادة، يحج�
 export function analyze(rawIdea: string): Analysis {
   const example = !rawIdea.trim();
   const t = example ? EXAMPLE_IDEA : rawIdea.trim();
-  const type = /تطبيق|app/i.test(t) ? "تطبيق" : /متجر|تسوق|تسوّق/.test(t) ? "متجر إلكتروني" : "منصة / موقع ويب";
-  const audience = /عيادة|مرضى|مريض/.test(t)
+  const type = /تطبيق|app/i.test(t)
+    ? "تطبيق"
+    : /متجر|تسوق|تسوّق/.test(t)
+      ? "متجر إلكتروني"
+      : "منصة / موقع ويب";
+  const audience = /عياد[ةت]|مرضى|مريض/.test(t)
     ? "المرضى والعيادة"
     : /طلاب|طالب|تعليم/.test(t)
       ? "الطلاب والمعلمون"
@@ -66,8 +159,21 @@ export function analyze(rawIdea: string): Analysis {
         : /عملاء|زبائن|مستخدم/.test(t)
           ? "عملاء المشروع"
           : "يُحدَّد مع مدير المنتج";
-  const suggested = new Set(["pm", "research", "req", "ux", "arch", "front", "back", "db", "qa", "ops"]);
-  const reasons = ["فريق متكامل لبناء فكرتك: النطاق والبحث والتصميم والبناء والاختبار والتشغيل"];
+  const suggested = new Set([
+    "pm",
+    "research",
+    "req",
+    "ux",
+    "arch",
+    "front",
+    "back",
+    "db",
+    "qa",
+    "ops",
+  ]);
+  const reasons = [
+    "فريق متكامل لبناء فكرتك: النطاق والبحث والتصميم والبناء والاختبار والتشغيل",
+  ];
   if (/حجز|مواعيد|دفع|متجر|حساب|مستخدم|بيانات|عملاء/.test(t)) {
     suggested.add("sec");
     reasons.push("الفكرة تتضمن بيانات عملاء أو مدفوعات: تحتاج مراجعة أمنية");
@@ -76,7 +182,14 @@ export function analyze(rawIdea: string): Analysis {
     suggested.add("perf");
     reasons.push("الأداء مذكور أو متوقع في الفكرة");
   }
-  return { example, idea: t, type, audience, reasons, suggested: AGENTS.map((a) => a.id).filter((id) => suggested.has(id)) };
+  return {
+    example,
+    idea: t,
+    type,
+    audience,
+    reasons,
+    suggested: AGENTS.map((a) => a.id).filter((id) => suggested.has(id)),
+  };
 }
 
 /** «N وكلاء مختارون» with the Arabic number agreement. */

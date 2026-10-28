@@ -16,7 +16,8 @@ export function BackToIdea() {
       onClick={() => transitionTo("/", (href) => router.push(href))}
       data-back-to-idea=""
     >
-      <Icon name="chevron" size={16} className={styles.backIcon} /> العودة للفكرة
+      <Icon name="chevron" size={16} className={styles.backIcon} /> العودة
+      للفكرة
     </button>
   );
 }

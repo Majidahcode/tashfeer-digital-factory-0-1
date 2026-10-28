@@ -24,3 +24,7 @@ test("the analysis: an example when nothing was typed, security and performance 
   expect(app.type).toBe("تطبيق");
   expect(app.suggested).toEqual(AGENTS.map((a) => a.id));
 });
+
+test("the audience reads the clinic in its possessive form too («عيادتي»)", () => {
+  expect(analyze("منصة حجز مواعيد لعيادتي").audience).toBe("المرضى والعيادة");
+});

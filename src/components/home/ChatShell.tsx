@@ -9,19 +9,40 @@ import { asset } from "@/lib/assets";
 import { cx } from "@/lib/cx";
 import { transitionTo } from "@/lib/page-transition";
 import { CONTENT_BOX, boxVars, chatRowVars } from "@/lib/portal-geometry";
-import { type AttachmentKind, addAttachments, removeAttachment, updateProject, useProject } from "@/lib/project-store";
+import {
+  type AttachmentKind,
+  addAttachments,
+  hasFile,
+  removeAttachment,
+  updateProject,
+  useProject,
+} from "@/lib/project-store";
 import styles from "./ChatShell.module.css";
 
-type Tool = { label: (typeof CHAT.tools)[number]; icon: IconName; kind: AttachmentKind | "link"; accept?: string };
+type Tool = {
+  label: (typeof CHAT.tools)[number];
+  icon: IconName;
+  kind: AttachmentKind | "link";
+  accept?: string;
+};
 const TOOLS: readonly Tool[] = [
-  { label: "الوصف", icon: "doc", kind: "description", accept: ".pdf,.doc,.docx,.txt,.md,.rtf,.odt" },
+  {
+    label: "الوصف",
+    icon: "doc",
+    kind: "description",
+    accept: ".pdf,.doc,.docx,.txt,.md,.rtf,.odt",
+  },
   { label: "روابط", icon: "link", kind: "link" },
   { label: "ملفات", icon: "file", kind: "file" },
   { label: "فيديو", icon: "video", kind: "video", accept: "video/*" },
   { label: "صور", icon: "image", kind: "image", accept: "image/*" },
 ];
 
-export type ChatMessage = { id: string; from: "tashfeer" | "visitor" | "note"; text: string };
+export type ChatMessage = {
+  id: string;
+  from: "tashfeer" | "visitor" | "note";
+  text: string;
+};
 
 /**
  * The intake inside the portal: the visitor describes the idea, attaches what explains it, and presses «ادخل». The
@@ -63,7 +84,10 @@ export function ChatShell({
   const idea = persist ? project.idea : local;
   const attachments = persist ? project.attachments : [];
 
-  const note = (text: string) => setNotes((n) => (n.at(-1) === text ? n : [...n.filter((x) => x !== text), text]));
+  const note = (text: string) =>
+    setNotes((n) =>
+      n.at(-1) === text ? n : [...n.filter((x) => x !== text), text],
+    );
 
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
@@ -80,7 +104,7 @@ export function ChatShell({
   };
 
   const submit = () => {
-    if (!idea.trim() && attachments.length === 0) {
+    if (!idea.trim() && !attachments.some((a) => hasFile(a.id))) {
       note(CHAT.notes.empty);
       fieldRef.current?.focus();
       return;
@@ -113,11 +137,23 @@ export function ChatShell({
       aria-labelledby="intake-title"
       data-chat-shell=""
       className={cx(styles.chat, className)}
-      style={{ ...boxVars("content", CONTENT_BOX), ...chatRowVars() } as CSSProperties}
+      style={
+        {
+          ...boxVars("content", CONTENT_BOX),
+          ...chatRowVars(),
+        } as CSSProperties
+      }
     >
       <header className={styles.head}>
         <span className={styles.avatar} title={CHAT.status} data-chat-avatar="">
-          <Image src={avatar.src} width={40} height={40} alt="" className={styles.avatarImg} sizes="40px" />
+          <Image
+            src={avatar.src}
+            width={40}
+            height={40}
+            alt=""
+            className={styles.avatarImg}
+            sizes="40px"
+          />
           <span className={styles.presence} aria-hidden="true" />
         </span>
         <h2 id="intake-title" className="sr-only">
@@ -128,7 +164,14 @@ export function ChatShell({
         </span>
       </header>
 
-      <div ref={logRef} className={styles.log} role="log" aria-live="polite" aria-label="المحادثة" tabIndex={0}>
+      <div
+        ref={logRef}
+        className={styles.log}
+        role="log"
+        aria-live="polite"
+        aria-label="المحادثة"
+        tabIndex={0}
+      >
         <p className={styles.bubble}>{CHAT.welcome}</p>
         {messages.map((m) =>
           m.from === "note" ? (
@@ -136,23 +179,47 @@ export function ChatShell({
               {m.text}
             </div>
           ) : (
-            <p key={m.id} className={cx(styles.bubble, m.from === "visitor" && styles.mine)} data-chat-message={m.from}>
+            <p
+              key={m.id}
+              className={cx(styles.bubble, m.from === "visitor" && styles.mine)}
+              data-chat-message={m.from}
+            >
               {m.text}
             </p>
           ),
         )}
         {attachments.length > 0 && (
-          <ul className={styles.chips} aria-label="المرفقات" data-chat-attachments="">
-            {attachments.map((a) => (
-              <li key={a.id} className={styles.chip}>
-                <span className={styles.chipName} dir="auto" title={a.name}>
-                  {a.name}
-                </span>
-                <button type="button" className={styles.chipRemove} aria-label={`إزالة ${a.name}`} onClick={() => removeAttachment(a.id)}>
-                  ×
-                </button>
-              </li>
-            ))}
+          <ul
+            className={styles.chips}
+            aria-label="المرفقات"
+            data-chat-attachments=""
+          >
+            {attachments.map((a) => {
+              // after a reload only the name is left: the file must be attached again before it can be used
+              const stale = !hasFile(a.id);
+              return (
+                <li
+                  key={a.id}
+                  className={cx(styles.chip, stale && styles.staleChip)}
+                  data-stale={stale ? "" : undefined}
+                >
+                  <span className={styles.chipName} dir="auto" title={a.name}>
+                    {a.name}
+                  </span>
+                  {stale && (
+                    <span className={styles.staleLabel}>تحتاج إعادة إرفاق</span>
+                  )}
+                  <button
+                    type="button"
+                    className={styles.chipRemove}
+                    aria-label={`إزالة ${a.name}`}
+                    onClick={() => removeAttachment(a.id)}
+                  >
+                    ×
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
         {notes.map((n) => (
@@ -175,7 +242,11 @@ export function ChatShell({
           value={idea}
           onChange={(e) => setIdea(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+            if (
+              e.key === "Enter" &&
+              !e.shiftKey &&
+              !e.nativeEvent.isComposing
+            ) {
               e.preventDefault();
               submit();
             }
@@ -192,7 +263,11 @@ export function ChatShell({
         </button>
       </div>
 
-      <div className={styles.tools} role="group" aria-label="أرفق ما يوضح فكرتك">
+      <div
+        className={styles.tools}
+        role="group"
+        aria-label="أرفق ما يوضح فكرتك"
+      >
         {TOOLS.map((t) => (
           <button
             key={t.label}
@@ -200,7 +275,9 @@ export function ChatShell({
             className={styles.tool}
             title={t.label}
             aria-disabled={persist ? undefined : "true"}
-            onClick={() => (persist ? pressTool(t) : note(CHAT.notes.attachments))}
+            onClick={() =>
+              persist ? pressTool(t) : note(CHAT.notes.attachments)
+            }
           >
             <Icon name={t.icon} size={16} />
             <span className="sr-only">{t.label}</span>
@@ -224,7 +301,12 @@ export function ChatShell({
       </div>
 
       <div className={styles.footer}>
-        <button type="button" className={styles.enter} onClick={submit} data-chat-enter="">
+        <button
+          type="button"
+          className={styles.enter}
+          onClick={submit}
+          data-chat-enter=""
+        >
           {CHAT.enter}
         </button>
       </div>

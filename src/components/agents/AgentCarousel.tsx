@@ -1,7 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type PointerEvent,
+} from "react";
 import { Icon } from "@/components/icons/Icon";
 import { type Agent, agentImage } from "@/domain/agents";
 import { cx } from "@/lib/cx";
@@ -36,9 +44,15 @@ export function AgentCarousel({
   const [pos, setPos] = useState(start); // fractional index at the centre
   const [dragging, setDragging] = useState(false);
   const track = useRef<HTMLDivElement>(null);
-  const drag = useRef<{ x0: number; pos0: number; moved: boolean; id: number; t: number; lastX: number; lastT: number } | null>(
-    null,
-  );
+  const drag = useRef<{
+    x0: number;
+    pos0: number;
+    moved: boolean;
+    id: number;
+    t: number;
+    lastX: number;
+    lastT: number;
+  } | null>(null);
   const suppressClick = useRef(false);
   const [step, setStep] = useState(220); // px between neighbouring cards at the centre (from the card's width)
 
@@ -55,13 +69,24 @@ export function AgentCarousel({
     return () => ro.disconnect();
   }, []);
 
-  const clamp = useCallback((p: number) => Math.max(0, Math.min(n - 1, p)), [n]);
+  const clamp = useCallback(
+    (p: number) => Math.max(0, Math.min(n - 1, p)),
+    [n],
+  );
   const go = (i: number) => setPos(clamp(Math.round(i)));
   const center = Math.round(pos);
 
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
-    drag.current = { x0: e.clientX, pos0: pos, moved: false, id: e.pointerId, t: performance.now(), lastX: e.clientX, lastT: performance.now() };
+    drag.current = {
+      x0: e.clientX,
+      pos0: pos,
+      moved: false,
+      id: e.pointerId,
+      t: performance.now(),
+      lastX: e.clientX,
+      lastT: performance.now(),
+    };
   };
   const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
     const d = drag.current;
@@ -86,17 +111,27 @@ export function AgentCarousel({
     window.setTimeout(() => (suppressClick.current = false), 0);
     setDragging(false);
     const v = (e.clientX - d.lastX) / Math.max(1, performance.now() - d.lastT); // px/ms at release
-    const p = d.pos0 + (e.clientX - d.x0) / step + Math.max(-1, Math.min(1, (v * 120) / step));
+    const p =
+      d.pos0 +
+      (e.clientX - d.x0) / step +
+      Math.max(-1, Math.min(1, (v * 120) / step));
     setPos(clamp(Math.round(p)));
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    const keys: Record<string, number> = { ArrowLeft: center + 1, ArrowRight: center - 1, Home: 0, End: n - 1 };
+    const keys: Record<string, number> = {
+      ArrowLeft: center + 1,
+      ArrowRight: center - 1,
+      Home: 0,
+      End: n - 1,
+    };
     if (!(e.key in keys)) return;
     e.preventDefault();
     const i = clamp(keys[e.key]!);
     go(i);
-    track.current?.querySelectorAll<HTMLElement>("[data-agent-card]")[i]?.focus({ preventScroll: true });
+    track.current
+      ?.querySelectorAll<HTMLElement>("[data-agent-card]")
+      [i]?.focus({ preventScroll: true });
   };
 
   return (
@@ -141,14 +176,21 @@ export function AgentCarousel({
             "--z": `${-ad * 70}px`,
             "--r": `${sign * Math.min(ad, 3) * 11}deg`,
             "--s": (1 - Math.min(ad, 3) * 0.1).toFixed(3),
-            "--o": Math.abs(d) > VISIBLE ? 0 : (1 - Math.min(ad, 3) * 0.16).toFixed(3),
+            // full strength everywhere: only the strip's edges fade (its mask), so every visible card keeps its colours
+            "--o": Math.abs(d) > VISIBLE ? 0 : 1,
+            // the light behind the figure: brightest at the centre
+            "--spot": Math.max(0, 1 - ad).toFixed(3),
             zIndex: 100 - Math.round(ad * 10),
           } as CSSProperties;
           return (
             <button
               key={a.id}
               type="button"
-              className={cx(styles.card, isSel && styles.selected, Math.abs(d) > VISIBLE && styles.hidden)}
+              className={cx(
+                styles.card,
+                isSel && styles.selected,
+                Math.abs(d) > VISIBLE && styles.hidden,
+              )}
               style={style}
               aria-pressed={isSel}
               aria-label={`${a.ar} — ${a.en}${suggested.has(a.id) ? " — مقترح من تشفير" : ""}`}
@@ -164,11 +206,25 @@ export function AgentCarousel({
             >
               <span className={styles.art}>
                 {img ? (
-                  <Image src={img.src} width={img.width} height={img.height} alt="" sizes="(max-width: 899px) 60vw, 300px" draggable={false} />
+                  <Image
+                    src={img.src}
+                    width={img.width}
+                    height={img.height}
+                    alt=""
+                    sizes="(max-width: 899px) 60vw, 300px"
+                    loading="eager"
+                    draggable={false}
+                  />
                 ) : (
-                  <span className={styles.slot}>
-                    بانتظار صورة الوكيل
-                    <small dir="ltr">{a.asset}</small>
+                  // no image supplied yet: the role's icon and specialty — not a stand-in character
+                  <span className={styles.slot} data-agent-placeholder="">
+                    <span className={styles.slotIcon}>
+                      <Icon name={a.icon ?? "doc"} size={44} />
+                    </span>
+                    <span className={styles.slotSpec}>{a.spec}</span>
+                    <span className={styles.slotNote}>
+                      صورة الوكيل قيد الإعداد
+                    </span>
                   </span>
                 )}
               </span>
@@ -176,7 +232,9 @@ export function AgentCarousel({
                 <b>{a.ar}</b>
                 <small dir="ltr">{a.en}</small>
               </span>
-              {suggested.has(a.id) && <i className={styles.suggested}>مقترح من تشفير</i>}
+              {suggested.has(a.id) && (
+                <i className={styles.suggested}>مقترح من تشفير</i>
+              )}
               <i className={styles.check} aria-hidden="true">
                 {isSel ? "✓" : ""}
               </i>

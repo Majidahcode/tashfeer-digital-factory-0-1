@@ -380,3 +380,7 @@
     block-size: 280px;
   }
 }
+
+.stale {
+  color: var(--state-warning);
+}
