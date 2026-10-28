@@ -8,6 +8,8 @@
   pointer-events: none;
   z-index: 3;
   fill: none;
+  /* the arrowhead's colour: lime with a limited touch of the yellow-green highlight (the line runs into it) */
+  --arrow-end: color-mix(in oklab, var(--brand-highlight) 45%, var(--brand-lime));
   stroke: var(--brand-text-silver);
   stroke-width: 2;
   stroke-linecap: round;
@@ -16,9 +18,19 @@
   filter: drop-shadow(0 0 6px var(--brand-glow-soft));
 }
 
+/* the curve's own path carries its geometry only; its colour runs along the pieces drawn over it */
+.geometry {
+  stroke: none;
+}
+
+.tip {
+  stroke: var(--arrow-end);
+}
+
 @media (forced-colors: active) {
-  .arrow {
-    stroke: CanvasText;
+  .arrow,
+  .arrow path {
+    stroke: CanvasText !important;
     filter: none;
   }
 }

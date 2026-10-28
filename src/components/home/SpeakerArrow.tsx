@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { type Box, type Drawing, pointer } from "@/lib/speaker-arrow";
+import { type Box, type Drawing, alongCurve, pointer } from "@/lib/speaker-arrow";
 import styles from "./SpeakerArrow.module.css";
 
 /*
@@ -40,6 +40,31 @@ function glyphBox(label: HTMLElement): Box {
   const m = ctx.measureText((label.textContent ?? "").trim());
   const baseline = r.top + Number.parseFloat(cs.paddingTop) + m.fontBoundingBoxAscent / 10;
   return { left: r.left, right: r.right, top: baseline - m.actualBoundingBoxAscent / 10, bottom: baseline + m.actualBoundingBoxDescent / 10 };
+}
+
+/**
+ * The line's colour along its length (owner's request of 2026-10-29): the page's near-black where it leaves «أنا», so
+ * it rises out of the background; forest green; emerald at the middle; lime over the last half; a touch of the
+ * yellow-green highlight at the arrowhead. Brand tokens only (src/styles/tokens.css), mixed in OKLab between stops.
+ */
+const STOPS: readonly (readonly [number, string])[] = [
+  [0, "--brand-bg"],
+  [0.27, "--brand-digit-low"],
+  [0.5, "--brand-emerald"],
+  [0.74, "--brand-lime"],
+  [1, "--arrow-end"],
+];
+
+function colourAt(at: number): string {
+  for (let i = 1; i < STOPS.length; i++) {
+    const [b, vb] = STOPS[i]!;
+    const [a, va] = STOPS[i - 1]!;
+    if (at <= b) {
+      const p = Math.round(((at - a) / (b - a)) * 1000) / 10;
+      return `color-mix(in oklab, var(${vb}) ${p}%, var(${va}))`;
+    }
+  }
+  return `var(${STOPS[STOPS.length - 1]![1]})`;
 }
 
 const visible = (el: Element) => {
@@ -92,8 +117,12 @@ export function SpeakerArrow() {
     <svg ref={ref} className={styles.arrow} aria-hidden="true" focusable="false" data-speaker-arrow="">
       {drawing ? (
         <>
-          <path d={drawing.line} data-arrow-line="" />
-          <path d={drawing.tip} data-arrow-tip="" />
+          {/* the whole curve, for its geometry; it is drawn by the pieces below, each in its colour along the way */}
+          <path d={drawing.line} className={styles.geometry} data-arrow-line="" />
+          {alongCurve(drawing.curve).map(({ d, at }) => (
+            <path key={at} d={d} style={{ stroke: colourAt(at) }} data-arrow-piece="" />
+          ))}
+          <path d={drawing.tip} className={styles.tip} data-arrow-tip="" />
         </>
       ) : null}
     </svg>

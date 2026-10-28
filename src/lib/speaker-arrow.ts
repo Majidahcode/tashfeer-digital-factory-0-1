@@ -157,6 +157,36 @@ export function toDrawing(curve: Curve): Drawing {
   };
 }
 
+/**
+ * The curve cut into `n` pieces of equal length along it, each with the fraction of the way it sits at (its middle),
+ * so a colour can run along the path itself — not across the screen, as a straight gradient would on an arc.
+ */
+export function alongCurve(curve: Curve, n = 48): { d: string; at: number }[] {
+  const STEPS = 400;
+  const pts: Pt[] = [];
+  const len: number[] = [0];
+  for (let i = 0; i <= STEPS; i++) {
+    pts.push(bezier(curve, i / STEPS));
+    if (i) len.push(len[i - 1]! + Math.hypot(pts[i]!.x - pts[i - 1]!.x, pts[i]!.y - pts[i - 1]!.y));
+  }
+  const total = len[STEPS]! || 1;
+  const pointAt = (s: number): Pt => {
+    let i = 1;
+    while (i < STEPS && len[i]! < s) i++;
+    const k = (s - len[i - 1]!) / ((len[i]! - len[i - 1]!) || 1);
+    return { x: pts[i - 1]!.x + k * (pts[i]!.x - pts[i - 1]!.x), y: pts[i - 1]!.y + k * (pts[i]!.y - pts[i - 1]!.y) };
+  };
+  const f = (p: Pt) => `${p.x.toFixed(2)} ${p.y.toFixed(2)}`;
+  const out: { d: string; at: number }[] = [];
+  for (let j = 0; j < n; j++) {
+    const a = (j / n) * total;
+    const b = ((j + 1) / n) * total;
+    const mid = [1, 2, 3].map((q) => pointAt(a + ((b - a) * q) / 4));
+    out.push({ d: `M${f(pointAt(a))} L${mid.map(f).join(" L")} L${f(pointAt(b))}`, at: (j + 0.5) / n });
+  }
+  return out;
+}
+
 /** Which case applies: the word beside the robot's head (hook) or above him (arc). */
 export function pointer(label: Box, robot: Box, guards: readonly Box[], bounds: Box): Drawing {
   const headY = robot.top + HEAD.y * (robot.bottom - robot.top);
