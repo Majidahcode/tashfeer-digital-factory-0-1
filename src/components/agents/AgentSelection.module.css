@@ -1,0 +1,382 @@
+/*
+ * Screen 2 (AgentSelection.tsx). The first screen's dark field and Neon palette; no portal here.
+ *   ≥ 900   the summary and Tashfeer (whole, standing) on the left · the title, the actions, the agents' strip and the
+ *           team bar on the right — one screen high on desktops
+ *   < 900   title → strip → team bar → summary, Tashfeer beside it
+ */
+.screen {
+  --pad: clamp(16px, 2.5vw, 64px);
+  position: relative;
+  z-index: var(--z-content);
+  direction: ltr; /* the composition is visual, as on the first screen: summary left, agents right */
+  display: grid;
+  grid-template-columns: clamp(290px, 23vw, 400px) minmax(0, 1fr);
+  gap: clamp(16px, 2vw, 40px);
+  min-block-size: calc(100svh - var(--header-h));
+  padding: 16px var(--pad) 18px;
+}
+
+/* desktops: one screen high — Tashfeer takes what the summary leaves in his column */
+@media (min-width: 900px) and (min-height: 640px) {
+  .screen {
+    block-size: calc(100svh - var(--header-h));
+  }
+}
+
+.side {
+  direction: rtl;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 8px;
+  min-block-size: 0;
+}
+
+.summary {
+  display: grid;
+  gap: 10px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: var(--neon-glass-fill);
+  box-shadow:
+    inset 0 1px 0 var(--neon-glass-top),
+    0 0 0 1px var(--neon-glass-edge);
+}
+
+.summaryTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--brand-lime);
+}
+
+.badge {
+  justify-self: start;
+  margin: 0;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--state-warning);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--state-warning) 40%, transparent);
+}
+
+.idea {
+  margin: 0;
+  padding: 8px 12px;
+  border-inline-start: 2px solid var(--brand-emerald);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--brand-text-silver);
+  background: color-mix(in srgb, var(--brand-emerald) 10%, transparent);
+  border-radius: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.facts {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.facts > div {
+  display: grid;
+  grid-template-columns: 7.5em 1fr;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.55;
+  background: color-mix(in srgb, var(--brand-glass-base) 70%, transparent);
+  box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
+}
+
+.facts dt {
+  color: var(--brand-muted);
+}
+
+.facts dd {
+  margin: 0;
+  color: var(--brand-text-silver);
+}
+
+/* Tashfeer, whole: as tall as the column leaves him, never cropped */
+.tashfeer {
+  justify-self: center;
+  align-self: end;
+  block-size: 100%;
+  max-block-size: 560px;
+  min-block-size: 0;
+  inline-size: auto;
+  max-inline-size: 100%;
+  object-fit: contain;
+  object-position: 50% 100%;
+  filter: drop-shadow(0 0 16px var(--brand-glow-soft));
+}
+
+.main {
+  direction: rtl;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 8px;
+  min-inline-size: 0;
+}
+
+.head {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.step {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--brand-lime);
+}
+
+.step::before,
+.step::after {
+  content: "";
+  inline-size: 40px;
+  block-size: 1px;
+  background: color-mix(in srgb, var(--brand-lime) 50%, transparent);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(28px, 2.6vw, 46px);
+  font-weight: 800;
+  line-height: 1.25;
+  background: var(--gradient-heading);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.lede {
+  margin: 0;
+  font-size: clamp(15px, 1.1vw, 19px);
+  color: var(--brand-text-silver);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-inline-end: auto;
+  font-size: 13px;
+  color: var(--brand-muted);
+}
+
+.legend i {
+  inline-size: 10px;
+  block-size: 10px;
+  border-radius: 50%;
+  background: var(--brand-highlight);
+  box-shadow: 0 0 8px var(--brand-glow);
+}
+
+.action {
+  padding: 8px 18px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--brand-highlight);
+  background: var(--brand-glass);
+  box-shadow:
+    inset 0 1px 0 var(--brand-glass-inner),
+    0 0 0 1px var(--brand-glass-edge),
+    0 0 18px -8px var(--brand-glow);
+  cursor: pointer;
+}
+
+.action:hover {
+  box-shadow:
+    inset 0 1px 0 var(--brand-glass-inner),
+    0 0 0 1px var(--brand-glow);
+}
+
+.action:focus-visible,
+.confirm:focus-visible {
+  outline: 2px solid var(--brand-highlight);
+  outline-offset: 2px;
+}
+
+.bar {
+  justify-self: center;
+  inline-size: min(100%, 760px);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  border-radius: 20px;
+  background: var(--neon-glass-fill);
+  box-shadow:
+    inset 0 1px 0 var(--neon-glass-top),
+    0 0 0 1px var(--neon-glass-edge),
+    0 14px 36px var(--brand-shadow);
+}
+
+.avatars {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.avatars li {
+  inline-size: 40px;
+  block-size: 40px;
+  margin-inline-start: -10px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--brand-lime);
+  background: var(--brand-glass-base);
+  box-shadow:
+    0 0 0 2px var(--brand-bg),
+    0 0 0 3px var(--brand-glow);
+}
+
+.avatars li:first-child {
+  margin-inline-start: 0;
+}
+
+.avatars img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  object-position: 50% 4%; /* head and shoulders */
+}
+
+.more {
+  font-size: 12px !important;
+}
+
+.count {
+  margin: 0;
+  flex: 1;
+  font-size: 15px;
+  color: var(--brand-text-silver);
+}
+
+.confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 34px;
+  border: 0;
+  border-radius: 14px;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--brand-bg);
+  background: linear-gradient(180deg, var(--brand-highlight), var(--brand-lime));
+  box-shadow: 0 0 24px -6px var(--brand-glow);
+  cursor: pointer;
+}
+
+.confirm:disabled {
+  color: var(--brand-muted);
+  background: var(--brand-glass);
+  box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
+  cursor: not-allowed;
+}
+
+.confirmed {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  inline-size: 100%;
+}
+
+.confirmed p {
+  flex: 1;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.confirmed b {
+  color: var(--brand-lime);
+}
+
+.backIcon {
+  transform: rotate(90deg);
+}
+
+@media (max-width: 899px) {
+  .screen {
+    grid-template-columns: 1fr;
+    padding-block-end: 24px;
+  }
+
+  .side {
+    order: 2;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto;
+    align-items: end;
+  }
+
+  .tashfeer {
+    block-size: 300px;
+    min-block-size: 0;
+  }
+
+  .main {
+    order: 1;
+  }
+
+  .actions {
+    justify-content: center;
+  }
+
+  .legend {
+    inline-size: 100%;
+    justify-content: center;
+    margin: 0;
+  }
+
+  .bar {
+    position: sticky;
+    bottom: 10px;
+    z-index: 220;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .confirm {
+    flex: 1 0 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 519px) {
+  .side {
+    grid-template-columns: 1fr;
+  }
+
+  .tashfeer {
+    block-size: 280px;
+  }
+}
