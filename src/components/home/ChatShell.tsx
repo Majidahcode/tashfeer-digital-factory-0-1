@@ -1,37 +1,111 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Icon, type IconName } from "@/components/icons/Icon";
 import { CHAT } from "@/domain/home-content";
 import { asset } from "@/lib/assets";
 import { cx } from "@/lib/cx";
+import { transitionTo } from "@/lib/page-transition";
 import { CONTENT_BOX, boxVars, chatRowVars } from "@/lib/portal-geometry";
+import { type AttachmentKind, addAttachments, removeAttachment, updateProject, useProject } from "@/lib/project-store";
 import styles from "./ChatShell.module.css";
 
-const TOOL_ICONS: readonly IconName[] = ["doc", "link", "file", "video", "image"];
+type Tool = { label: (typeof CHAT.tools)[number]; icon: IconName; kind: AttachmentKind | "link"; accept?: string };
+const TOOLS: readonly Tool[] = [
+  { label: "الوصف", icon: "doc", kind: "description", accept: ".pdf,.doc,.docx,.txt,.md,.rtf,.odt" },
+  { label: "روابط", icon: "link", kind: "link" },
+  { label: "ملفات", icon: "file", kind: "file" },
+  { label: "فيديو", icon: "video", kind: "video", accept: "video/*" },
+  { label: "صور", icon: "image", kind: "image", accept: "image/*" },
+];
+
+export type ChatMessage = { id: string; from: "tashfeer" | "visitor" | "note"; text: string };
 
 /**
- * Phase 1: the intake window's visual design only. Nothing here pretends to send, upload or transcribe. The header is
- * the avatar alone, with a grey "not connected" dot; the preview status is spelled out for assistive technology and in
- * the avatar's tooltip, and shown in the conversation as soon as the visitor uses the chat — focusing the field,
- * pressing Enter, or pressing a control that needs Phase 3. Those controls are marked unavailable (aria-disabled)
- * rather than inert, so pressing one explains instead of doing nothing.
+ * The intake inside the portal: the visitor describes the idea, attaches what explains it, and presses «ادخل». The
+ * idea and the attachments are kept in this browser only (src/lib/project-store.ts) — nothing is uploaded and no
+ * assistant answers yet; the conversation says so where it applies. The microphone is not available yet and says so.
  *
  * It lives inside the portal ring: positioned over the ring's opening and drawn above the ring art, with each row
- * at a measured height and width of the opening (src/lib/portal-geometry.ts). Like a messaging app, the
- * conversation takes most of the height and the text field sits right under it; the attachment types are compact
- * icons (each named for assistive technology and in its tooltip) and Enter a compact button.
+ * at a measured height and width of the opening (src/lib/portal-geometry.ts). Like a messaging app, the messages
+ * gather above the text field; the attachment types are compact icons (each named for assistive technology and in
+ * its tooltip) and Enter a compact button.
+ *
+ * By default «ادخل» opens the agents screen. The video test (/robot-animation-test) drives it instead: it keeps its
+ * own text (`persist={false}`), adds the conversation (`messages`), and is told when typing starts and on submit.
  */
-export function ChatShell({ className }: { className?: string }) {
-  const [notice, setNotice] = useState(false);
+export function ChatShell({
+  className,
+  persist = true,
+  messages = [],
+  onTypingStart,
+  onSubmit,
+}: {
+  className?: string;
+  persist?: boolean;
+  messages?: readonly ChatMessage[];
+  onTypingStart?: () => void;
+  /** called with the idea; without it, «ادخل» opens the agents screen */
+  onSubmit?: (idea: string) => void;
+}) {
+  const router = useRouter();
+  const project = useProject();
+  const [local, setLocal] = useState("");
+  const [notes, setNotes] = useState<string[]>([]);
   const logRef = useRef<HTMLDivElement>(null);
+  const fieldRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const pickKind = useRef<AttachmentKind>("file");
+  const typing = useRef(false);
   const avatar = asset("brand-mark");
-  const explain = () => setNotice(true);
+  const idea = persist ? project.idea : local;
+  const attachments = persist ? project.attachments : [];
+
+  const note = (text: string) => setNotes((n) => (n.at(-1) === text ? n : [...n.filter((x) => x !== text), text]));
 
   useEffect(() => {
-    if (notice) logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
-  }, [notice]);
+    logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
+  }, [notes, messages.length, attachments.length]);
+
+  const setIdea = (value: string) => {
+    if (value.trim() && !typing.current) {
+      typing.current = true;
+      onTypingStart?.();
+    }
+    if (!value.trim()) typing.current = false;
+    if (persist) updateProject({ idea: value });
+    else setLocal(value);
+  };
+
+  const submit = () => {
+    if (!idea.trim() && attachments.length === 0) {
+      note(CHAT.notes.empty);
+      fieldRef.current?.focus();
+      return;
+    }
+    if (onSubmit) {
+      onSubmit(idea.trim());
+      typing.current = false;
+      if (!persist) setLocal("");
+      return;
+    }
+    transitionTo("/agents", (href) => router.push(href));
+  };
+
+  const pressTool = (t: Tool) => {
+    if (t.kind === "link") {
+      note(CHAT.notes.links);
+      fieldRef.current?.focus();
+      return;
+    }
+    pickKind.current = t.kind;
+    const input = fileRef.current;
+    if (!input) return;
+    input.accept = t.accept ?? "";
+    input.click();
+  };
 
   return (
     <section
@@ -56,11 +130,36 @@ export function ChatShell({ className }: { className?: string }) {
 
       <div ref={logRef} className={styles.log} role="log" aria-live="polite" aria-label="المحادثة" tabIndex={0}>
         <p className={styles.bubble}>{CHAT.welcome}</p>
-        {notice && (
-          <div className={styles.note} role="status">
-            {CHAT.disabledNote}
-          </div>
+        {messages.map((m) =>
+          m.from === "note" ? (
+            <div key={m.id} className={styles.note} data-chat-message="note">
+              {m.text}
+            </div>
+          ) : (
+            <p key={m.id} className={cx(styles.bubble, m.from === "visitor" && styles.mine)} data-chat-message={m.from}>
+              {m.text}
+            </p>
+          ),
         )}
+        {attachments.length > 0 && (
+          <ul className={styles.chips} aria-label="المرفقات" data-chat-attachments="">
+            {attachments.map((a) => (
+              <li key={a.id} className={styles.chip}>
+                <span className={styles.chipName} dir="auto" title={a.name}>
+                  {a.name}
+                </span>
+                <button type="button" className={styles.chipRemove} aria-label={`إزالة ${a.name}`} onClick={() => removeAttachment(a.id)}>
+                  ×
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {notes.map((n) => (
+          <div key={n} className={styles.note} role="status">
+            {n}
+          </div>
+        ))}
       </div>
 
       <div className={styles.inputRow}>
@@ -68,15 +167,17 @@ export function ChatShell({ className }: { className?: string }) {
           وصف المشروع
         </label>
         <textarea
+          ref={fieldRef}
           id="intake-text"
           className={styles.textarea}
           rows={1}
           placeholder={CHAT.placeholder}
-          onFocus={explain}
+          value={idea}
+          onChange={(e) => setIdea(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
+            if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault();
-              explain();
+              submit();
             }
           }}
         />
@@ -85,29 +186,45 @@ export function ChatShell({ className }: { className?: string }) {
           className={styles.iconBtn}
           aria-disabled="true"
           aria-label="تسجيل صوتي — غير مفعّل بعد"
-          onClick={explain}
+          onClick={() => note(CHAT.notes.mic)}
         >
           <Icon name="mic" size={16} />
         </button>
       </div>
 
-      <div className={styles.tools} role="group" aria-label="أنواع المرفقات — غير مفعّلة في معاينة التصميم">
-        {CHAT.tools.map((label, i) => (
-          <button key={label} type="button" className={styles.tool} aria-disabled="true" title={label} onClick={explain}>
-            <Icon name={TOOL_ICONS[i] ?? "file"} size={16} />
-            <span className="sr-only">{label}</span>
+      <div className={styles.tools} role="group" aria-label="أرفق ما يوضح فكرتك">
+        {TOOLS.map((t) => (
+          <button
+            key={t.label}
+            type="button"
+            className={styles.tool}
+            title={t.label}
+            aria-disabled={persist ? undefined : "true"}
+            onClick={() => (persist ? pressTool(t) : note(CHAT.notes.attachments))}
+          >
+            <Icon name={t.icon} size={16} />
+            <span className="sr-only">{t.label}</span>
           </button>
         ))}
+        <input
+          ref={fileRef}
+          type="file"
+          multiple
+          hidden
+          data-chat-file-input=""
+          onChange={(e) => {
+            const files = e.target.files;
+            if (files?.length) {
+              addAttachments(pickKind.current, files);
+              note(CHAT.notes.attachments);
+            }
+            e.target.value = "";
+          }}
+        />
       </div>
 
       <div className={styles.footer}>
-        <button
-          type="button"
-          className={styles.enter}
-          aria-disabled="true"
-          title="يُفعَّل مع الاستلام الحقيقي"
-          onClick={explain}
-        >
+        <button type="button" className={styles.enter} onClick={submit} data-chat-enter="">
           {CHAT.enter}
         </button>
       </div>

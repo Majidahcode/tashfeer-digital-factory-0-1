@@ -1,12 +1,14 @@
 import Image from "next/image";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { AmbientPhrases } from "@/components/background/AmbientPhrases";
 import { NumberedCard } from "@/components/cards/NumberedCard";
 import { Icon } from "@/components/icons/Icon";
 import { GradientText } from "@/components/typography/GradientText";
 import { AMBIENT_PHRASES, FEATURES, HERO } from "@/domain/home-content";
-import { asset, assetUrl } from "@/lib/assets";
-import { GLASS_BOX, RING_ASPECT, RING_IMAGE, boxVars } from "@/lib/portal-geometry";
+import { TashfeerCharacter } from "@/components/characters/TashfeerCharacter";
+import { PortalFrame } from "@/components/portal/PortalFrame";
+import { asset } from "@/lib/assets";
+import { RING_ASPECT, RING_IMAGE } from "@/lib/portal-geometry";
 import { ChatShell } from "./ChatShell";
 import { HeroDisclosure } from "./HeroDisclosure";
 import { ProcessSteps } from "./ProcessSteps";
@@ -18,9 +20,15 @@ import styles from "./HomeScene.module.css";
  * customer frame it; the copy states the value proposition without taking over. Desktop keeps the approved
  * left-to-right composition; narrow screens lead with the portal (see HomeScene.module.css).
  */
-export function HomeScene() {
-  const robot = asset("tashfeer");
-  const ring = asset("portal-ring");
+export function HomeScene({
+  characterMedia,
+  chat,
+}: {
+  /** what Tashfeer is drawn with (default: the approved still image) — the video test passes its player */
+  characterMedia?: ReactNode;
+  /** the portal's content (default: the intake chat) */
+  chat?: ReactNode;
+} = {}) {
   const customer = asset("seated-customer");
 
   return (
@@ -88,38 +96,9 @@ export function HomeScene() {
       </div>
 
       <div className={styles.stage} data-scene-part="stage">
-        <Image
-          src={robot.src}
-          width={robot.width}
-          height={robot.height}
-          alt="تشفير"
-          className={styles.robot}
-          sizes="(max-width: 899px) 30vw, 16vw"
-          priority
-          data-tashfeer=""
-        />
+        <TashfeerCharacter className={styles.robot} media={characterMedia} />
         {/* the portal box is the ring's visible band; the glow overflows it. Glass < ring < chat content. */}
-        <div className={styles.portal} data-portal="" style={{ aspectRatio: RING_ASPECT, ...boxVars("img", RING_IMAGE) }}>
-          <div
-            className={styles.glass}
-            aria-hidden="true"
-            style={{ ...boxVars("glass", GLASS_BOX), "--hole-mask": assetUrl("portal-hole-mask") } as CSSProperties}
-          />
-          {/* served as-is (lossless WebP of the derived ring): the optimizer's AVIF smeared its fine sparks */}
-          <div className={styles.ringClip}>
-            <Image
-              src={ring.src}
-              width={ring.width}
-              height={ring.height}
-              alt=""
-              className={styles.ring}
-              unoptimized
-              priority
-              data-portal-ring=""
-            />
-          </div>
-          <ChatShell />
-        </div>
+        <PortalFrame className={styles.portal}>{chat ?? <ChatShell />}</PortalFrame>
       </div>
 
       <SpeakerArrow />

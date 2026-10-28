@@ -16,6 +16,9 @@
 }
 
 .cta {
+  border: 0;
+  font-family: inherit;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;

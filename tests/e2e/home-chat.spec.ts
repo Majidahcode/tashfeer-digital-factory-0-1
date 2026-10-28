@@ -8,7 +8,10 @@ import { hasMousePointer, openHome } from "./support";
  * wide desktops.
  */
 
-const NOTE = "معاينة تصميم: الإرسال والمرفقات والصوت غير مفعّلة بعد.";
+const MIC_NOTE = "التسجيل الصوتي غير مفعّل بعد؛ اكتب فكرتك.";
+const EMPTY_NOTE = "اكتب فكرتك أولًا، أو أرفق ما يوضحها.";
+const FILES_NOTE = "تبقى المرفقات في متصفحك ولا تُرفع في هذه النسخة.";
+const STATUS = "نسخة تجريبية — لا يوجد ذكاء اصطناعي متصل بعد";
 
 test.beforeEach(async ({ page }) => {
   await openHome(page);
@@ -90,13 +93,13 @@ test("the chat header is the avatar alone (32–40 px): no name or status label 
   expect(r.statusShown).toBe(false);
   // both remain for assistive technology: the region is named by its (visually hidden) heading, the status is read out
   await expect(page.getByRole("region", { name: "تشفير" })).toHaveAttribute("data-chat-shell", "");
-  expect(r.status).toBe("معاينة تصميم — غير مفعّل");
+  expect(r.status).toBe(STATUS);
 });
 
 test("chat typography: a compact messaging hierarchy that does not grow with the portal", async ({ page }) => {
-  // show the explanation line too: it is the secondary copy that appears when the chat is used
-  await page.locator("[data-chat-shell] textarea").focus();
-  await expect(page.locator("[data-chat-shell]").getByRole("status")).toHaveText(NOTE);
+  // show an explanation line too (the microphone's): the secondary copy that appears when it applies
+  await page.locator("[data-chat-shell]").getByRole("button", { name: /تسجيل صوتي/ }).click({ force: true }); // aria-disabled: it explains
+  await expect(page.locator("[data-chat-shell]").getByRole("status")).toHaveText(MIC_NOTE);
   const r = await page.evaluate(() => {
     const chat = document.querySelector("[data-chat-shell]")!;
     const size = (el: Element) => Number.parseFloat(getComputedStyle(el).fontSize);
@@ -123,8 +126,8 @@ test("the whole chat sits inside the portal's opening: every part keeps ≥ 12 p
   // the owner's reference portal (2026-10-24): the band is where the ring image is at least 50 % opaque, read on the
   // image itself at its rendered size; the avatar, the message, the field, each attachment icon and «ادخل» — with the
   // explanation line shown too — keep 12 px of air from it all round
-  await page.locator("[data-chat-shell] textarea").focus();
-  await expect(page.locator("[data-chat-shell]").getByRole("status")).toHaveText(NOTE);
+  await page.locator("[data-chat-shell]").getByRole("button", { name: /تسجيل صوتي/ }).click({ force: true }); // aria-disabled: it explains
+  await expect(page.locator("[data-chat-shell]").getByRole("status")).toHaveText(MIC_NOTE);
   const worst = await page.evaluate(async () => {
     const img = document.querySelector<HTMLImageElement>("img[data-portal-ring]")!;
     const ib = img.getBoundingClientRect();
@@ -168,7 +171,7 @@ test("the whole chat sits inside the portal's opening: every part keeps ≥ 12 p
   for (const [name, a] of Object.entries(worst)) expect(a, `${name}: the ring's opacity within 12 px`).toBeLessThan(0.5);
 });
 
-test("pressing a control that is not enabled yet explains it in the conversation; nothing is sent", async ({ page }, info) => {
+test("«ادخل» with nothing written explains what is needed; the microphone says it is not available yet", async ({ page }, info) => {
   const chat = page.locator("[data-chat-shell]");
   const note = chat.getByRole("status");
   await expect(note).toHaveCount(0);
@@ -177,21 +180,26 @@ test("pressing a control that is not enabled yet explains it in the conversation
   const b = (await enter.boundingBox())!;
   if (hasMousePointer(info)) await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2);
   else await page.touchscreen.tap(b.x + b.width / 2, b.y + b.height / 2);
-  await expect(note).toHaveText(NOTE);
-  await expect(enter).toBeDisabled();
-  // the conversation holds the welcome and the explanation, nothing else
-  await expect(chat.locator("[role=log] > *")).toHaveCount(2);
+  await expect(note).toHaveText(EMPTY_NOTE);
+  await expect(page).toHaveURL(/\/$/);
+  const mic = chat.getByRole("button", { name: /تسجيل صوتي/ });
+  await expect(mic).toBeDisabled();
+  await mic.click({ force: true }); // aria-disabled, but it explains when pressed
+  await expect(chat.getByRole("status").last()).toHaveText(MIC_NOTE);
 });
 
-test("keyboard: an attachment type is reachable and, pressed, explains instead of opening anything", async ({ page }) => {
+test("keyboard: an attachment type opens the file picker; the file is listed, kept in the browser, removable", async ({ page }) => {
   const chat = page.locator("[data-chat-shell]");
   const images = chat.getByRole("button", { name: "صور" });
   await images.focus();
   await expect(images).toBeFocused();
+  const chooser = page.waitForEvent("filechooser");
   await page.keyboard.press("Enter");
-  await expect(chat.getByRole("status")).toHaveText(NOTE);
-  await expect(images).toBeDisabled();
-  await expect(chat.locator("[role=log] > *")).toHaveCount(2);
+  await (await chooser).setFiles({ name: "مرجع.png", mimeType: "image/png", buffer: Buffer.from("89504e47", "hex") });
+  await expect(chat.locator("[data-chat-attachments] li")).toHaveCount(1);
+  await expect(chat.getByRole("status")).toHaveText(FILES_NOTE);
+  await chat.getByRole("button", { name: "إزالة مرجع.png" }).click();
+  await expect(chat.locator("[data-chat-attachments]")).toHaveCount(0);
 });
 
 test("wide desktops: the portal is as large as the screen allows, whole under the header, on one screen", async ({ page }, info) => {

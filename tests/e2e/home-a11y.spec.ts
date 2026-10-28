@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { openHome } from "./support";
 
 const FOCUSABLE =
-  "a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex='-1'])";
+  "a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]):not([hidden]), select:not([disabled]), [tabindex]:not([tabindex='-1'])";
 
 test("P1-15 axe-core reports no serious or critical violations", async ({ page }, info) => {
   await openHome(page);
@@ -83,28 +83,22 @@ test("loads without console errors, page errors or failed requests", async ({ pa
   expect(problems).toEqual([]);
 });
 
-test("the intake is an honest design preview: nothing pretends to send, upload or record", async ({ page }) => {
+test("the intake is honest: nothing pretends to record or answer; what is typed is kept, not sent", async ({ page }) => {
   await openHome(page);
   const chat = page.locator("[data-chat-shell]");
-  await expect(chat.getByRole("button", { name: "ادخل" })).toBeDisabled();
-  for (const label of ["الوصف", "روابط", "ملفات", "فيديو", "صور"]) await expect(chat.getByRole("button", { name: label })).toBeDisabled();
   await expect(chat.getByRole("button", { name: /تسجيل صوتي/ })).toBeDisabled();
   await expect(page.getByRole("button", { name: /تحدّث الآن/ })).toBeDisabled();
-  // the preview status is stated in the chat's header for assistive technology (owner's correction of 2026-10-23: no
-  // longer as a visible label), and explained in the conversation as soon as the chat is used
-  await expect(chat.locator("[data-chat-status]")).toHaveText("معاينة تصميم — غير مفعّل");
-  const note = chat.getByRole("status");
-  await expect(note).toHaveCount(0);
+  // what this version does is stated in the chat's header for assistive technology (and the avatar's tooltip)
+  await expect(chat.locator("[data-chat-status]")).toHaveText("نسخة تجريبية — لا يوجد ذكاء اصطناعي متصل بعد");
+  await expect(chat.getByRole("status")).toHaveCount(0);
 
   const box = chat.getByLabel("وصف المشروع");
   // a real click: fails if the ring art drawn over the chat intercepts the pointer
   await box.click();
   await expect(box).toBeFocused();
-  await expect(note, "explained before anything is typed").toHaveText("معاينة تصميم: الإرسال والمرفقات والصوت غير مفعّلة بعد.");
   await box.fill("أبي موقع لمطعمي");
-  await box.press("Enter");
-  await expect(chat.getByRole("status")).toHaveText("معاينة تصميم: الإرسال والمرفقات والصوت غير مفعّلة بعد.");
   await expect(box).toHaveValue("أبي موقع لمطعمي");
+  // nothing answers in the conversation: the idea goes with the visitor to the agents screen
   await expect(chat.getByRole("log")).not.toContainText("أبي موقع لمطعمي");
 });
 

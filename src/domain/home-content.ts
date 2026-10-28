@@ -36,10 +36,17 @@ export const AMBIENT_PHRASES = [
 
 export const CHAT = {
   name: "تشفير",
-  status: "معاينة تصميم — غير مفعّل",
+  /** read out with the avatar (its tooltip, and for assistive technology): what this version does and does not do */
+  status: "نسخة تجريبية — لا يوجد ذكاء اصطناعي متصل بعد",
   welcome: "أهلًا! أنا تشفير، مساعدك في مصنع التحول الرقمي. أخبرني عن فكرتك أو مشروعك.",
   tools: ["الوصف", "روابط", "ملفات", "فيديو", "صور"] as const,
   placeholder: "اشرح فكرتك هنا…",
-  disabledNote: "معاينة تصميم: الإرسال والمرفقات والصوت غير مفعّلة بعد.",
   enter: "ادخل",
+  /** the honest lines the conversation shows when they apply */
+  notes: {
+    attachments: "تبقى المرفقات في متصفحك ولا تُرفع في هذه النسخة.",
+    links: "الصق الروابط في وصف فكرتك؛ يحفظها تشفير معها.",
+    mic: "التسجيل الصوتي غير مفعّل بعد؛ اكتب فكرتك.",
+    empty: "اكتب فكرتك أولًا، أو أرفق ما يوضحها.",
+  },
 };

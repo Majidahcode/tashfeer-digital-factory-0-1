@@ -1,0 +1,64 @@
+/*
+ * The portal as one part (PortalFrame.tsx): the chat's glass, the ring art, and what is drawn above the ring (the
+ * chat). Its box — the ring's visible band — is sized and placed by the scene; everything here is relative to it.
+ * Layers (one stacking context): glass (z 1) < behind (z 1, after the glass: what passes behind the frame) < ring (z 2) < content (the chat, z 3).
+ */
+.frame {
+  position: relative;
+}
+
+.behind {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* the ring image's box (band + glow); on wide desktops it also trims the faint end of the lower glow (see ≥1440) */
+.ringClip {
+  position: absolute;
+  left: var(--img-l);
+  top: var(--img-t);
+  inline-size: var(--img-w);
+  block-size: var(--img-h);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.ring {
+  display: block;
+  inline-size: 100%;
+  block-size: auto; /* the image's own aspect ratio: never stretched */
+  max-inline-size: none;
+}
+
+/* the chat's glass: fills the ring's opening (measured mask), framed by the ring's own inner glow above it */
+.glass {
+  position: absolute;
+  left: var(--glass-l);
+  top: var(--glass-t);
+  inline-size: var(--glass-w);
+  block-size: var(--glass-h);
+  z-index: 1;
+  /* translucent dark green glass: denser behind the text, thinner toward the ring, a faint yellow-green sheen on top */
+  background:
+    radial-gradient(ellipse 70% 46% at 50% 30%, var(--chat-sheen), transparent 72%),
+    radial-gradient(
+      ellipse at 50% 55%,
+      color-mix(in srgb, var(--brand-glass-base) 48%, transparent) 30%,
+      var(--chat-glass) 100%
+    );
+  box-shadow: inset 0 0 40px var(--brand-glow-soft);
+  -webkit-mask: var(--hole-mask) 0 0 / 100% 100% no-repeat;
+  mask: var(--hole-mask) 0 0 / 100% 100% no-repeat;
+}
+
+
+/* ≥1440 (HomeScene.module.css): the ring's glow is clipped only at the screen's bottom edge */
+@media (min-width: 1440px) {
+  /* from the image's top (above the band: --img-t is negative) down to the screen's bottom edge, at most the image */
+  .ringClip {
+    block-size: min(var(--img-h), calc(100svh - var(--header-h) - var(--air-top) - var(--img-t)));
+    overflow: clip;
+  }
+}
