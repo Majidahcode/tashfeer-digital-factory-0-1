@@ -58,30 +58,43 @@ test("two models with a name and a direction each, clearly illustrative; approva
   await expect(page.locator("[data-approve-design]")).toBeEnabled();
 });
 
-test("«عرض النموذج» opens a larger preview that closes; choosing there counts", async ({
+test("the models are seen on the page itself: no larger view, no comparison window; «مقارنة مباشرة» is a label", async ({
   page,
 }) => {
   await toPrototypes(page);
-  await page.locator("[data-view=A]").click();
-  const dialog = page.locator("dialog[data-preview-dialog=A]");
-  await expect(dialog).toBeVisible();
-  const big = await dialog.locator("[data-prototype-preview=A]").boundingBox();
-  const small = await page
-    .locator("[data-prototype=A] [data-prototype-preview=A]")
-    .boundingBox();
-  expect(big!.width).toBeGreaterThan(small!.width * 1.3);
-  await dialog.locator("[data-dialog-close]").click();
-  await expect(dialog).toBeHidden();
-  await page.locator("[data-view=B]").click();
-  await page.keyboard.press("Escape");
-  await expect(page.locator("dialog[open]")).toHaveCount(0);
-  await page.locator("[data-view=B]").click();
-  await page
-    .locator("dialog[open]")
-    .getByRole("button", { name: "اختيار هذا النموذج" })
-    .click();
-  await page.locator("dialog[open] [data-dialog-close]").click();
-  expect(await chosen(page)).toEqual(["B"]);
+  await expect(page.locator("[data-view]")).toHaveCount(0);
+  await expect(page.locator("dialog")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /عرض النموذج|مقارنة/ })).toHaveCount(0);
+  for (const id of ["A", "B"]) {
+    const card = page.locator(`[data-prototype=${id}]`);
+    await expect(card.getByRole("button")).toHaveCount(2);
+    await expect(card.locator(`[data-choose=${id}]`)).toBeVisible();
+    await expect(card.locator(`[data-request=${id}]`)).toBeVisible();
+  }
+  const label = page.locator("[data-compare-label]");
+  expect(await label.evaluate((e) => e.tagName)).toBe("SPAN");
+  const wide = (page.viewportSize()?.width ?? 0) >= 1100;
+  if (wide) await expect(label).toHaveText("مقارنة مباشرة");
+  else await expect(label).toBeHidden();
+});
+
+test("the change-request form is hidden until asked for, names its model, and closes", async ({
+  page,
+}) => {
+  await toPrototypes(page);
+  await expect(page.locator("[data-note-form]")).toHaveCount(0);
+  await expect(page.locator("[data-note-text]")).toHaveCount(0);
+  await page.locator("[data-request=A]").click();
+  const form = page.locator("[data-note-form=A]");
+  await expect(form).toBeVisible();
+  await expect(form).toContainText("طلب تعديل على النموذج A");
+  await expect(page.locator("[data-note-text]")).toBeFocused();
+  await expect(page.locator("[data-note-attach]")).toBeVisible();
+  await expect(page.locator("[data-request=A]")).toHaveAttribute("aria-expanded", "true");
+  await page.locator("[data-request=B]").click();
+  await expect(page.locator("[data-note-form=B]")).toContainText("النموذج B");
+  await page.locator("[data-note-close]").click();
+  await expect(page.locator("[data-note-form]")).toHaveCount(0);
 });
 
 test("a change request is tied to its model, kept across a reload, and its file then needs re-attaching", async ({
@@ -192,19 +205,45 @@ test("opened without an approved team, the screen points to the step that is nee
   await expect(page).toHaveURL(/\/agents\/?$/);
 });
 
-test("the review fits: no sideways scroll; both previews are shown", async ({
+test("the previews are large from the start: side by side on a desktop, one under the other below; nothing cut", async ({
   page,
 }) => {
   await toPrototypes(page);
   const r = await page.evaluate(() => ({
+    vw: document.documentElement.clientWidth,
     sideways:
       document.documentElement.scrollWidth -
       document.documentElement.clientWidth,
     previews: [
-      ...document.querySelectorAll("[data-prototype] [data-prototype-preview]"),
-    ].map((e) => Math.round(e.getBoundingClientRect().width)),
+      ...document.querySelectorAll<HTMLElement>("[data-prototype] [data-prototype-preview]"),
+    ].map((e) => {
+      const b = e.getBoundingClientRect();
+      return { x: b.x, y: b.y, w: b.width, h: b.height, cut: e.scrollHeight - e.clientHeight };
+    }),
   }));
   expect(r.sideways).toBeLessThanOrEqual(0);
   expect(r.previews).toHaveLength(2);
-  for (const w of r.previews) expect(w).toBeGreaterThan(250);
+  const [a, b] = r.previews;
+  for (const p of r.previews) expect(p.cut).toBeLessThanOrEqual(1);
+  expect(Math.abs(a!.w - b!.w)).toBeLessThanOrEqual(1);
+  expect(Math.abs(a!.h - b!.h)).toBeLessThanOrEqual(1);
+  if (r.vw >= 1100) {
+    // side by side, together most of the width
+    expect(Math.abs(a!.y - b!.y)).toBeLessThanOrEqual(1);
+    expect(a!.w + b!.w).toBeGreaterThan(r.vw * 0.6);
+  } else {
+    // one under the other, each nearly the full width
+    expect(b!.y).toBeGreaterThan(a!.y + a!.h);
+    expect(a!.w).toBeGreaterThan(Math.min(r.vw * 0.8, 700));
+  }
+});
+
+test("on a desktop the two models and the approval are on the first screen", async ({ page }) => {
+  const vp = page.viewportSize()!;
+  test.skip(vp.width < 1100 || vp.height < 760, "desktop sizes");
+  await toPrototypes(page);
+  const bottom = await page
+    .locator("[data-approve-design]")
+    .evaluate((e) => e.getBoundingClientRect().bottom);
+  expect(bottom).toBeLessThanOrEqual(vp.height);
 });

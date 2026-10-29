@@ -1,6 +1,5 @@
 import { Icon, type IconName } from "@/components/icons/Icon";
 import type { Prototype } from "@/domain/prototypes";
-import { cx } from "@/lib/cx";
 import styles from "./PrototypePreview.module.css";
 
 const FEATURES: readonly [IconName, string, string][] = [
@@ -21,15 +20,11 @@ const SERVICES: readonly IconName[] = [
 /**
  * One prototype's preview. For an illustrative prototype: an example page drawn in HTML — the same header, hero,
  * features and services in both directions, only the visual treatment differs — scaled to its box (every size is in
- * em of a font size set from the box's width). For a real output (later): the image or the live page.
+ * em of a font size set from the box's width, so nothing is stretched or cut: the height follows the content). In a
+ * narrow box (a phone) the same page is drawn in its narrow layout, readable, rather than a desktop page shrunk.
+ * For a real output (later): the image or the live page.
  */
-export function PrototypePreview({
-  prototype,
-  large = false,
-}: {
-  prototype: Prototype;
-  large?: boolean;
-}) {
+export function PrototypePreview({ prototype }: { prototype: Prototype }) {
   const s = prototype.source;
   if (s.kind === "image") {
     return (
@@ -55,7 +50,7 @@ export function PrototypePreview({
   }
   return (
     <div
-      className={cx(styles.frame, large && styles.large)}
+      className={styles.frame}
       data-theme={s.theme}
       data-prototype-preview={prototype.id}
     >

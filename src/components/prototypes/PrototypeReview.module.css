@@ -1,7 +1,8 @@
 /*
  * Screen 4 (PrototypeReview.tsx) — the dark field and Neon palette of the other screens; Tashfeer whole, no portal.
- *   ≥ 1100  steps across the top · Tashfeer on the left · title, the two models (A on the right), notes and actions
- *   < 1100  steps → title → models A | B (one under the other below 720) → notes → actions → Tashfeer
+ *   ≥ 1100  steps across the top · Tashfeer on the left · title, the two models large and side by side (A on the
+ *           right, «مقارنة مباشرة» between them as a label), the change-request form when asked for, actions
+ *   < 1100  steps → title → model A → model B (each the full width, readable) → form → actions → Tashfeer
  */
 .screen {
   --pad: clamp(16px, 2.5vw, 64px);
@@ -121,20 +122,23 @@
   color: var(--brand-text-silver);
 }
 
-/* ── the two models ── */
+/* ── the two models: as large as the content column allows ── */
 .cards {
+  --cards-gap: clamp(64px, 5.5vw, 104px);
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: clamp(28px, 4vw, 72px);
-  max-inline-size: min(1300px, calc((100svh - 400px) * 2.6));
+  grid-template-columns: minmax(0, 1fr) var(--cards-gap) minmax(0, 1fr);
+  align-items: stretch;
   inline-size: 100%;
+  max-inline-size: 1720px;
   justify-self: center;
 }
 
 .card {
   position: relative;
   display: grid;
-  gap: 10px;
+  grid-template-rows: auto 1fr auto;
+  gap: 12px;
+  min-inline-size: 0;
   padding: 14px 16px 16px;
   border-radius: 20px;
   background: var(--neon-glass-fill);
@@ -169,13 +173,6 @@
   color: var(--brand-muted);
 }
 
-.summary {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--brand-text-silver);
-}
-
 .chosen {
   display: inline-flex;
   align-items: center;
@@ -197,56 +194,42 @@
   background: var(--brand-lime);
 }
 
-.previewBtn {
-  display: block;
-  padding: 0;
-  border: 0;
-  border-radius: 10px;
-  background: none;
-  cursor: zoom-in;
-}
-
-.previewBtn:focus-visible {
-  outline: 2px solid var(--brand-highlight);
-  outline-offset: 3px;
-}
-
 .cardActions {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  max-inline-size: 560px;
+  inline-size: 100%;
+  justify-self: center;
 }
 
-/* the live comparison, between the two cards */
+/* «مقارنة مباشرة»: a label between the two cards, not a control */
 .compare {
-  position: absolute;
-  top: 50%;
-  inset-inline-end: calc(-1 * clamp(28px, 4vw, 72px) / 2 - 32px);
-  translate: 0 -50%;
-  inline-size: 64px;
+  align-self: center;
+  justify-self: center;
   display: grid;
   justify-items: center;
-  gap: 6px;
-  padding: 0;
-  border: 0;
-  font: inherit;
-  font-size: 12px;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
   color: var(--brand-text-silver);
-  background: none;
-  cursor: pointer;
-  z-index: 2;
 }
 
-.compare svg {
-  inline-size: 46px;
-  block-size: 46px;
-  padding: 12px;
-  border-radius: 50%;
-  color: var(--brand-lime);
-  background: var(--brand-glass-strong);
-  box-shadow:
-    inset 0 0 0 1.5px var(--brand-glow),
-    0 0 16px -6px var(--brand-glow);
+.compare::before,
+.compare::after {
+  content: "";
+  inline-size: 1px;
+  block-size: 56px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in srgb, var(--brand-lime) 55%, transparent)
+  );
+}
+
+.compare::after {
+  rotate: 180deg;
 }
 
 /* ── buttons ── */
@@ -311,6 +294,11 @@
     0 0 0 1px var(--brand-glass-edge);
 }
 
+.secondaryOn {
+  color: var(--brand-highlight);
+  box-shadow: inset 0 0 0 1.5px var(--brand-lime);
+}
+
 .secondary svg,
 .choose svg {
   color: var(--brand-lime);
@@ -330,7 +318,7 @@
 .choose:focus-visible,
 .save:focus-visible,
 .target:focus-visible,
-.compare:focus-visible,
+.formClose:focus-visible,
 .attachBtn:focus-visible {
   outline: 2px solid var(--brand-highlight);
   outline-offset: 2px;
@@ -339,8 +327,8 @@
 /* ── notes ── */
 .notes {
   display: grid;
-  gap: 10px;
-  max-inline-size: 1300px;
+  gap: 12px;
+  max-inline-size: 1720px;
   scroll-margin-block: 120px;
   inline-size: 100%;
   justify-self: center;
@@ -350,6 +338,27 @@
   box-shadow:
     inset 0 1px 0 var(--neon-glass-top),
     0 0 0 1px var(--neon-glass-edge);
+}
+
+.form {
+  display: grid;
+  gap: 10px;
+  scroll-margin-block: 24px;
+}
+
+.formClose {
+  margin-inline-start: auto;
+  inline-size: 34px;
+  block-size: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  font: inherit;
+  font-size: 20px;
+  color: var(--brand-text-silver);
+  background: var(--brand-glass);
+  box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
+  cursor: pointer;
 }
 
 .notesHead {
@@ -647,90 +656,6 @@
   color: var(--brand-muted);
 }
 
-/* ── the larger preview ── */
-.dialog {
-  margin: auto; /* the reset removes the browser's centring of a modal dialog */
-  inset: 0;
-  inline-size: min(1200px, 94vw);
-  max-block-size: 92svh;
-  padding: 0;
-  border: 0;
-  border-radius: 20px;
-  color: var(--brand-text-silver);
-  background: var(--brand-bg);
-  box-shadow:
-    0 0 0 1px var(--brand-glow),
-    0 30px 80px var(--brand-shadow-deep);
-}
-
-.dialog::backdrop {
-  background: var(--brand-scrim);
-}
-
-.dialogBody {
-  direction: rtl;
-  display: grid;
-  gap: 12px;
-  padding: 16px 20px 20px;
-}
-
-.dialogHead {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-}
-
-.dialogHead h2 {
-  margin: 0;
-  font-size: 22px;
-  color: var(--brand-lime);
-}
-
-.close {
-  margin-inline-start: auto;
-  inline-size: 40px;
-  block-size: 40px;
-  border: 0;
-  border-radius: 50%;
-  font: inherit;
-  font-size: 22px;
-  color: var(--brand-text-silver);
-  background: var(--brand-glass);
-  box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
-  cursor: pointer;
-}
-
-.close:focus-visible {
-  outline: 2px solid var(--brand-highlight);
-}
-
-.dialogPreviews {
-  display: grid;
-  gap: 16px;
-}
-
-.dialogCompare {
-  grid-template-columns: 1fr 1fr;
-}
-
-.dialogPreviews figure {
-  display: grid;
-  gap: 10px;
-  min-inline-size: 0;
-  margin: 0;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-}
-
-.dialogPreviews figcaption {
-  font-weight: 800;
-}
-
-.dialogActions {
-  display: flex;
-  gap: 8px;
-}
-
 /* ── no approved team ── */
 .gate {
   grid-template-columns: 1fr;
@@ -766,8 +691,11 @@
     block-size: 300px;
   }
 
+  /* one model under the other, each the full width (up to a comfortable size): readable, not shrunk to fit two */
   .cards {
-    gap: 16px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+    max-inline-size: 900px;
   }
 
   .compare {
@@ -777,30 +705,17 @@
   .noteRow {
     grid-template-columns: 1fr;
   }
-
-  .dialogCompare {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* phones: one model under the other; the larger preview (the dialog) is where they are seen in detail */
-@media (max-width: 719px) {
-  .cards {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 1279px) {
-  .cardActions {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .cardActions > :first-child {
-    grid-column: 1 / -1;
-  }
 }
 
 @media (max-width: 519px) {
+  .card {
+    padding: 12px;
+  }
+
+  .cardActions {
+    grid-template-columns: 1fr;
+  }
+
   .steps {
     gap: 6px 10px;
     font-size: 12px;
@@ -812,14 +727,14 @@
   }
 }
 
-/* desktops under 960 px high: the direction line alone describes each model, so everything fits one screen */
-@media (min-width: 1100px) and (max-height: 959px) {
-  .summary {
-    display: none;
-  }
-
+/* desktops under 900 px high: a tighter head, so the two models and the approval stay on one screen */
+@media (min-width: 1100px) and (max-height: 899px) {
   .main {
     gap: 10px;
+  }
+
+  .title {
+    font-size: clamp(26px, 2.2vw, 38px);
   }
 
   .head .lede {
