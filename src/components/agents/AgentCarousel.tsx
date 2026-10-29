@@ -25,6 +25,9 @@ const VISIBLE = 3.4; // cards further than this from the centre are hidden
  *
  * Moved by dragging (mouse or touch), by the arrows, and by the keyboard (← next, → previous, Home / End; Tab to a card
  * centres it). Pressing a card toggles it — a press that turned into a drag never does.
+ *
+ * mode "inspect" (the team approval screen): the centre card is the agent shown in detail — pressing a card brings it
+ * to the centre instead of toggling it, `onCenter` reports the agent at the centre, and `focus` moves an agent there.
  */
 export function AgentCarousel({
   agents,
@@ -32,6 +35,9 @@ export function AgentCarousel({
   suggested,
   onToggle,
   start = 0,
+  mode = "toggle",
+  onCenter,
+  focus,
 }: {
   agents: readonly Agent[];
   selected: ReadonlySet<string>;
@@ -39,6 +45,10 @@ export function AgentCarousel({
   onToggle: (id: string) => void;
   /** the agent at the centre at first */
   start?: number;
+  mode?: "toggle" | "inspect";
+  onCenter?: (id: string) => void;
+  /** a request to bring an agent to the centre (a new object each time, so the same agent can be asked for again) */
+  focus?: { id: string } | null;
 }) {
   const n = agents.length;
   const [pos, setPos] = useState(start); // fractional index at the centre
@@ -75,6 +85,20 @@ export function AgentCarousel({
   );
   const go = (i: number) => setPos(clamp(Math.round(i)));
   const center = Math.round(pos);
+
+  // inspect mode: report the agent at the centre once the strip settles (not while it is being dragged)
+  const centerId = agents[Math.max(0, Math.min(n - 1, center))]?.id;
+  useEffect(() => {
+    if (!dragging && centerId) onCenter?.(centerId);
+  }, [centerId, dragging, onCenter]);
+  // …and bring an agent chosen elsewhere (the production journey) to the centre
+  // (adjusted while rendering, as React recommends for state that follows a prop)
+  const [lastFocus, setLastFocus] = useState(focus);
+  if (focus !== lastFocus) {
+    setLastFocus(focus);
+    const i = focus ? agents.findIndex((a) => a.id === focus.id) : -1;
+    if (i >= 0) setPos(i);
+  }
 
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
@@ -135,7 +159,7 @@ export function AgentCarousel({
   };
 
   return (
-    <div className={styles.wrap} data-agent-carousel="" data-center={center}>
+    <div className={styles.wrap} data-agent-carousel="" data-center={center} data-mode={mode}>
       <button
         type="button"
         className={cx(styles.nav, styles.prev)}
@@ -202,7 +226,7 @@ export function AgentCarousel({
               onFocus={() => {
                 if (!drag.current) setPos(i);
               }}
-              onClick={() => onToggle(a.id)}
+              onClick={() => (mode === "inspect" ? setPos(i) : onToggle(a.id))}
             >
               <span className={styles.art}>
                 {img ? (

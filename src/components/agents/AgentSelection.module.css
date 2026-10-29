@@ -384,3 +384,15 @@
 .stale {
   color: var(--state-warning);
 }
+
+/* the team was approved, then changed: the bar says the new line-up needs approving */
+.changed {
+  flex: 1 0 100%;
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: var(--state-warning);
+}
+
+.bar {
+  flex-wrap: wrap;
+}

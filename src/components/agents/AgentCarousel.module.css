@@ -3,7 +3,7 @@
  * (--x, --z, --r, --s, --o: offset, depth, turn, scale, opacity); the strip's edges fade to the page's black.
  */
 .wrap {
-  --card-w: clamp(176px, min(17vw, 33svh), 300px);
+  --card-w: var(--strip-card-w, clamp(176px, min(17vw, 33svh), 300px));
   position: relative;
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -312,4 +312,9 @@
   .dots i {
     transition: none;
   }
+}
+
+/* inspect mode (the team screen): only the agent shown in detail carries the check */
+.wrap[data-mode="inspect"] .card:not(.selected) .check {
+  display: none;
 }

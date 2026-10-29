@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { hasMousePointer, openHome } from "./support";
+import { hasMousePointer, openHome, settled } from "./support";
 
 /*
  * Screen 1 → screen 2: «ادخل» opens «تحليل وبناء فكرة العميل» with the idea and the attachments; the team is chosen
@@ -15,6 +15,7 @@ async function toAgents(page: Page) {
   await chat.getByRole("button", { name: "ادخل" }).click();
   await expect(page).toHaveURL(/\/agents\/?$/);
   await page.locator("[data-agents-screen]").waitFor();
+  await settled(page);
 }
 
 const team = (page: Page) =>
@@ -37,7 +38,7 @@ test("«ادخل» carries the idea to the agents screen: summary, suggested tea
   await expect(page.locator("[data-portal]")).toHaveCount(0);
 });
 
-test("select and deselect: the counter follows; «تأكيد الفريق» is disabled at zero; confirming does not claim production", async ({ page }) => {
+test("select and deselect: the counter follows; «تأكيد الفريق» is disabled at zero, and opens the team screen", async ({ page }) => {
   await toAgents(page);
   await page.locator("[data-select-none]").click();
   await expect(page.locator("[data-team-count]")).toHaveText("لم يُختر أي وكيل");
@@ -55,7 +56,8 @@ test("select and deselect: the counter follows; «تأكيد الفريق» is d
   await page.locator("[data-select-suggested]").click();
   await expect(page.locator("[data-team-count]")).toHaveText("12 وكيلًا مختارًا");
   await page.locator("[data-confirm-team]").click();
-  await expect(page.locator("[data-team-confirmed]")).toContainText("لم يبدأ أي إنتاج");
+  await expect(page).toHaveURL(/\/team\/?$/);
+  await expect(page.locator("[data-team-screen] [data-agent-card]")).toHaveCount(12);
 });
 
 test("dragging moves the strip and never toggles an agent; arrows and keys move it too", async ({ page }, info) => {

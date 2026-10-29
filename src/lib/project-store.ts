@@ -9,7 +9,13 @@
 import { useSyncExternalStore } from "react";
 
 export type AttachmentKind = "description" | "file" | "video" | "image";
-export type Attachment = { id: string; kind: AttachmentKind; name: string; type: string; size: number };
+export type Attachment = {
+  id: string;
+  kind: AttachmentKind;
+  name: string;
+  type: string;
+  size: number;
+};
 
 export type Project = {
   idea: string;
@@ -17,10 +23,18 @@ export type Project = {
   /** null until the visitor (or «اختيار المقترحين») chooses: the agents screen then starts from the suggestions */
   team: string[] | null;
   confirmed: boolean;
+  /** the team as it was approved on the team screen; a different current team means the approval no longer holds */
+  approvedTeam: string[] | null;
 };
 
 const KEY = "tashfeer.project.v1";
-const EMPTY: Project = { idea: "", attachments: [], team: null, confirmed: false };
+const EMPTY: Project = {
+  idea: "",
+  attachments: [],
+  team: null,
+  confirmed: false,
+  approvedTeam: null,
+};
 const FILES = new Map<string, File>();
 const listeners = new Set<() => void>();
 let state: Project = EMPTY;
@@ -36,8 +50,13 @@ function load(): Project {
       state = {
         idea: typeof p.idea === "string" ? p.idea : "",
         attachments: Array.isArray(p.attachments) ? p.attachments : [],
-        team: Array.isArray(p.team) ? p.team.filter((x): x is string => typeof x === "string") : null,
+        team: Array.isArray(p.team)
+          ? p.team.filter((x): x is string => typeof x === "string")
+          : null,
         confirmed: p.confirmed === true,
+        approvedTeam: Array.isArray(p.approvedTeam)
+          ? p.approvedTeam.filter((x): x is string => typeof x === "string")
+          : null,
       };
     }
   } catch {
@@ -58,9 +77,14 @@ export function getProject(): Project {
   return load();
 }
 
-export function updateProject(change: Partial<Project> | ((p: Project) => Partial<Project>)) {
+export function updateProject(
+  change: Partial<Project> | ((p: Project) => Partial<Project>),
+) {
   const current = load();
-  state = { ...current, ...(typeof change === "function" ? change(current) : change) };
+  state = {
+    ...current,
+    ...(typeof change === "function" ? change(current) : change),
+  };
   save();
   for (const l of listeners) l();
 }
@@ -72,12 +96,19 @@ export function addAttachments(kind: AttachmentKind, files: Iterable<File>) {
     FILES.set(id, f);
     added.push({ id, kind, name: f.name, type: f.type, size: f.size });
   }
-  updateProject((p) => ({ attachments: [...p.attachments.filter((a) => !added.some((n) => n.id === a.id)), ...added] }));
+  updateProject((p) => ({
+    attachments: [
+      ...p.attachments.filter((a) => !added.some((n) => n.id === a.id)),
+      ...added,
+    ],
+  }));
 }
 
 export function removeAttachment(id: string) {
   FILES.delete(id);
-  updateProject((p) => ({ attachments: p.attachments.filter((a) => a.id !== id) }));
+  updateProject((p) => ({
+    attachments: p.attachments.filter((a) => a.id !== id),
+  }));
 }
 
 /** Whether the file behind an attachment is still in this page's memory (false after a reload). */
@@ -105,4 +136,14 @@ export function useProject(): Project {
 /** Links typed into the idea (the chat's «روابط» asks for them there). */
 export function linksIn(text: string): string[] {
   return [...new Set(text.match(/https?:\/\/[^\s،,]+/g) ?? [])];
+}
+
+/** The approval of the team: none yet, valid for the current team, or given to a team that has changed since. */
+export function approvalOf(p: Project): "none" | "approved" | "changed" {
+  if (!p.approvedTeam) return "none";
+  const team = p.team ?? [];
+  const same =
+    team.length === p.approvedTeam.length &&
+    team.every((id) => p.approvedTeam!.includes(id));
+  return same ? "approved" : "changed";
 }

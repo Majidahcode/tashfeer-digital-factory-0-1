@@ -1,11 +1,14 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { TashfeerCharacter } from "@/components/characters/TashfeerCharacter";
 import { Icon } from "@/components/icons/Icon";
 import { AGENTS, agentImage, analyze, chosenLabel } from "@/domain/agents";
+import { transitionTo } from "@/lib/page-transition";
 import {
+  approvalOf,
   hasFile,
   linksIn,
   updateProject,
@@ -18,9 +21,10 @@ import styles from "./AgentSelection.module.css";
  * Screen 2 — «تحليل وبناء فكرة العميل»: Tashfeer has read the idea and suggests a team; the visitor adds or removes
  * agents and confirms. The analysis is a local, rule-based reading of what was typed (src/domain/agents.ts) — no
  * assistant is connected, and the summary says so. The choice is kept with the idea (src/lib/project-store.ts).
- * The next step (approving the team, the two prototypes, the factory) is not built: confirming shows that plainly.
+ * «تأكيد الفريق» opens the team screen (/team), where the team is approved.
  */
 export function AgentSelection() {
+  const router = useRouter();
   const project = useProject();
   const analysis = useMemo(() => analyze(project.idea), [project.idea]);
   const suggested = useMemo(() => new Set(analysis.suggested), [analysis]);
@@ -156,25 +160,12 @@ export function AgentSelection() {
         />
 
         <div className={styles.bar} data-team-bar="">
-          {project.confirmed && chosen.length > 0 ? (
-            <div
-              className={styles.confirmed}
-              role="status"
-              data-team-confirmed=""
-            >
-              <p>
-                <b>حُفظ الفريق: {chosenLabel(chosen.length)}.</b> اعتماد الفريق
-                وبدء العمل لم يُبنيا بعد في هذه النسخة — لم يبدأ أي إنتاج.
-              </p>
-              <button
-                type="button"
-                className={styles.action}
-                onClick={() => updateProject({ confirmed: false })}
-              >
-                تعديل الفريق
-              </button>
-            </div>
-          ) : (
+          {approvalOf(project) === "changed" && (
+            <p className={styles.changed} role="status" data-team-changed="">
+              عدّلت الفريق بعد اعتماده — سيُطلب اعتماد التشكيلة الجديدة.
+            </p>
+          )}
+          {
             <>
               <ul className={styles.avatars} aria-hidden="true">
                 {chosen.slice(0, 6).map((a) => {
@@ -211,18 +202,19 @@ export function AgentSelection() {
                 type="button"
                 className={styles.confirm}
                 disabled={chosen.length === 0}
-                onClick={() =>
+                onClick={() => {
                   updateProject({
                     team: chosen.map((a) => a.id),
                     confirmed: true,
-                  })
-                }
+                  });
+                  transitionTo("/team", (href) => router.push(href));
+                }}
                 data-confirm-team=""
               >
                 تأكيد الفريق
               </button>
             </>
-          )}
+          }
         </div>
       </div>
     </section>

@@ -9,7 +9,9 @@
 export type TransitionStep = "idle" | "leaving" | "approachingPortal" | "behindFrame" | "cameraFollow" | "arriving";
 
 type Navigate = (href: string) => void;
-type ViewTransitionDocument = Document & { startViewTransition?: (update: () => void | Promise<void>) => unknown };
+type ViewTransitionDocument = Document & {
+  startViewTransition?: (update: () => void | Promise<void>) => { finished: Promise<void> };
+};
 
 export function setTransitionStep(step: TransitionStep) {
   if (step === "idle") document.documentElement.removeAttribute("data-scene-transition");
@@ -28,21 +30,24 @@ export function transitionTo(href: string, navigate: Navigate) {
     return;
   }
   setTransitionStep("leaving");
-  doc.startViewTransition(
+  // the cross-fade is over (and the new screen takes pointer input again) when `finished` settles
+  const transition = doc.startViewTransition(
     () =>
       new Promise<void>((resolve) => {
         navigate(href);
-        // the new screen has rendered once the URL has changed and a frame has passed
+        // the new screen is in place once the URL has changed (polled with timers: while the browser holds the
+        // transition's update, it renders no frames, so requestAnimationFrame would never fire)
+        const target = new URL(href, location.href).pathname.replace(/\/$/, "");
         const started = performance.now();
         const wait = () => {
-          if (location.pathname === new URL(href, location.href).pathname || performance.now() - started > 1500) {
-            requestAnimationFrame(() => {
-              setTransitionStep("idle");
-              resolve();
-            });
-          } else requestAnimationFrame(wait);
+          const here = location.pathname.replace(/\/$/, "");
+          if (here === target || performance.now() - started > 1500) {
+            window.setTimeout(resolve, 30);
+          } else window.setTimeout(wait, 16);
         };
         wait();
       }),
   );
+  const done = () => setTransitionStep("idle");
+  transition.finished.then(done, done);
 }

@@ -130,3 +130,8 @@ export async function phraseStates(page: Page) {
     .locator("[data-phrase-index]")
     .evaluateAll((els) => els.map((el) => `${el.getAttribute("data-state")}:${el.getAttribute("data-reveal-source") ?? "-"}`));
 }
+
+/** The temporary cross-fade between screens is over (page-transition.ts clears <html data-scene-transition>). */
+export async function settled(page: Page) {
+  await page.locator("html:not([data-scene-transition])").waitFor({ state: "attached" });
+}
