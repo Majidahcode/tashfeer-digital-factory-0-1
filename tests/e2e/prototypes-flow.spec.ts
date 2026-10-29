@@ -58,24 +58,53 @@ test("two models with a name and a direction each, clearly illustrative; approva
   await expect(page.locator("[data-approve-design]")).toBeEnabled();
 });
 
-test("the models are seen on the page itself: no larger view, no comparison window; «مقارنة مباشرة» is a label", async ({
+test("the models are seen on the page itself: two actions each, no comparison window; «مقارنة مباشرة» is a label", async ({
   page,
 }) => {
   await toPrototypes(page);
   await expect(page.locator("[data-view]")).toHaveCount(0);
-  await expect(page.locator("dialog")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: /عرض النموذج|مقارنة/ })).toHaveCount(0);
+  await expect(page.locator("dialog[open]")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /مقارنة/ })).toHaveCount(0);
   for (const id of ["A", "B"]) {
     const card = page.locator(`[data-prototype=${id}]`);
-    await expect(card.getByRole("button")).toHaveCount(2);
+    // the two actions, and the «معاينة توضيحية» stamp on the preview
+    await expect(card.getByRole("button")).toHaveCount(3);
     await expect(card.locator(`[data-choose=${id}]`)).toBeVisible();
     await expect(card.locator(`[data-request=${id}]`)).toBeVisible();
+    await expect(card.locator(`[data-open-preview=${id}]`)).toHaveText("معاينة توضيحية");
   }
   const label = page.locator("[data-compare-label]");
   expect(await label.evaluate((e) => e.tagName)).toBe("SPAN");
   const wide = (page.viewportSize()?.width ?? 0) >= 1100;
   if (wide) await expect(label).toHaveText("مقارنة مباشرة");
   else await expect(label).toBeHidden();
+});
+
+test("«معاينة توضيحية» opens that model in a larger window; choosing there counts; it closes", async ({
+  page,
+}) => {
+  await toPrototypes(page);
+  await page.locator("[data-open-preview=B]").click();
+  const dialog = page.locator("dialog[data-preview-dialog=B]");
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("heading")).toHaveText("النموذج B");
+  const big = await dialog.locator("[data-prototype-preview=B]").boundingBox();
+  const small = await page.locator("[data-prototype=B] [data-prototype-preview=B]").boundingBox();
+  expect(big!.width).toBeGreaterThanOrEqual(small!.width);
+  await expect(dialog.locator("[data-open-preview]")).toHaveCount(0);
+  await dialog.locator("[data-dialog-choose=B]").click();
+  expect(await chosen(page)).toEqual(["B"]);
+  await expect(dialog.locator("[data-dialog-choose=B]")).toHaveText(/النموذج المختار/);
+  await page.keyboard.press("Escape");
+  await expect(page.locator("dialog[open]")).toHaveCount(0);
+  await page.locator("[data-open-preview=A]").click();
+  await page.locator("dialog[open] [data-dialog-close]").click();
+  await expect(page.locator("dialog[open]")).toHaveCount(0);
+  // «طلب تعديل» in the window closes it and opens the form for that model
+  await page.locator("[data-open-preview=A]").click();
+  await page.locator("[data-dialog-request=A]").click();
+  await expect(page.locator("dialog[open]")).toHaveCount(0);
+  await expect(page.locator("[data-note-form=A]")).toBeVisible();
 });
 
 test("the change-request form is hidden until asked for, names its model, and closes", async ({

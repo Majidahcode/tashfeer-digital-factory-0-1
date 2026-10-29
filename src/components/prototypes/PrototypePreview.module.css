@@ -217,6 +217,24 @@
   box-shadow: inset 0 0 0 1px var(--brand-glow);
 }
 
+button.stamp {
+  border: 0;
+  font: inherit;
+  font-size: 12px;
+  cursor: zoom-in;
+}
+
+button.stamp:hover {
+  box-shadow:
+    inset 0 0 0 1.5px var(--brand-lime),
+    0 0 12px -2px var(--brand-glow);
+}
+
+button.stamp:focus-visible {
+  outline: 2px solid var(--brand-highlight);
+  outline-offset: 2px;
+}
+
 .media {
   display: block;
   inline-size: 100%;

@@ -656,6 +656,77 @@
   color: var(--brand-muted);
 }
 
+/* ── the larger window, opened from a model's «معاينة توضيحية» stamp ── */
+.dialog {
+  margin: auto; /* the reset removes the browser's centring of a modal dialog */
+  inset: 0;
+  inline-size: min(1400px, 94vw);
+  max-inline-size: none; /* the browser's own limit (100% − 2em) would make it narrower than the card on a phone */
+  max-block-size: 94svh;
+  padding: 0;
+  border: 0;
+  border-radius: 20px;
+  color: var(--brand-text-silver);
+  background: var(--brand-bg);
+  box-shadow:
+    0 0 0 1px var(--brand-glow),
+    0 30px 80px var(--brand-shadow-deep);
+}
+
+.dialog::backdrop {
+  background: var(--brand-scrim);
+}
+
+.dialogBody {
+  direction: rtl;
+  display: grid;
+  gap: 14px;
+  padding: 16px 20px 20px;
+}
+
+.dialogHead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.dialogHead h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--brand-text-silver);
+}
+
+.close {
+  margin-inline-start: auto;
+  inline-size: 40px;
+  block-size: 40px;
+  border: 0;
+  border-radius: 50%;
+  font: inherit;
+  font-size: 22px;
+  color: var(--brand-text-silver);
+  background: var(--brand-glass);
+  box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
+  cursor: pointer;
+}
+
+.close:focus-visible {
+  outline: 2px solid var(--brand-highlight);
+}
+
+.dialogPreview {
+  min-inline-size: 0;
+}
+
+.dialogActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  inline-size: min(100%, 560px);
+  justify-self: center;
+}
+
 /* ── no approved team ── */
 .gate {
   grid-template-columns: 1fr;
@@ -704,6 +775,16 @@
 
   .noteRow {
     grid-template-columns: 1fr;
+  }
+
+  /* the window takes nearly the whole screen: its preview at least as large as the card's */
+  .dialog {
+    inline-size: calc(100vw - 16px);
+    max-block-size: calc(100svh - 16px);
+  }
+
+  .dialogBody {
+    padding: 12px;
   }
 }
 

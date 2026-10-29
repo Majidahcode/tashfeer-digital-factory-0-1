@@ -36,6 +36,7 @@ const STEPS = [
  * Screen 4 — «مراجعة النموذجين»: two visual directions for the project, large and side by side (one under the other
  * below 1100 px), so they are seen and compared on the page itself. The visitor chooses one (only one), asks for a
  * change on the model it concerns — the request form opens in the page only then — and approves the chosen model.
+ * A model's «معاينة توضيحية» stamp opens it in a larger window, with the same two actions.
  * Requests are kept in this browser; no agent acts on them yet. The previews are illustrative, and say so; the factory —
  * the next screen — is not built, and approving starts nothing.
  */
@@ -55,6 +56,9 @@ export function PrototypeReview() {
   const [file, setFile] = useState<Attachment | null>(null);
   const [fileError, setFileError] = useState("");
   const [confirming, setConfirming] = useState(false);
+  /** the model shown in the larger window, opened from its «معاينة توضيحية» stamp */
+  const [viewing, setViewing] = useState<ModelId | null>(null);
+  const dialog = useRef<HTMLDialogElement>(null);
   const noteRef = useRef<HTMLTextAreaElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -65,6 +69,13 @@ export function PrototypeReview() {
     formRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
     noteRef.current?.focus({ preventScroll: true });
   }, [ask]);
+
+  useEffect(() => {
+    const d = dialog.current;
+    if (!d) return;
+    if (viewing && !d.open) d.showModal();
+    if (!viewing && d.open) d.close();
+  }, [viewing]);
 
   if (!hydrated) return <section className={styles.screen} aria-busy="true" />;
 
@@ -111,6 +122,7 @@ export function PrototypeReview() {
     updateProject({ chosenModel: id });
   };
   const requestChange = (id: ModelId) => {
+    setViewing(null);
     setTarget(id);
     setEditing(true);
     setAsk((n) => n + 1);
@@ -199,6 +211,7 @@ export function PrototypeReview() {
                 requesting={editing && target === p.id}
                 onChoose={() => choose(p.id)}
                 onRequest={() => requestChange(p.id)}
+                onOpen={() => setViewing(p.id)}
               />
             </Fragment>
           ))}
@@ -454,6 +467,66 @@ export function PrototypeReview() {
           </p>
         </div>
       </div>
+      <dialog
+        ref={dialog}
+        className={styles.dialog}
+        onClose={() => setViewing(null)}
+        onClick={(e) => e.target === e.currentTarget && setViewing(null)}
+        aria-labelledby="preview-title"
+        data-preview-dialog={viewing ?? ""}
+      >
+        {viewing && (
+          <div className={styles.dialogBody}>
+            <header className={styles.dialogHead}>
+              <div>
+                <h2 id="preview-title">{modelName(viewing)}</h2>
+                <span className={styles.direction}>
+                  {PROTOTYPES.find((p) => p.id === viewing)?.direction}
+                </span>
+              </div>
+              {chosen === viewing && (
+                <span className={styles.chosen}>
+                  <Icon name="check" size={16} /> محدد
+                </span>
+              )}
+              <button
+                type="button"
+                className={styles.close}
+                onClick={() => setViewing(null)}
+                aria-label="إغلاق المعاينة"
+                data-dialog-close=""
+              >
+                ×
+              </button>
+            </header>
+            <div className={styles.dialogPreview}>
+              {PROTOTYPES.filter((p) => p.id === viewing).map((p) => (
+                <PrototypePreview key={p.id} prototype={p} />
+              ))}
+            </div>
+            <div className={styles.dialogActions}>
+              <button
+                type="button"
+                className={chosen === viewing ? styles.primarySm : styles.choose}
+                onClick={() => choose(viewing)}
+                aria-pressed={chosen === viewing}
+                data-dialog-choose={viewing}
+              >
+                <Icon name="check" size={16} />{" "}
+                {chosen === viewing ? "النموذج المختار" : "اختيار هذا النموذج"}
+              </button>
+              <button
+                type="button"
+                className={styles.secondary}
+                onClick={() => requestChange(viewing)}
+                data-dialog-request={viewing}
+              >
+                <Icon name="pen" size={16} /> طلب تعديل
+              </button>
+            </div>
+          </div>
+        )}
+      </dialog>
     </section>
   );
 }
@@ -465,6 +538,7 @@ function PrototypeCard({
   requesting,
   onChoose,
   onRequest,
+  onOpen,
 }: {
   prototype: Prototype;
   selected: boolean;
@@ -472,6 +546,7 @@ function PrototypeCard({
   requesting: boolean;
   onChoose: () => void;
   onRequest: () => void;
+  onOpen: () => void;
 }) {
   return (
     <article
@@ -493,7 +568,7 @@ function PrototypeCard({
           </span>
         )}
       </header>
-      <PrototypePreview prototype={p} />
+      <PrototypePreview prototype={p} onOpen={onOpen} />
       <div className={styles.cardActions}>
         <button
           type="button"

@@ -24,7 +24,14 @@ const SERVICES: readonly IconName[] = [
  * narrow box (a phone) the same page is drawn in its narrow layout, readable, rather than a desktop page shrunk.
  * For a real output (later): the image or the live page.
  */
-export function PrototypePreview({ prototype }: { prototype: Prototype }) {
+export function PrototypePreview({
+  prototype,
+  onOpen,
+}: {
+  prototype: Prototype;
+  /** when given, the «معاينة توضيحية» stamp is a button that opens this model in a larger window */
+  onOpen?: () => void;
+}) {
   const s = prototype.source;
   if (s.kind === "image") {
     return (
@@ -107,7 +114,20 @@ export function PrototypePreview({ prototype }: { prototype: Prototype }) {
           <span>روابط سريعة · تواصل معنا · سياسة الخصوصية</span>
         </footer>
       </div>
-      <span className={styles.stamp}>معاينة توضيحية</span>
+      {onOpen ? (
+        <button
+          type="button"
+          className={styles.stamp}
+          onClick={onOpen}
+          aria-label={`معاينة توضيحية — عرض ${prototype.name} في نافذة`}
+          aria-haspopup="dialog"
+          data-open-preview={prototype.id}
+        >
+          معاينة توضيحية
+        </button>
+      ) : (
+        <span className={styles.stamp}>معاينة توضيحية</span>
+      )}
     </div>
   );
 }
