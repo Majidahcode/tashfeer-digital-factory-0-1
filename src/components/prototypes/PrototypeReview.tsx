@@ -37,8 +37,8 @@ const STEPS = [
  * below 1100 px), so they are seen and compared on the page itself. The visitor chooses one (only one), asks for a
  * change on the model it concerns — the request form opens in the page only then — and approves the chosen model.
  * A model's «معاينة توضيحية» stamp opens it in a larger window, with the same two actions.
- * Requests are kept in this browser; no agent acts on them yet. The previews are illustrative, and say so; the factory —
- * the next screen — is not built, and approving starts nothing.
+ * Requests are kept in this browser; no agent acts on them yet. The previews are illustrative, and say so. Approving
+ * saves the approval and opens the factory (/factory).
  */
 export function PrototypeReview() {
   const router = useRouter();
@@ -153,6 +153,8 @@ export function PrototypeReview() {
         at: Date.now(),
       },
     });
+    // the approval is saved; production starts in the factory
+    go("/factory");
   };
 
   return (
@@ -434,9 +436,16 @@ export function PrototypeReview() {
             >
               <Icon name="check" size={22} />
               <p>
-                <b>اعتُمد التصميم: {modelName(chosen)}.</b> الخطوة التالية واجهة
-                المصنع، وهي غير متاحة بعد في هذه النسخة. لم يبدأ أي إنتاج فعلي.
+                <b>اعتُمد التصميم: {modelName(chosen)}.</b> الإنتاج في المصنع.
               </p>
+              <button
+                type="button"
+                className={styles.primarySm}
+                onClick={() => go("/factory")}
+                data-enter-factory=""
+              >
+                <Icon name="rocket" size={16} /> الدخول إلى المصنع
+              </button>
             </div>
           ) : (
             !confirming && (

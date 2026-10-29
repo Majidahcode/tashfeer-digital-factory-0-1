@@ -1,4 +1,4 @@
-const PATHS = {
+export const ICON_PATHS = {
   doc: "M6 3h8l4 4v14H6z M14 3v4h4 M9 12h6 M9 16h6",
   link: "M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1 M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1",
   file: "M6 3h8l4 4v14H6z M14 3v4h4",
@@ -28,11 +28,13 @@ const PATHS = {
   handoff:
     "M7 11V7a2 2 0 0 1 4 0v4 M13 11V6a2 2 0 0 1 4 0v8a6 6 0 0 1-6 6H9a5 5 0 0 1-5-5v-2a2 2 0 0 1 3-1.7",
   info: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 11v5 M12 8h.01",
+  play: "M8 5.5v13l10.5-6.5z",
+  pause: "M8 5v14 M16 5v14",
   gauge:
     "M4 17a8 8 0 1 1 16 0 M12 17l4-5 M12 17h.01 M6.5 13.5l1 .5 M17.5 13.5l-1 .5 M12 9v1",
 } as const;
 
-export type IconName = keyof typeof PATHS;
+export type IconName = keyof typeof ICON_PATHS;
 
 export function Icon({
   name,
@@ -57,7 +59,7 @@ export function Icon({
       aria-hidden="true"
       focusable="false"
     >
-      <path d={PATHS[name]} />
+      <path d={ICON_PATHS[name]} />
     </svg>
   );
 }

@@ -1,0 +1,616 @@
+/*
+ * Screen 5 (FactoryScreen.tsx) — the 3D scene fills the screen under the header; a few controls float over it:
+ *   top      the factory's name, the project's history (done), «محاكاة تفاعلية», the production's state and control
+ *   start    Tashfeer's one line (bottom right in RTL)
+ *   bottom   the stations, the camera's two ways of watching, a hint
+ *   panel    one station's details (right on a desktop, a sheet from the bottom on a phone)
+ * Little text, the scene is the content.
+ */
+.screen {
+  position: relative;
+  z-index: var(--z-content);
+  block-size: calc(100svh - var(--header-h));
+  min-block-size: 520px;
+  overflow: hidden;
+  background: var(--brand-bg);
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+}
+
+.stage canvas {
+  touch-action: none;
+}
+
+.loading {
+  display: grid;
+  place-items: center;
+  block-size: 100%;
+  color: var(--brand-muted);
+}
+
+/* ── overlay pieces ── */
+.top,
+.guide,
+.bar,
+.panel {
+  position: absolute;
+  z-index: 2;
+}
+
+.top {
+  inset-block-start: 14px;
+  inset-inline: clamp(12px, 2vw, 32px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px 16px;
+  pointer-events: none;
+}
+
+.top > * {
+  pointer-events: auto;
+}
+
+.titleBlock {
+  display: grid;
+  gap: 4px;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(22px, 2vw, 32px);
+  font-weight: 800;
+  line-height: 1.2;
+  background: var(--gradient-heading);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.history {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--brand-muted);
+}
+
+.history span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.history svg {
+  color: var(--brand-emerald-bright);
+}
+
+.control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 8px 10px;
+  border-radius: 16px;
+  background: var(--brand-glass-strong);
+  box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
+}
+
+.simTag {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--state-warning);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--state-warning) 55%, transparent);
+}
+
+/* a fixed width: the state changes as production moves, the pause button beside it must not */
+.prodState {
+  inline-size: 15em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  color: var(--brand-text-silver);
+}
+
+/* ── buttons ── */
+.primary,
+.primarySm,
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.primary {
+  padding: 13px 30px;
+  border-radius: 14px;
+  font-size: 17px;
+  color: var(--brand-bg);
+  background: linear-gradient(180deg, var(--brand-highlight), var(--brand-lime));
+  box-shadow: 0 0 24px -6px var(--brand-glow);
+}
+
+.primarySm,
+.secondary {
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.primarySm {
+  color: var(--brand-bg);
+  background: linear-gradient(180deg, var(--brand-highlight), var(--brand-lime));
+}
+
+.secondary {
+  color: var(--brand-text-silver);
+  background: var(--brand-glass);
+  box-shadow:
+    inset 0 1px 0 var(--brand-glass-inner),
+    0 0 0 1px var(--brand-glass-edge);
+}
+
+.primary:focus-visible,
+.primarySm:focus-visible,
+.secondary:focus-visible,
+.stationBtn:focus-visible,
+.camBtn:focus-visible,
+.close:focus-visible {
+  outline: 2px solid var(--brand-highlight);
+  outline-offset: 2px;
+}
+
+/* ── Tashfeer's line ── */
+/* on the side opposite the panel (bottom left), so the two never cover each other */
+.guide {
+  inset-block-end: 118px;
+  inset-inline-end: clamp(12px, 2vw, 32px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-inline-size: min(420px, calc(100% - 24px));
+  padding: 8px 14px 8px 10px;
+  border-radius: 16px;
+  background: var(--brand-glass-strong);
+  box-shadow: inset 0 0 0 1px var(--chat-edge);
+}
+
+.guide p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--brand-text-silver);
+}
+
+.guideFace {
+  flex: none;
+  inline-size: 40px;
+  block-size: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* ── stations and camera ── */
+.bar {
+  inset-block-end: 14px;
+  inset-inline: clamp(12px, 2vw, 32px);
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.bar > * {
+  pointer-events: auto;
+}
+
+.stations {
+  display: flex;
+  gap: 8px;
+  max-inline-size: 100%;
+  margin: 0;
+  padding: 6px;
+  overflow-x: auto;
+  list-style: none;
+  border-radius: 18px;
+  background: var(--brand-glass-strong);
+  box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.stationBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--brand-text-silver);
+  background: transparent;
+  cursor: pointer;
+}
+
+.stationBtn:hover {
+  background: var(--brand-glass);
+}
+
+.stationOn {
+  color: var(--brand-highlight);
+  box-shadow: inset 0 0 0 1.5px var(--brand-lime);
+}
+
+.stationNum {
+  font-size: 12px;
+  color: var(--brand-lime);
+}
+
+.dot {
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 50%;
+  background: var(--brand-muted);
+}
+
+.dot.active {
+  background: var(--brand-lime);
+  box-shadow: 0 0 8px var(--brand-glow);
+}
+
+.dot.done {
+  background: var(--brand-emerald-bright);
+}
+
+.camBtns {
+  display: flex;
+  gap: 8px;
+}
+
+.camBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--brand-text-silver);
+  background: var(--brand-glass-strong);
+  box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
+  cursor: pointer;
+}
+
+.camBtn svg {
+  color: var(--brand-lime);
+}
+
+.camOn {
+  color: var(--brand-highlight);
+  box-shadow: inset 0 0 0 1.5px var(--brand-lime);
+}
+
+.hint {
+  margin: 0;
+  font-size: 11px;
+  color: var(--brand-muted);
+  text-align: center;
+}
+
+/* ── the station's panel ── */
+.panel {
+  inset-block-start: 96px;
+  inset-inline-start: clamp(12px, 2vw, 32px);
+  inline-size: min(380px, calc(100% - 24px));
+  max-block-size: calc(100% - 96px - 150px);
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  overflow-y: auto;
+  padding: 16px 18px;
+  border-radius: 20px;
+  background: var(--neon-glass-fill), var(--brand-glass-strong);
+  box-shadow:
+    inset 0 1px 0 var(--neon-glass-top),
+    0 0 0 1px var(--neon-glass-edge),
+    0 20px 50px var(--brand-shadow);
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panelHead h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--brand-text-silver);
+}
+
+.panelNum {
+  font-weight: 800;
+  color: var(--brand-lime);
+}
+
+.status {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--brand-muted);
+  box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
+}
+
+.status.active {
+  color: var(--brand-lime);
+  box-shadow: inset 0 0 0 1px var(--brand-glow);
+}
+
+.status.done {
+  color: var(--brand-emerald-bright);
+}
+
+.close {
+  margin-inline-start: auto;
+  inline-size: 32px;
+  block-size: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  font: inherit;
+  font-size: 20px;
+  color: var(--brand-text-silver);
+  background: var(--brand-glass);
+  box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
+  cursor: pointer;
+}
+
+.rows {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.rows > div {
+  display: grid;
+  grid-template-columns: 7.5em 1fr;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-size: 14px;
+  background: color-mix(in srgb, var(--brand-glass-base) 70%, transparent);
+  box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
+}
+
+.rows dt {
+  color: var(--brand-lime);
+  font-weight: 600;
+}
+
+.rows dd {
+  margin: 0;
+  color: var(--brand-text-silver);
+}
+
+.checks h3,
+.delivery h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  color: var(--brand-lime);
+}
+
+.checks ul,
+.checks ol {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.checks > ul > li {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--brand-text-silver);
+}
+
+.checks ol li {
+  padding-inline-start: 10px;
+  border-inline-start: 2px solid var(--brand-glass-edge);
+  line-height: 1.6;
+}
+
+.fail {
+  color: var(--state-danger);
+}
+
+.checks ol li.fail {
+  border-inline-start-color: var(--state-danger);
+}
+
+.pass {
+  color: var(--brand-emerald-bright);
+}
+
+.fix {
+  display: block;
+  color: var(--brand-text-silver);
+}
+
+.fixPending {
+  display: block;
+  color: var(--state-warning);
+}
+
+.delivery {
+  display: grid;
+  gap: 8px;
+}
+
+.muted {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--brand-muted);
+}
+
+.tech {
+  font-size: 12px;
+  color: var(--brand-muted);
+}
+
+.tech summary {
+  cursor: pointer;
+  color: var(--brand-text-silver);
+}
+
+.tech ul {
+  display: grid;
+  gap: 2px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tech time {
+  color: var(--brand-lime);
+  font-variant-numeric: tabular-nums;
+}
+
+.simNote {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--state-warning);
+}
+
+/* ── without WebGL ── */
+.fallback {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 16px;
+  block-size: 100%;
+  padding: 120px 16px 170px;
+  color: var(--brand-text-silver);
+  text-align: center;
+}
+
+.fallback p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.fallbackProduct {
+  inline-size: min(560px, 100%);
+}
+
+/* ── no approvals ── */
+.gate {
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+}
+
+.gateBox {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  max-inline-size: 560px;
+  padding: 32px 28px;
+  border-radius: 20px;
+  text-align: center;
+  color: var(--brand-text-silver);
+  background: var(--neon-glass-fill);
+  box-shadow:
+    inset 0 1px 0 var(--neon-glass-top),
+    0 0 0 1px var(--neon-glass-edge);
+}
+
+.gateBox p {
+  margin: 0;
+  line-height: 1.7;
+}
+
+.gateTitle {
+  margin: 0;
+  font-size: clamp(26px, 2.4vw, 38px);
+  font-weight: 800;
+  background: var(--gradient-heading);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ── phones and narrow screens ── */
+@media (max-width: 719px) {
+  .screen {
+    min-block-size: 560px;
+  }
+
+  .control {
+    padding: 6px 8px;
+  }
+
+  .prodState {
+    inline-size: 13em;
+    font-size: 12px;
+  }
+
+  .guide {
+    inset-block-start: auto;
+    inset-block-end: 150px;
+    inset-inline: 12px;
+  }
+
+  .guide p {
+    font-size: 13px;
+  }
+
+  .hint {
+    display: none;
+  }
+
+  .stations {
+    justify-content: flex-start;
+  }
+
+  /* the panel: a sheet above the stations' bar, so another station is still one tap away */
+  .panel {
+    inset-block-start: auto;
+    inset-block-end: 122px;
+    inset-inline: 8px;
+    inline-size: auto;
+    max-block-size: calc(100% - 122px - 150px);
+  }
+
+  /* with a panel open, its own text says what Tashfeer would */
+  .guideHidden {
+    display: none;
+  }
+}

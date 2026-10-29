@@ -172,7 +172,7 @@ test("a change request is tied to its model, kept across a reload, and its file 
   );
 });
 
-test("approving with unexecuted requests says so first; the approval is saved, survives a reload, and names the next step", async ({
+test("approving with unexecuted requests says so first; the approval is saved and opens the factory; back here it stands", async ({
   page,
 }) => {
   await toPrototypes(page);
@@ -184,14 +184,13 @@ test("approving with unexecuted requests says so first; the approval is saved, s
   await expect(page.locator("[data-approve-confirm]")).toContainText(
     "لم تُنفَّذ بعد",
   );
-  await expect(page.locator("[data-design-approved]")).toHaveCount(0);
+  await expect(page).toHaveURL(/\/prototypes\/?$/);
   await page.locator("[data-approve-anyway]").click();
+  await expect(page).toHaveURL(/\/factory\/?$/);
+  await page.goto("/prototypes");
   const done = page.locator("[data-design-approved]");
   await expect(done).toContainText("النموذج B");
-  await expect(done).toContainText("واجهة المصنع");
-  await expect(done).toContainText("لم يبدأ أي إنتاج فعلي");
-  await page.reload();
-  await expect(done).toBeVisible();
+  await expect(page.locator("[data-enter-factory]")).toBeVisible();
   // choosing the other model withdraws it
   await page.locator("[data-choose=A]").click();
   await expect(page.locator("[data-design-review]")).toBeVisible();
@@ -204,6 +203,8 @@ test("changing the idea after the design is approved marks the approval for revi
   await toPrototypes(page);
   await page.locator("[data-choose=A]").click();
   await page.locator("[data-approve-design]").click();
+  await expect(page).toHaveURL(/\/factory\/?$/);
+  await page.goto("/prototypes");
   await expect(page.locator("[data-design-approved]")).toBeVisible();
   await page.locator("[data-back-to-team]").click();
   await page.locator("[data-team-screen]").waitFor();
