@@ -145,7 +145,7 @@ function Backdrop({ pal }: { pal: ScenePalette }) {
   return (
     <group>
       {/* the name, far behind the line, like a lit sign on the factory's back wall */}
-      <mesh position={[12, 4.6, -26]} rotation-y={-0.3}>
+      <mesh position={[11, 3.2, -21]} rotation-y={-0.3}>
         <planeGeometry args={[7, 2.05]} />
         <meshBasicMaterial map={sign} transparent opacity={0.45} toneMapped={false} fog={false} />
       </mesh>

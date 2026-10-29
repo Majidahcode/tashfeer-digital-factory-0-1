@@ -176,7 +176,7 @@
 /* ── Tashfeer's line ── */
 /* on the side opposite the panel (bottom left), so the two never cover each other */
 .guide {
-  inset-block-end: 118px;
+  inset-block-end: 150px; /* above the stations' bar and the camera buttons */
   inset-inline-end: clamp(12px, 2vw, 32px);
   display: flex;
   align-items: center;
