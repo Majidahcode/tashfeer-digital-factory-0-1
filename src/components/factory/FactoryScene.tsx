@@ -7,7 +7,9 @@
  * dark floor, lit from below its edges; the stations beside it; the visitor's one product travelling on it, its screen
  * showing the approved model as it is built; Tashfeer at the start of the line.
  *
- * Built geometry: the floor, the line, its underglow, the stations, the product, the sign.
+ * Built geometry: the reflective floor, the belt and its neon, the stations, the product in its glass case, the sign.
+ * The first station and the product follow the visual sample under review (scene/Showcase.tsx); the other stations keep
+ * the earlier design until the sample is approved.
  * Temporary asset: Tashfeer is his approved 2D image on a plane that turns to face the camera — there is no 3D model of
  * him yet (no rigged GLB in the project or the reference package), so none is invented.
  *
@@ -15,14 +17,12 @@
  * shot beside the product, and OrbitControls for the visitor's own looking, zooming and moving, inside the factory.
  */
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  AdditiveBlending,
   BoxGeometry,
   EdgesGeometry,
   Frustum,
   Matrix4,
-  DoubleSide,
   type Group,
   type Mesh,
   type MeshStandardMaterial,
@@ -46,16 +46,25 @@ import {
   frameAt,
   introStartPose,
   overviewPose,
+  samplePose,
   stationPlace,
   stationPose,
-  stripGeometry,
-  trackGeometry,
 } from "./scene/layout";
 import { type ScenePalette, readPalette } from "./scene/palette";
 import {
+  Belt,
+  Effects,
+  Environment,
+  ProductCase,
+  type Quality,
+  QualityContext,
+  ReflectiveFloor,
+  SampleStation,
+  lit,
+} from "./scene/Showcase";
+import {
   SCREEN,
   drawProductScreen,
-  glowTexture,
   iconTexture,
   productScreenTexture,
   signTexture,
@@ -86,7 +95,7 @@ export default function FactoryScene(props: FactorySceneProps) {
     <Canvas
       dpr={[1, 1.5]}
       camera={{ fov: 42, near: 0.1, far: 120, position: introStartPose().pos.toArray() }}
-      gl={{ antialias: true, powerPreference: "high-performance" }}
+      gl={{ antialias: true, powerPreference: "high-performance", toneMappingExposure: 1.05 }}
       data-factory-canvas=""
     >
       <World {...props} />
@@ -94,24 +103,69 @@ export default function FactoryScene(props: FactorySceneProps) {
   );
 }
 
+/** ?quality=high|low forces a level (for reviews and weak devices); otherwise it is chosen from the frame rate */
+function forcedQuality(): Quality | null {
+  const q = new URLSearchParams(window.location.search).get("quality");
+  return q === "high" || q === "low" ? q : null;
+}
+
+/** Measures the frame rate for about 1.5 s after the first frames; under 24 fps it asks for the lighter level. */
+function QualityProbe({ onLow }: { onLow: () => void }) {
+  const t = useRef({ frames: 0, time: 0, warm: 0, done: false });
+  useFrame((_, dt) => {
+    const s = t.current;
+    if (s.done) return;
+    if (s.warm < 3) {
+      s.warm += 1; // the first frames compile shaders and upload textures: not a measure
+      return;
+    }
+    s.frames += 1;
+    s.time += dt;
+    // decide after 1.5 s, or at once if even a few frames are this slow
+    if (s.time >= 1.5 || (s.frames >= 3 && s.time / s.frames > 0.2)) {
+      s.done = true;
+      if (s.frames / s.time < 24) onLow();
+    }
+  });
+  return null;
+}
+
+/** A GPU drawn in software (no graphics card): slow on any device, so the light level from the start. */
+function softwareRenderer(gl: { getContext: () => WebGLRenderingContext | WebGL2RenderingContext }): boolean {
+  const ctx = gl.getContext();
+  const info = ctx.getExtension("WEBGL_debug_renderer_info");
+  const name = String(info ? ctx.getParameter(info.UNMASKED_RENDERER_WEBGL) : ctx.getParameter(ctx.RENDERER));
+  return /swiftshader|llvmpipe|software/i.test(name);
+}
+
 function World(props: FactorySceneProps) {
   const pal = useMemo(() => readPalette(), []);
+  const gl = useThree((s) => s.gl);
+  const [forced] = useState(forcedQuality);
+  const [quality, setQuality] = useState<Quality>(() => forced ?? (softwareRenderer(gl) ? "low" : "high"));
+  useEffect(() => {
+    window.__tashfeerFactoryQuality = quality;
+  }, [quality]);
   const scene = useThree((s) => s.scene);
   useEffect(() => {
     scene.background = pal.bg.clone();
     scene.fog = null;
   }, [scene, pal]);
   return (
-    <>
-      <fog attach="fog" args={[pal.bg, 16, 46]} />
-      <ambientLight color={pal.text} intensity={0.22} />
-      <hemisphereLight args={[pal.text, pal.bg, 0.35]} />
-      <directionalLight color={pal.text} intensity={0.55} position={[-6, 12, 10]} />
-      <Floor pal={pal} />
-      <Line pal={pal} />
+    <QualityContext value={quality}>
+      <fog attach="fog" args={[pal.bg, 18, 52]} />
+      {/* the reflections' environment on the high level only (sampled by every glossy pixel) */}
+      {quality === "high" && <Environment pal={pal} />}
+      <ambientLight color={pal.text} intensity={0.12} />
+      <hemisphereLight args={[pal.text, pal.bg, 0.25]} />
+      <directionalLight color={pal.text} intensity={0.45} position={[-6, 12, 10]} />
+      {!forced && quality === "high" && <QualityProbe onLow={() => setQuality("low")} />}
+      <ReflectiveFloor pal={pal} quality={quality} />
+      <Belt pal={pal} />
       <Backdrop pal={pal} />
       {props.stations.map((s, i) => (
         <StationMark
+          quality={quality}
           key={s.id}
           index={i}
           count={props.stations.length}
@@ -122,23 +176,16 @@ function World(props: FactorySceneProps) {
           onSelect={props.onSelect}
         />
       ))}
-      <Product {...props} pal={pal} />
+      <Product {...props} pal={pal} quality={quality} />
       <Tashfeer src={props.tashfeerSrc} />
       <CameraRig {...props} />
-    </>
+      {/* the glow (a post-process) on the high level only; the light level renders directly */}
+      {quality === "high" && <Effects />}
+    </QualityContext>
   );
 }
 
-/* ── the floor and the far background: dark, calm ── */
-
-function Floor({ pal }: { pal: ScenePalette }) {
-  return (
-    <mesh rotation-x={-Math.PI / 2} position-y={-0.001} receiveShadow>
-      <planeGeometry args={[90, 90]} />
-      <meshStandardMaterial color={pal.glassBase} roughness={0.55} metalness={0.25} />
-    </mesh>
-  );
-}
+/* ── the far background ── */
 
 function Backdrop({ pal }: { pal: ScenePalette }) {
   const sign = useMemo(() => signTexture(pal), [pal]);
@@ -149,42 +196,6 @@ function Backdrop({ pal }: { pal: ScenePalette }) {
         <planeGeometry args={[7, 2.05]} />
         <meshBasicMaterial map={sign} transparent opacity={0.45} toneMapped={false} fog={false} />
       </mesh>
-    </group>
-  );
-}
-
-/* ── the production line: smooth black, lit from under its edges ── */
-
-function Line({ pal }: { pal: ScenePalette }) {
-  const track = useMemo(() => trackGeometry(), []);
-  const edgeNear = useMemo(() => stripGeometry(TRACK.width / 2 + 0.02, 0.05, 0.03), []);
-  const edgeFar = useMemo(() => stripGeometry(-TRACK.width / 2 - 0.02, 0.05, 0.03), []);
-  const glowNear = useMemo(() => stripGeometry(TRACK.width / 2 + 0.25, 1.1, 0.006), []);
-  const glowFar = useMemo(() => stripGeometry(-TRACK.width / 2 - 0.25, 1.1, 0.006), []);
-  const glow = useMemo(() => glowTexture(pal), [pal]);
-  return (
-    <group>
-      <mesh geometry={track}>
-        <meshStandardMaterial color={pal.bg} roughness={0.22} metalness={0.35} side={DoubleSide} />
-      </mesh>
-      {[edgeNear, edgeFar].map((g, i) => (
-        <mesh key={i} geometry={g}>
-          <meshBasicMaterial color={pal.neon} toneMapped={false} side={DoubleSide} />
-        </mesh>
-      ))}
-      {[glowNear, glowFar].map((g, i) => (
-        <mesh key={i} geometry={g}>
-          <meshBasicMaterial
-            map={glow}
-            transparent
-            opacity={0.7}
-            side={DoubleSide}
-            blending={AdditiveBlending}
-            depthWrite={false}
-            toneMapped={false}
-          />
-        </mesh>
-      ))}
     </group>
   );
 }
@@ -200,6 +211,7 @@ function StationMark({
   pal,
   reducedMotion,
   onSelect,
+  quality,
 }: {
   index: number;
   count: number;
@@ -208,6 +220,7 @@ function StationMark({
   pal: ScenePalette;
   reducedMotion: boolean;
   onSelect: (id: StationId) => void;
+  quality: Quality;
 }) {
   const place = useMemo(() => stationPlace(index, count), [index, count]);
   const label = useMemo(() => stationLabel(index + 1, station.name, pal), [index, station.name, pal]);
@@ -223,17 +236,31 @@ function StationMark({
     ring.current.emissiveIntensity = (selected ? 2.4 : base) * (0.55 + 0.45 * pulse);
   });
   const edges = useMemo(() => new EdgesGeometry(new BoxGeometry(1.3, 1.1, 0.9)), []);
+  const events = {
+    onClick: (e: { stopPropagation: () => void }) => {
+      e.stopPropagation();
+      onSelect(station.id);
+    },
+    onPointerOver: () => (document.body.style.cursor = "pointer"),
+    onPointerOut: () => (document.body.style.cursor = ""),
+  };
+  // the visual sample (under review): the first station only, in the reference's design
+  if (index === 0)
+    return (
+      <group position={place.pos} rotation-y={yaw} {...events}>
+        <SampleStation
+          num={index + 1}
+          name={station.name}
+          status={station.status}
+          selected={selected}
+          pal={pal}
+          reducedMotion={reducedMotion}
+          quality={quality}
+        />
+      </group>
+    );
   return (
-    <group
-      position={place.pos}
-      rotation-y={yaw}
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelect(station.id);
-      }}
-      onPointerOver={() => (document.body.style.cursor = "pointer")}
-      onPointerOut={() => (document.body.style.cursor = "")}
-    >
+    <group position={place.pos} rotation-y={yaw} {...events}>
       {/* plinth */}
       <mesh position-y={0.3}>
         <boxGeometry args={[2.3, 0.6, 1.5]} />
@@ -299,10 +326,11 @@ function Product({
   model,
   pal,
   reducedMotion,
-}: FactorySceneProps & { pal: ScenePalette }) {
+  quality,
+}: FactorySceneProps & { pal: ScenePalette; quality: Quality }) {
   const group = useRef<Group>(null);
   const scan = useRef<Mesh>(null);
-  const screen = useMemo(() => productScreenTexture(model, build, pal), [model, pal]); // eslint-disable-line react-hooks/exhaustive-deps -- redrawn below as `build` changes
+  const screen = useMemo(() => productScreenTexture(model, build, pal, 2), [model, pal]); // eslint-disable-line react-hooks/exhaustive-deps -- redrawn below as `build` changes
   const drawn = useRef(build);
   useEffect(() => {
     if (Math.abs(drawn.current - build) < 0.01 && drawn.current !== 0) return;
@@ -322,58 +350,29 @@ function Product({
     }
     if (scan.current) {
       scan.current.visible = checking;
-      scan.current.position.y = 0.45 + 1.1 * (0.5 + 0.5 * Math.sin(clock.elapsedTime * (reducedMotion ? 0 : 1.6)));
+      scan.current.position.y = 0.75 * Math.sin(clock.elapsedTime * (reducedMotion ? 0 : 1.6));
     }
     window.__tashfeerFactoryProductU = u.current;
   });
-  const w = 1.8;
+  const w = 2.6;
   const h = (w * SCREEN.h) / SCREEN.w;
   return (
     <group ref={group}>
-      {/* carrier */}
-      <mesh position-y={0.06}>
-        <boxGeometry args={[1.5, 0.12, 1]} />
-        <meshStandardMaterial color={pal.bg} roughness={0.3} metalness={0.6} />
-      </mesh>
-      <mesh position={[0, 0.125, 0.51]}>
-        <boxGeometry args={[1.4, 0.02, 0.01]} />
-        <meshBasicMaterial color={pal.neon} toneMapped={false} />
-      </mesh>
-      {/* stand */}
-      <mesh position={[0, 0.3, -0.1]}>
-        <boxGeometry args={[0.14, 0.4, 0.08]} />
-        <meshStandardMaterial color={pal.bg} roughness={0.3} metalness={0.6} />
-      </mesh>
-      {/* the screen, tilted back a little, facing the camera side */}
-      <group position={[0, 0.48 + h / 2, -0.05]} rotation-x={-0.08}>
-        <mesh>
-          <boxGeometry args={[w + 0.08, h + 0.08, 0.06]} />
-          <meshStandardMaterial
-            color={pal.bg}
-            roughness={0.25}
-            metalness={0.5}
-            emissive={delivered ? pal.highlight : pal.neon}
-            emissiveIntensity={delivered ? 0.35 : 0.08}
-          />
+      <ProductCase pal={pal} screen={{ map: screen.texture, w, h }} delivered={delivered} quality={quality}>
+        {/* the quality station's scan: a thin light passing over the screen */}
+        <mesh ref={scan} position={[0, 0, 0.04]} visible={false}>
+          <planeGeometry args={[w + 0.1, 0.02]} />
+          <meshBasicMaterial color={lit(pal.highlight, 2.4)} transparent opacity={0.9} />
         </mesh>
-        <mesh position-z={0.032}>
-          <planeGeometry args={[w, h]} />
-          <meshBasicMaterial map={screen.texture} toneMapped={false} />
-        </mesh>
-      </group>
-      {/* the quality station's scan: a thin light passing over the screen */}
-      <mesh ref={scan} position={[0, 1, 0.06]} visible={false}>
-        <planeGeometry args={[w + 0.2, 0.025]} />
-        <meshBasicMaterial color={pal.highlight} toneMapped={false} transparent opacity={0.9} />
-      </mesh>
+      </ProductCase>
       {/* the light on the product: it is the scene's hero */}
       <spotLight
         color={pal.text}
-        intensity={22}
-        distance={9}
-        angle={0.6}
-        penumbra={0.8}
-        position={[0, 4, 2.5]}
+        intensity={26}
+        distance={10}
+        angle={0.65}
+        penumbra={0.85}
+        position={[0, 4.6, 3]}
       />
     </group>
   );
@@ -389,10 +388,11 @@ function Tashfeer({ src }: { src: string }) {
     return t;
   }, [src]);
   const place = useMemo(() => {
-    const { p, n } = frameAt(0.115);
-    return p.clone().addScaledVector(n, 2.1);
+    // behind the product, on the far side of the line, presenting it (as in the reference)
+    const { p, n, t } = frameAt(ENTRY_U);
+    return p.clone().addScaledVector(n, -2.7).addScaledVector(t, 2.2);
   }, []);
-  const h = 2.6;
+  const h = 3.5;
   useFrame(({ camera }) => {
     const m = mesh.current;
     if (!m) return;
@@ -419,6 +419,8 @@ declare global {
       inView: (id: string) => boolean;
     };
     __tashfeerFactoryProductU?: number;
+    /** the rendering level in use */
+    __tashfeerFactoryQuality?: string;
   }
 }
 
@@ -498,6 +500,7 @@ function CameraRig({ camera: store, stations, travel, reducedMotion }: FactorySc
       if (i >= 0) return stationPose(i, count, panelShift, panelBelow);
     }
     if (s.mode === "overview") return overviewPose();
+    if (s.mode === "sample") return samplePose();
     return followPose(window.__tashfeerFactoryProductU ?? productU(count, travelRef.current));
   };
 

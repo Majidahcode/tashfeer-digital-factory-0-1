@@ -331,6 +331,19 @@ export function FactoryScreen() {
             >
               <Icon name="search" size={16} /> المشهد الكامل
             </button>
+            {/* for reviewing the visual sample: the reference image's angle */}
+            <button
+              type="button"
+              className={cx(styles.camBtn, cam.mode === "sample" && styles.camOn)}
+              onClick={() => {
+                setSelected(null);
+                cameraStore.go("sample");
+              }}
+              aria-pressed={cam.mode === "sample"}
+              data-cam-sample=""
+            >
+              <Icon name="image" size={16} /> زاوية العينة
+            </button>
           </div>
         )}
         {webgl && (
@@ -394,9 +407,14 @@ function StationPanel({
         </button>
       </header>
 
+      <p className={styles.simNote}>
+        <Icon name="info" size={14} /> محاكاة تفاعلية — ليست نتائج عمل حقيقي.
+      </p>
+
+      {/* the essentials: who, and what now; everything else opens on request */}
       <dl className={styles.rows}>
         <div>
-          <dt>الوكيل المسؤول</dt>
+          <dt>الوكيل</dt>
           <dd data-panel-agent="">{responsible(station, team)}</dd>
         </div>
         <div>
@@ -405,71 +423,80 @@ function StationPanel({
             {st.task ?? (st.status === "done" ? "اكتملت مهام المحطة" : "لم تبدأ بعد")}
           </dd>
         </div>
-        <div>
-          <dt>المخرج المتاح</dt>
-          <dd data-panel-output="">{st.outputs.length ? st.outputs.join("، ") : "لا يوجد مخرج بعد"}</dd>
-        </div>
       </dl>
 
-      {station.id === "quality" && (
-        <section className={styles.checks} aria-label="الفحوص" data-panel-checks="">
-          <h3>الفحوص</h3>
-          {st.checks.length === 0 ? (
-            <p className={styles.muted}>لم يُجرَ أي فحص بعد.</p>
-          ) : (
+      <details className={styles.more} data-panel-details="">
+        <summary>
+          المخرجات{station.id === "quality" ? " والفحوص" : ""}
+          {openCount(st) > 0 && <span className={styles.issueDot}>مشكلة مفتوحة</span>}
+        </summary>
+        <dl className={styles.rows}>
+          <div>
+            <dt>المخرج المتاح</dt>
+            <dd data-panel-output="">{st.outputs.length ? st.outputs.join("، ") : "لا يوجد مخرج بعد"}</dd>
+          </div>
+        </dl>
+
+        {station.id === "quality" && (
+          <section className={styles.checks} aria-label="الفحوص" data-panel-checks="">
+            <h3>الفحوص</h3>
+            {st.checks.length === 0 ? (
+              <p className={styles.muted}>لم يُجرَ أي فحص بعد.</p>
+            ) : (
+              <ul>
+                {st.checks.map((c) => (
+                  <li key={c.id} data-check={c.id} data-check-state={openIssue(c) ? "open" : "pass"}>
+                    <b>{c.label}</b>
+                    <ol>
+                      {c.runs.map((r, i) => (
+                        <li key={i} className={r.result === "fail" ? styles.fail : styles.pass}>
+                          {r.result === "fail" ? "مشكلة: " : i > 0 ? "إعادة الاختبار: نجح — " : "نجح — "}
+                          {r.detail}
+                          {r.result === "fail" && c.fix && i === 0 && (
+                            <span className={styles.fix} data-check-fix="">المعالجة: {c.fix}</span>
+                          )}
+                          {r.result === "fail" && !c.fix && <span className={styles.fixPending}>المعالجة جارية</span>}
+                        </li>
+                      ))}
+                    </ol>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
+
+        {station.id === "delivery" && (
+          <section className={styles.delivery} data-panel-delivery="">
+            <h3>معاينة المنتج</h3>
+            {prototype && <PrototypePreview prototype={prototype} />}
+            <p className={styles.muted}>
+              {st.status === "done"
+                ? "اكتمل الخط في المحاكاة. لا يوجد ملف للتنزيل ولا رابط منشور: لم يُنتَج مخرج حقيقي بعد."
+                : "لا يوجد ملف للتنزيل ولا رابط منشور بعد."}
+            </p>
+          </section>
+        )}
+
+        {log.length > 0 && (
+          <div className={styles.tech}>
+            <h3>السجل</h3>
             <ul>
-              {st.checks.map((c) => (
-                <li key={c.id} data-check={c.id} data-check-state={openIssue(c) ? "open" : "pass"}>
-                  <b>{c.label}</b>
-                  <ol>
-                    {c.runs.map((r, i) => (
-                      <li key={i} className={r.result === "fail" ? styles.fail : styles.pass}>
-                        {r.result === "fail" ? "مشكلة: " : i > 0 ? "إعادة الاختبار: نجح — " : "نجح — "}
-                        {r.detail}
-                        {r.result === "fail" && c.fix && i === 0 && (
-                          <span className={styles.fix} data-check-fix="">المعالجة: {c.fix}</span>
-                        )}
-                        {r.result === "fail" && !c.fix && <span className={styles.fixPending}>المعالجة جارية</span>}
-                      </li>
-                    ))}
-                  </ol>
+              {log.map((e, i) => (
+                <li key={i}>
+                  <time>{formatTime(e.at)}</time> {describe(e)}
                 </li>
               ))}
             </ul>
-          )}
-        </section>
-      )}
-
-      {station.id === "delivery" && (
-        <section className={styles.delivery} data-panel-delivery="">
-          <h3>معاينة المنتج</h3>
-          {prototype && <PrototypePreview prototype={prototype} />}
-          <p className={styles.muted}>
-            {st.status === "done"
-              ? "اكتمل الخط في المحاكاة. لا يوجد ملف للتنزيل ولا رابط منشور: لم يُنتَج مخرج حقيقي بعد."
-              : "لا يوجد ملف للتنزيل ولا رابط منشور بعد."}
-          </p>
-        </section>
-      )}
-
-      {log.length > 0 && (
-        <details className={styles.tech}>
-          <summary>تفاصيل تقنية</summary>
-          <ul>
-            {log.map((e, i) => (
-              <li key={i}>
-                <time>{formatTime(e.at)}</time> {describe(e)}
-              </li>
-            ))}
-          </ul>
-        </details>
-      )}
-
-      <p className={styles.simNote}>
-        <Icon name="info" size={14} /> محاكاة تفاعلية — ليست نتائج عمل حقيقي.
-      </p>
+          </div>
+        )}
+      </details>
     </aside>
   );
+}
+
+function openCount(st: FactoryState["stations"][string]) {
+  return st.checks.filter(openIssue).length;
 }
 
 function formatTime(s: number) {

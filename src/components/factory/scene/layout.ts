@@ -27,10 +27,11 @@ export const CURVE = new CatmullRomCurve3(
   "centripetal",
 );
 
-export const TRACK = { width: 1.7, top: 0.34 };
+/** the belt: 2.1 m across, its running surface 0.42 m above the floor, a raised lip at each edge */
+export const TRACK = { width: 2.1, top: 0.42, lip: 0.06, lipWidth: 0.14 };
 /** where the product waits before the first station */
 export const ENTRY_U = 0.05;
-const FIRST = 0.17;
+const FIRST = 0.2;
 const LAST = 0.9;
 
 export function stationU(index: number, count: number): number {
@@ -53,63 +54,24 @@ export function stationPlace(index: number, count: number) {
   return { u, pos: p.clone().addScaledVector(n, -2.3), t, n, line: p };
 }
 
-/* ── the line's geometry: a flat, rounded ribbon with low walls ── */
-
-export function trackGeometry(samples = 320): BufferGeometry {
-  const w = TRACK.width / 2;
-  const h = TRACK.top;
-  const bevel = 0.06;
-  // the cross-section, from the camera side round to the far side (x across, y up)
-  const section: [number, number][] = [
-    [w + 0.02, 0],
-    [w, h - bevel],
-    [w - bevel, h],
-    [-w + bevel, h],
-    [-w, h - bevel],
-    [-w - 0.02, 0],
-  ];
-  const pos: number[] = [];
-  const idx: number[] = [];
-  for (let i = 0; i <= samples; i++) {
-    const { p, n } = frameAt(i / samples);
-    for (const [x, y] of section) {
-      pos.push(p.x + n.x * x, y, p.z + n.z * x);
-    }
-  }
-  const k = section.length;
-  for (let i = 0; i < samples; i++) {
-    for (let j = 0; j < k - 1; j++) {
-      const a = i * k + j;
-      const b = (i + 1) * k + j;
-      idx.push(a, b, a + 1, b, b + 1, a + 1);
-    }
-  }
-  const g = new BufferGeometry();
-  g.setAttribute("position", new BufferAttribute(new Float32Array(pos), 3));
-  g.setIndex(idx);
-  g.computeVertexNormals();
-  return g;
-}
-
-/** A flat strip along the line, `offset` across it and `width` wide, at height y (the underglow, the floor glow). */
-export function stripGeometry(offset: number, width: number, y: number, samples = 320): BufferGeometry {
+/**
+ * A ribbon along the line between two points of its cross-section — (`a` across, `ay` up) to (`b` across, `by` up) —
+ * with u along the line in metres (÷ `tile`) and v across. Flat, vertical or sloped: the belt is built from these.
+ */
+export function ribbonGeometry(a: number, ay: number, b: number, by: number, tile = 1, samples = 360): BufferGeometry {
   const pos: number[] = [];
   const uv: number[] = [];
   const idx: number[] = [];
+  const length = CURVE.getLength();
   for (let i = 0; i <= samples; i++) {
     const u = i / samples;
     const { p, n } = frameAt(u);
-    for (const [s, v] of [
-      [offset - width / 2, 0],
-      [offset + width / 2, 1],
-    ] as const) {
-      pos.push(p.x + n.x * s, y, p.z + n.z * s);
-      uv.push(u, v);
-    }
+    pos.push(p.x + n.x * a, ay, p.z + n.z * a, p.x + n.x * b, by, p.z + n.z * b);
+    uv.push((u * length) / tile, 0, (u * length) / tile, 1);
   }
   for (let i = 0; i < samples; i++) {
-    const a = i * 2;
-    idx.push(a, a + 2, a + 1, a + 2, a + 3, a + 1);
+    const k = i * 2;
+    idx.push(k, k + 2, k + 1, k + 2, k + 3, k + 1);
   }
   const g = new BufferGeometry();
   g.setAttribute("position", new BufferAttribute(new Float32Array(pos), 3));
@@ -126,8 +88,8 @@ export type Pose = { pos: Vector3; target: Vector3 };
 /** Beside the line, slightly behind the product, looking at it: the tracking shot. */
 export function followPose(u: number): Pose {
   const { p, t, n } = frameAt(u);
-  const target = p.clone().add(new Vector3(0, TRACK.top + 0.7, 0)).addScaledVector(n, -0.6).addScaledVector(t, 0.8);
-  const pos = p.clone().addScaledVector(n, 6.6).addScaledVector(t, -2.6).add(new Vector3(0, 2.5, 0));
+  const target = p.clone().add(new Vector3(0, TRACK.top + 1.1, 0)).addScaledVector(n, -0.6).addScaledVector(t, 0.8);
+  const pos = p.clone().addScaledVector(n, 7.6).addScaledVector(t, -2.8).add(new Vector3(0, 2.8, 0));
   return { pos, target };
 }
 
@@ -149,6 +111,18 @@ export function stationPose(index: number, count: number, panelSide = 0, panelBe
     .addScaledVector(s.t, -1.4)
     .addScaledVector(right, panelSide)
     .add(new Vector3(0, 3.1, 0));
+  return { pos, target };
+}
+
+/**
+ * The reference angle (the owner's approved image): low, on the camera side, just behind the product at the start of
+ * the line, looking along it — the product large in front, the first station beside it, the line bending away.
+ */
+export function samplePose(): Pose {
+  // found by projecting the product, Tashfeer and the stations and matching their places in the reference image
+  const { p, t, n } = frameAt(ENTRY_U);
+  const target = p.clone().addScaledVector(t, 3.4).addScaledVector(n, -2.75).add(new Vector3(0, 1, 0));
+  const pos = p.clone().addScaledVector(n, 9.3).addScaledVector(t, 3.6).add(new Vector3(0, 3, 0));
   return { pos, target };
 }
 

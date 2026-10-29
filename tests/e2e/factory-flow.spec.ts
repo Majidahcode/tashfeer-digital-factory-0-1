@@ -127,10 +127,10 @@ test.describe("factory", () => {
   test("the opening shot ends on the product; a station is reached smoothly and framed; back to the whole factory and to the product", async ({
     page,
   }) => {
-    // smoothness is measured frame by frame; WebGL here is drawn in software, and beyond 1440×900 a frame can take
-    // longer than a whole move under the suite's parallel load — so the path is measured at that size at most
+    // smoothness is measured frame by frame; WebGL here is drawn in software, and on large screens a frame can take
+    // longer than a whole move under the suite's parallel load — so the path is measured at 1024×640 at most
     const vp = page.viewportSize()!;
-    if (vp.width > 1440) await page.setViewportSize({ width: 1440, height: 900 });
+    if (vp.width > 1024) await page.setViewportSize({ width: 1024, height: 640 });
     await seedApproved(page);
     await openFactory(page);
     await cameraSettled(page);
@@ -279,7 +279,7 @@ test.describe("factory", () => {
 
   test("a changed approval stops the factory: no production on an old approval", async ({ page }) => {
     await seedApproved(page);
-    await openFactory(page, "?speed=12");
+    await openFactory(page, "?speed=4");
     await page.locator("[data-production-toggle]").click();
     await expect(page.locator("[data-station-btn=setup]")).toHaveAttribute("data-status", "done", { timeout: 15_000 });
     await page.locator("[data-production-toggle]").click();
@@ -326,6 +326,43 @@ test.describe("factory", () => {
     await expect(page.locator("[data-factory-canvas]")).toHaveCount(0);
     await page.locator("[data-station-btn=quality]").click();
     await expect(page.locator("[data-station-panel=quality]")).toBeVisible();
+  });
+
+  test("the station panel: name, agent, status and task up front; outputs and checks on request; the simulation labelled", async ({
+    page,
+  }) => {
+    await seedApproved(page);
+    await openFactory(page);
+    await page.locator("[data-station-btn=quality]").click();
+    const panel = page.locator("[data-station-panel=quality]");
+    await expect(panel.locator("h2")).toHaveText("الجودة");
+    await expect(panel.locator("[data-panel-status]")).toHaveText("لم تبدأ");
+    await expect(panel.locator("[data-panel-agent]")).toHaveText("اختبار الجودة");
+    await expect(panel.locator("[data-panel-task]")).toBeVisible();
+    await expect(panel).toContainText("محاكاة تفاعلية");
+    // the rest is closed until asked for
+    const details = panel.locator("[data-panel-details]");
+    await expect(details).not.toHaveAttribute("open", "");
+    await expect(panel.locator("[data-panel-output]")).toBeHidden();
+    await expect(panel.locator("[data-panel-checks]")).toBeHidden();
+    await details.locator("summary").click();
+    await expect(panel.locator("[data-panel-output]")).toBeVisible();
+    await expect(panel.locator("[data-panel-checks]")).toBeVisible();
+  });
+
+  test("the visual sample: the reference angle frames the product's case and the first station; the camera can still go round it", async ({
+    page,
+  }) => {
+    await seedApproved(page);
+    await openFactory(page);
+    await cameraSettled(page);
+    await page.locator("[data-cam-sample]").click();
+    await expect(screen(page)).toHaveAttribute("data-camera-mode", "sample");
+    await cameraSettled(page);
+    expect(await page.evaluate(() => window.__tashfeerFactory!.inView("setup"))).toBe(true);
+    // camera moves never change production
+    await expect(page.locator("[data-production-state]")).toHaveText("الإنتاج لم يبدأ");
+    await expect(page.locator("[data-station-btn=setup]")).toHaveAttribute("data-status", "waiting");
   });
 
   test("no console errors on the factory", async ({ page }) => {

@@ -2,7 +2,7 @@
  * Textures drawn on canvases: the product's screen (the approved model's example page, built up as production
  * advances), the stations' labels, and the factory's sign. Arabic text is laid out by the browser (direction rtl).
  */
-import { CanvasTexture, SRGBColorSpace } from "three";
+import { CanvasTexture, RepeatWrapping, SRGBColorSpace } from "three";
 import { ICON_PATHS, type IconName } from "@/components/icons/Icon";
 import type { ModelId } from "@/lib/project-store";
 import type { ScenePalette } from "./palette";
@@ -45,6 +45,8 @@ export function drawProductScreen(
   pal: ScenePalette,
 ) {
   const ctx = target.getContext("2d")!;
+  // drawn in SCREEN units, at the canvas's own resolution (2× for the large, readable screen)
+  ctx.setTransform(target.width / SCREEN.w, 0, 0, target.height / SCREEN.h, 0, 0);
   ctx.direction = "rtl";
   const k = pal.css;
   const light = model === "A";
@@ -214,8 +216,8 @@ export function drawProductScreen(
   });
 }
 
-export function productScreenTexture(model: ModelId, build: number, pal: ScenePalette) {
-  const { c } = canvas(SCREEN.w, SCREEN.h);
+export function productScreenTexture(model: ModelId, build: number, pal: ScenePalette, scale = 1) {
+  const { c } = canvas(SCREEN.w * scale, SCREEN.h * scale);
   drawProductScreen(c, model, build, pal);
   return { canvas: c, texture: texture(c) };
 }
@@ -271,14 +273,131 @@ export function signTexture(pal: ScenePalette) {
   return texture(c);
 }
 
-/** A soft glow: bright along its middle (v = 0.5), fading to nothing at both sides — for the light under the line. */
-export function glowTexture(pal: ScenePalette) {
+/** A one-sided glow: bright at one edge of a strip (v = 0, or v = 1 when `flip`), gone at the other — light at a foot. */
+export function fadeTexture(pal: ScenePalette, flip = false) {
   const { c, ctx } = canvas(4, 256);
-  const g = ctx.createLinearGradient(0, 0, 0, 256);
-  g.addColorStop(0, "transparent");
-  g.addColorStop(0.5, pal.css.neon);
+  const g = ctx.createLinearGradient(0, flip ? 256 : 0, 0, flip ? 0 : 256);
+  g.addColorStop(0, pal.css.neon);
+  g.addColorStop(0.35, pal.css.emerald);
   g.addColorStop(1, "transparent");
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, 4, 256);
+  return texture(c);
+}
+
+/* ── the sample station's and the product case's details (the reference image) ── */
+
+/**
+ * The belt's running surface: a dark perforated metal plate, tiled along the line. Used as the colour map and as the
+ * bump map (the holes read as holes).
+ */
+export function perforatedTexture(pal: ScenePalette) {
+  const { c, ctx } = canvas(256, 256);
+  ctx.fillStyle = pal.css.glassBase;
+  ctx.fillRect(0, 0, 256, 256);
+  const step = 16;
+  for (let y = step / 2; y < 256; y += step)
+    for (let x = (y / step) % 2 ? step : step / 2; x < 256; x += step) {
+      ctx.beginPath();
+      ctx.arc(x, y, 4.2, 0, Math.PI * 2);
+      ctx.fillStyle = pal.css.bg;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x - 0.8, y - 0.8, 4.2, Math.PI * 0.9, Math.PI * 1.6);
+      ctx.strokeStyle = pal.css.muted;
+      ctx.globalAlpha = 0.25;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  const t = texture(c);
+  t.wrapS = t.wrapT = RepeatWrapping;
+  return t;
+}
+
+/** A floating name tag: dark glass, a fine bright edge, the name. */
+export function tagTexture(text: string, pal: ScenePalette) {
+  const { c, ctx } = canvas(720, 180);
+  ctx.fillStyle = pal.css.bg;
+  ctx.globalAlpha = 0.78;
+  rr(ctx, 6, 6, 708, 168, 30);
+  ctx.fill();
+  ctx.globalAlpha = 0.55;
+  ctx.strokeStyle = pal.css.text;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.textAlign = "center";
+  ctx.fillStyle = pal.css.text;
+  ctx.font = `700 76px ${FONT}`;
+  ctx.fillText(text, 360, 116);
+  return texture(c);
+}
+
+/** The ⊕ badge on a glass case's corner. */
+export function plusTexture(pal: ScenePalette) {
+  const { c, ctx } = canvas(256, 256);
+  ctx.beginPath();
+  ctx.arc(128, 128, 112, 0, Math.PI * 2);
+  ctx.fillStyle = pal.css.bg;
+  ctx.fill();
+  ctx.lineWidth = 14;
+  ctx.strokeStyle = pal.css.neon;
+  ctx.stroke();
+  ctx.lineCap = "round";
+  ctx.lineWidth = 18;
+  ctx.beginPath();
+  ctx.moveTo(128, 74);
+  ctx.lineTo(128, 182);
+  ctx.moveTo(74, 128);
+  ctx.lineTo(182, 128);
+  ctx.strokeStyle = pal.css.text;
+  ctx.stroke();
+  return texture(c);
+}
+
+/** The number plate on a base's front: «01 —». */
+export function numberTexture(num: number, pal: ScenePalette) {
+  const { c, ctx } = canvas(400, 140);
+  ctx.direction = "ltr";
+  ctx.textAlign = "left";
+  ctx.fillStyle = pal.css.text;
+  ctx.font = `800 96px ${FONT}`;
+  ctx.fillText(String(num).padStart(2, "0"), 20, 106);
+  ctx.fillRect(170, 64, 64, 9);
+  return texture(c);
+}
+
+/** The small screen inside the sample station's case: the project's structure being set up. */
+export function setupPanelTexture(pal: ScenePalette) {
+  const { c, ctx } = canvas(512, 640);
+  const k = pal.css;
+  ctx.fillStyle = k.bg;
+  ctx.globalAlpha = 0.8;
+  rr(ctx, 8, 8, 496, 624, 28);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = k.neon;
+  ctx.globalAlpha = 0.6;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.textAlign = "right";
+  ctx.fillStyle = k.neon;
+  ctx.font = `800 40px ${FONT}`;
+  ctx.fillText("هيكل المشروع", 470, 84);
+  const rows = ["الصفحات", "المكوّنات", "الإعدادات", "الهوية"];
+  rows.forEach((r, i) => {
+    const y = 170 + i * 108;
+    ctx.fillStyle = k.text;
+    ctx.font = `600 34px ${FONT}`;
+    ctx.fillText(r, 470, y);
+    ctx.fillStyle = k.emerald;
+    rr(ctx, 48, y - 28, 200, 14, 7);
+    ctx.fill();
+    ctx.fillStyle = k.neon;
+    rr(ctx, 48, y - 28, 200 * (1 - i * 0.22), 14, 7);
+    ctx.fill();
+  });
   return texture(c);
 }

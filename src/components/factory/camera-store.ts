@@ -6,6 +6,7 @@
  *   follow    the camera travels beside the line with the product
  *   station   stopped in front of one station, to inspect it
  *   overview  the whole factory
+ *   sample    the reference image's angle, to review the visual sample (low, behind the product, along the line)
  *   free      the visitor's own: drag to look, wheel or pinch to zoom, right-drag or two fingers to move
  *
  * Any interaction of the visitor's with the scene switches to "free": the camera never fights their control.
@@ -13,7 +14,7 @@
 import { useSyncExternalStore } from "react";
 import type { StationId } from "@/domain/factory";
 
-export type CameraMode = "intro" | "follow" | "station" | "overview" | "free";
+export type CameraMode = "intro" | "follow" | "station" | "overview" | "sample" | "free";
 export type CameraState = { mode: CameraMode; station: StationId | null; settled: boolean; request: number };
 
 export type CameraStore = ReturnType<typeof createCameraStore>;
