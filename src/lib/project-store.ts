@@ -25,6 +25,27 @@ export type Project = {
   confirmed: boolean;
   /** the team as it was approved on the team screen; a different current team means the approval no longer holds */
   approvedTeam: string[] | null;
+  /** the prototypes review: the model chosen, the change requests recorded, and the approved design */
+  chosenModel: ModelId | null;
+  notes: DesignNote[];
+  approvedDesign: ApprovedDesign | null;
+};
+
+export type ModelId = "A" | "B";
+/** A change request, kept in this browser only — no agent acts on it yet. */
+export type DesignNote = {
+  id: string;
+  model: ModelId;
+  text: string;
+  file: Attachment | null;
+  at: number;
+};
+/** What was approved, with the idea and the team it was approved for (to know when it needs another look). */
+export type ApprovedDesign = {
+  model: ModelId;
+  idea: string;
+  team: string[];
+  at: number;
 };
 
 const KEY = "tashfeer.project.v1";
@@ -34,6 +55,9 @@ const EMPTY: Project = {
   team: null,
   confirmed: false,
   approvedTeam: null,
+  chosenModel: null,
+  notes: [],
+  approvedDesign: null,
 };
 const FILES = new Map<string, File>();
 const listeners = new Set<() => void>();
@@ -57,6 +81,13 @@ function load(): Project {
         approvedTeam: Array.isArray(p.approvedTeam)
           ? p.approvedTeam.filter((x): x is string => typeof x === "string")
           : null,
+        chosenModel:
+          p.chosenModel === "A" || p.chosenModel === "B" ? p.chosenModel : null,
+        notes: Array.isArray(p.notes) ? p.notes : [],
+        approvedDesign:
+          p.approvedDesign && typeof p.approvedDesign === "object"
+            ? p.approvedDesign
+            : null,
       };
     }
   } catch {
@@ -111,6 +142,32 @@ export function removeAttachment(id: string) {
   }));
 }
 
+/** Keep a reference file for a change request: in memory like the intake's attachments, its name in the note. */
+export function keepNoteFile(f: File): Attachment {
+  const id = `note-${f.name}-${f.size}-${f.lastModified}`;
+  FILES.set(id, f);
+  return { id, kind: "file", name: f.name, type: f.type, size: f.size };
+}
+
+export function addNote(model: ModelId, text: string, file: Attachment | null) {
+  const note: DesignNote = {
+    id: `n${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+    model,
+    text,
+    file,
+    at: Date.now(),
+  };
+  updateProject((p) => ({ notes: [...p.notes, note] }));
+}
+
+export function removeNote(id: string) {
+  updateProject((p) => {
+    const n = p.notes.find((x) => x.id === id);
+    if (n?.file) FILES.delete(n.file.id);
+    return { notes: p.notes.filter((x) => x.id !== id) };
+  });
+}
+
 /** Whether the file behind an attachment is still in this page's memory (false after a reload). */
 export function hasFile(id: string): boolean {
   return FILES.has(id);
@@ -146,4 +203,21 @@ export function approvalOf(p: Project): "none" | "approved" | "changed" {
     team.length === p.approvedTeam.length &&
     team.every((id) => p.approvedTeam!.includes(id));
   return same ? "approved" : "changed";
+}
+
+const sameSet = (a: readonly string[], b: readonly string[]) =>
+  a.length === b.length && a.every((x) => b.includes(x));
+
+/**
+ * The design approval: none yet; valid; or needing another look because the idea, the team or the chosen model has
+ * changed since it was given.
+ */
+export function designApprovalOf(p: Project): "none" | "approved" | "review" {
+  const d = p.approvedDesign;
+  if (!d) return "none";
+  const same =
+    d.idea === p.idea &&
+    sameSet(d.team, p.team ?? []) &&
+    d.model === p.chosenModel;
+  return same ? "approved" : "review";
 }

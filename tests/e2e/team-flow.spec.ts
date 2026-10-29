@@ -2,8 +2,8 @@ import { expect, test, type Page } from "@playwright/test";
 import { hasMousePointer, openHome, settled } from "./support";
 
 /*
- * Screen 3 — «اعتماد الفريق»: only the agents the visitor chose, their details on the centre card, the proposed
- * journey with the agent's stage, approving (and withdrawing the approval when the team changes), and the way back.
+ * Screen 3 — «اعتماد الفريق»: only the agents the visitor chose, their details on the centre card, approving (and
+ * withdrawing the approval when the team changes), and the way back.
  */
 
 const IDEA = "أبي منصة حجز مواعيد لعيادتي، يحجز فيها العملاء ويدفعون مسبقًا";
@@ -37,7 +37,10 @@ async function toTeam(page: Page, ids: string[]) {
   for (const id of ids) await pick(page, id);
   await page.locator("[data-confirm-team]").click();
   await expect(page).toHaveURL(/\/team\/?$/);
-  await page.locator("[data-team-screen] [data-agent-card]").first().waitFor({ state: "attached" });
+  await page
+    .locator("[data-team-screen] [data-agent-card]")
+    .first()
+    .waitFor({ state: "attached" });
   await settled(page);
 }
 
@@ -67,7 +70,7 @@ test("only the chosen agents reach the team screen, in order, with their images 
   await expect(page.locator("[data-portal]")).toHaveCount(0);
 });
 
-test("the details follow the agent at the centre; the journey highlights its stage and can bring an agent there", async ({
+test("the details follow the agent at the centre; the screen has no production journey", async ({
   page,
 }) => {
   await toTeam(page, ["research", "ux", "back"]);
@@ -78,27 +81,13 @@ test("the details follow the agent at the centre; the journey highlights its sta
   );
   await expect(page.locator("[data-agent-detail]")).toContainText("Figma");
   await expect(page.locator("[data-agent-detail]")).toContainText("خطة مقترحة");
-  await expect(page.locator("[data-stage=design]")).toHaveAttribute(
-    "aria-current",
-    "step",
-  );
-  // the journey shows only the stages this team covers
-  expect(
-    await page
-      .locator("[data-journey] [data-stage]")
-      .evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.stage)),
-  ).toEqual(["research", "design", "build"]);
+  // the journey was removed from this screen (owner's request of 2026-10-29)
+  await expect(page.locator("[data-journey], [data-stage]")).toHaveCount(0);
+  await expect(page.getByText("رحلة الإنتاج المقترحة")).toHaveCount(0);
   // pressing a card brings it to the centre and shows it
   await page.locator("[data-team-screen] [data-agent-card=back]").click();
   await expect.poll(() => detail(page)).toBe("back");
   await expect(page.locator("[data-agent-detail]")).toContainText("حجز");
-  await expect(page.locator("[data-stage=build]")).toHaveAttribute(
-    "aria-current",
-    "step",
-  );
-  // a stage brings its agent
-  await page.locator("[data-stage=research]").click();
-  await expect.poll(() => detail(page)).toBe("research");
 });
 
 test("dragging the team strip changes the agent shown, without leaving the screen", async ({
@@ -137,23 +126,24 @@ test("dragging the team strip changes the agent shown, without leaving the scree
   await expect(page).toHaveURL(/\/team\/?$/);
 });
 
-test("approving saves the team (and survives a reload); changing the team withdraws it until the new line-up is approved", async ({
+test("approving saves the team and opens the prototypes review; changing the team withdraws it until approved again", async ({
   page,
 }) => {
   await toTeam(page, ["ux", "back"]);
   await page.locator("[data-approve-team]").click();
-  await expect(page.locator("[data-team-approved]")).toContainText(
-    "مراجعة النموذجين",
-  );
-  await expect(page.locator("[data-team-approved]")).toContainText(
-    "لم يبدأ أي إنتاج",
-  );
+  await expect(page).toHaveURL(/\/prototypes\/?$/);
+  await page.locator("[data-prototypes-screen]").waitFor();
+  await expect(page.locator("[data-prototypes-gate]")).toHaveCount(0);
+  await settled(page);
+  await page.locator("[data-back-to-team]").click();
+  await expect(page).toHaveURL(/\/team\/?$/);
   await page.reload();
   await expect(page.locator("[data-team-approved]")).toBeVisible();
 
   await page.locator("[data-edit-team]").click();
   await expect(page).toHaveURL(/\/agents\/?$/);
   await page.locator("[data-agents-screen]").waitFor();
+  await settled(page);
   // the selection came back as it was
   expect(
     await page.evaluate(() =>
@@ -172,10 +162,8 @@ test("approving saves the team (and survives a reload); changing the team withdr
   await expect(page.locator("[data-team-approved]")).toHaveCount(0);
   expect(await cards(page)).toEqual(["ux", "back", "front"]);
   await page.locator("[data-approve-team]").click();
-  await expect(page.locator("[data-team-approved]")).toContainText(
-    "3 وكلاء مختارون",
-  );
-  await expect(page.locator("[data-approval-changed]")).toHaveCount(0);
+  await expect(page).toHaveURL(/\/prototypes\/?$/);
+  await expect(page.locator("[data-prototypes-gate]")).toHaveCount(0);
 });
 
 test("back from the team keeps the idea and the attachments' states", async ({
@@ -197,7 +185,10 @@ test("back from the team keeps the idea and the attachments' states", async ({
   await page.locator("[data-agents-screen]").waitFor();
   await settled(page);
   await page.locator("[data-confirm-team]").click();
-  await page.locator("[data-team-screen] [data-agent-card]").first().waitFor({ state: "attached" });
+  await page
+    .locator("[data-team-screen] [data-agent-card]")
+    .first()
+    .waitFor({ state: "attached" });
   await settled(page);
   await page.locator("[data-back-to-agents]").click();
   await page.locator("[data-agents-screen]").waitFor();

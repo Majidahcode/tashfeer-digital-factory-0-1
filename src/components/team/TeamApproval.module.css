@@ -1,7 +1,7 @@
 /*
  * Screen 3 (TeamApproval.tsx) — the agents screen's dark field, Neon palette and curved strip; no portal.
- *   ≥ 1100  Tashfeer (whole) on the left · title, strip, journey and actions in the middle · the agent's details right
- *   < 1100  title → strip → details → journey → actions → Tashfeer
+ *   ≥ 1100  Tashfeer (whole) on the left · title, strip and actions in the middle · the agent's details right
+ *   < 1100  title → strip → details → actions → Tashfeer
  */
 .screen {
   --pad: clamp(16px, 2.5vw, 64px);
@@ -9,7 +9,11 @@
   z-index: var(--z-content);
   direction: ltr; /* visual composition, as on the other screens: Tashfeer left, details right */
   display: grid;
-  grid-template-columns: clamp(170px, 15vw, 300px) minmax(0, 1fr) clamp(330px, 25vw, 440px);
+  grid-template-columns: clamp(170px, 15vw, 300px) minmax(0, 1fr) clamp(
+      330px,
+      25vw,
+      440px
+    );
   gap: clamp(12px, 1.6vw, 32px);
   min-block-size: calc(100svh - var(--header-h));
   padding: 14px var(--pad) 18px;
@@ -34,10 +38,10 @@
 
 .main {
   /* the strip sits between Tashfeer and the details: smaller cards, so the neighbours stay clear of the faded edges */
-  --strip-card-w: clamp(150px, min(12.5vw, 30svh), 250px);
+  --strip-card-w: clamp(150px, min(14vw, 38svh), 280px);
   direction: rtl;
   display: grid;
-  grid-template-rows: auto 1fr auto auto;
+  grid-template-rows: auto 1fr auto;
   gap: 10px;
   min-inline-size: 0;
   min-block-size: 0;
@@ -83,109 +87,9 @@
   color: var(--brand-text-silver);
 }
 
-/* ── the proposed production journey ── */
-.journey {
-  display: grid;
-  justify-items: center;
-  gap: 8px;
-}
-
-.journeyTitle {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--brand-lime);
-}
-
-.stages {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px 22px;
-  margin: 0;
-  padding: 8px 0 0;
-  list-style: none;
-}
-
-.stages li {
-  position: relative;
-}
-
-/* the connector between two stages */
-.stages li + li::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  inset-inline-end: calc(100% + 4px);
-  inline-size: 14px;
-  block-size: 1px;
-  background: color-mix(in srgb, var(--brand-lime) 55%, transparent);
-}
-
-.stage {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px 8px 14px;
-  border: 0;
-  border-radius: 999px;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--brand-text-silver);
-  background: var(--brand-glass);
-  box-shadow:
-    inset 0 1px 0 var(--brand-glass-inner),
-    0 0 0 1px var(--brand-glass-edge);
-  cursor: pointer;
-}
-
-.stage svg {
-  color: var(--brand-lime);
-}
-
-.stageNum {
-  position: absolute;
-  top: -10px;
-  inset-inline-start: -6px;
-  inline-size: 22px;
-  block-size: 22px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--brand-lime);
-  background: var(--brand-bg);
-  box-shadow: inset 0 0 0 1.5px var(--brand-lime);
-}
-
-/* the stage of the agent shown in detail */
-.stageOn {
-  color: var(--brand-highlight);
-  box-shadow:
-    inset 0 0 0 1.5px var(--brand-lime),
-    0 0 18px -4px var(--brand-glow);
-  background:
-    radial-gradient(120% 120% at 50% 120%, color-mix(in srgb, var(--brand-lime) 16%, transparent), transparent 70%),
-    var(--brand-glass);
-}
-
-.stageOn .stageNum {
-  color: var(--brand-bg);
-  background: var(--brand-lime);
-}
-
-.stage:focus-visible,
-.primary:focus-visible,
-.secondary:focus-visible {
-  outline: 2px solid var(--brand-highlight);
-  outline-offset: 2px;
-}
-
 /* ── actions ── */
 .actions {
+  padding-block-end: clamp(8px, 2svh, 28px);
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -210,7 +114,11 @@
   padding: 13px 34px;
   font-size: 17px;
   color: var(--brand-bg);
-  background: linear-gradient(180deg, var(--brand-highlight), var(--brand-lime));
+  background: linear-gradient(
+    180deg,
+    var(--brand-highlight),
+    var(--brand-lime)
+  );
   box-shadow: 0 0 24px -6px var(--brand-glow);
 }
 
@@ -462,7 +370,7 @@
     block-size: 320px;
   }
 
-  /* on one column the details come right after the strip, the journey and actions after them */
+  /* on one column the details come right after the strip, the actions after them */
   .main {
     display: contents;
   }
@@ -473,10 +381,6 @@
 
   .main > :nth-child(2) {
     order: 1;
-  }
-
-  .journey {
-    order: 3;
   }
 
   .actions {
@@ -490,4 +394,15 @@
   .tashfeer {
     order: 5;
   }
+}
+
+.approvedLine {
+  flex: 1 0 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 14px;
+  color: var(--brand-lime);
 }

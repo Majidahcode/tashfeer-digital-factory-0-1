@@ -1,0 +1,828 @@
+/*
+ * Screen 4 (PrototypeReview.tsx) — the dark field and Neon palette of the other screens; Tashfeer whole, no portal.
+ *   ≥ 1100  steps across the top · Tashfeer on the left · title, the two models (A on the right), notes and actions
+ *   < 1100  steps → title → models A | B (one under the other below 720) → notes → actions → Tashfeer
+ */
+.screen {
+  --pad: clamp(16px, 2.5vw, 64px);
+  position: relative;
+  z-index: var(--z-content);
+  direction: ltr;
+  display: grid;
+  grid-template-columns: clamp(150px, 13vw, 260px) minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  column-gap: clamp(12px, 1.6vw, 32px);
+  min-block-size: calc(100svh - var(--header-h));
+  padding: 10px var(--pad) 18px;
+}
+
+/* ── steps ── */
+.steps {
+  grid-column: 1 / -1;
+  direction: rtl;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+  margin: 0 0 6px;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  color: var(--brand-muted);
+}
+
+.steps li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.steps li + li::before {
+  content: "";
+  inline-size: 40px;
+  block-size: 1px;
+  margin-inline-end: 12px;
+  background: color-mix(in srgb, var(--brand-text-silver) 30%, transparent);
+}
+
+.stepNum {
+  inline-size: 30px;
+  block-size: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: inset 0 0 0 1.5px
+    color-mix(in srgb, var(--brand-text-silver) 40%, transparent);
+}
+
+.done {
+  color: var(--brand-text-silver);
+}
+
+.done .stepNum {
+  color: var(--brand-lime);
+  box-shadow: inset 0 0 0 1.5px var(--brand-lime);
+}
+
+.current {
+  color: var(--brand-highlight);
+  font-weight: 800;
+}
+
+.current .stepNum {
+  color: var(--brand-lime);
+  box-shadow:
+    inset 0 0 0 2px var(--brand-lime),
+    0 0 14px -2px var(--brand-glow);
+}
+
+.tashfeer {
+  align-self: end;
+  justify-self: center;
+  block-size: min(100%, 680px);
+  inline-size: auto;
+  max-inline-size: 100%;
+  object-fit: contain;
+  object-position: 50% 100%;
+  filter: drop-shadow(0 0 16px var(--brand-glow-soft));
+}
+
+.main {
+  direction: rtl;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-inline-size: 0;
+}
+
+.head {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(28px, 2.6vw, 46px);
+  font-weight: 800;
+  line-height: 1.25;
+  background: var(--gradient-heading);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.lede {
+  margin: 0;
+  font-size: clamp(15px, 1.1vw, 19px);
+  color: var(--brand-text-silver);
+}
+
+/* ── the two models ── */
+.cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(28px, 4vw, 72px);
+  max-inline-size: min(1300px, calc((100svh - 400px) * 2.6));
+  inline-size: 100%;
+  justify-self: center;
+}
+
+.card {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px 16px;
+  border-radius: 20px;
+  background: var(--neon-glass-fill);
+  box-shadow:
+    inset 0 1px 0 var(--neon-glass-top),
+    0 0 0 1px var(--neon-glass-edge);
+}
+
+.cardOn {
+  box-shadow:
+    inset 0 0 0 2px var(--brand-lime),
+    0 0 30px -6px var(--brand-glow);
+}
+
+.cardHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--brand-text-silver);
+}
+
+.direction {
+  margin: 0;
+  font-size: 14px;
+  color: var(--brand-muted);
+}
+
+.summary {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--brand-text-silver);
+}
+
+.chosen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--brand-highlight);
+  box-shadow: inset 0 0 0 1.5px var(--brand-lime);
+}
+
+.chosen svg {
+  inline-size: 20px;
+  block-size: 20px;
+  padding: 2px;
+  border-radius: 50%;
+  color: var(--brand-bg);
+  background: var(--brand-lime);
+}
+
+.previewBtn {
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  cursor: zoom-in;
+}
+
+.previewBtn:focus-visible {
+  outline: 2px solid var(--brand-highlight);
+  outline-offset: 3px;
+}
+
+.cardActions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+/* the live comparison, between the two cards */
+.compare {
+  position: absolute;
+  top: 50%;
+  inset-inline-end: calc(-1 * clamp(28px, 4vw, 72px) / 2 - 32px);
+  translate: 0 -50%;
+  inline-size: 64px;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  font-size: 12px;
+  color: var(--brand-text-silver);
+  background: none;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.compare svg {
+  inline-size: 46px;
+  block-size: 46px;
+  padding: 12px;
+  border-radius: 50%;
+  color: var(--brand-lime);
+  background: var(--brand-glass-strong);
+  box-shadow:
+    inset 0 0 0 1.5px var(--brand-glow),
+    0 0 16px -6px var(--brand-glow);
+}
+
+/* ── buttons ── */
+.primary,
+.primarySm,
+.secondary,
+.choose,
+.save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.primary {
+  padding: 13px 34px;
+  border-radius: 14px;
+  font-size: 17px;
+  color: var(--brand-bg);
+  background: linear-gradient(
+    180deg,
+    var(--brand-highlight),
+    var(--brand-lime)
+  );
+  box-shadow: 0 0 24px -6px var(--brand-glow);
+}
+
+.primarySm,
+.choose,
+.secondary,
+.save {
+  padding: 9px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.primarySm {
+  color: var(--brand-bg);
+  background: linear-gradient(
+    180deg,
+    var(--brand-highlight),
+    var(--brand-lime)
+  );
+}
+
+.choose {
+  color: var(--brand-highlight);
+  background: color-mix(in srgb, var(--brand-emerald) 34%, transparent);
+  box-shadow: inset 0 0 0 1px var(--brand-glow);
+}
+
+.secondary,
+.save {
+  color: var(--brand-text-silver);
+  background: var(--brand-glass);
+  box-shadow:
+    inset 0 1px 0 var(--brand-glass-inner),
+    0 0 0 1px var(--brand-glass-edge);
+}
+
+.secondary svg,
+.choose svg {
+  color: var(--brand-lime);
+}
+
+.primary:disabled,
+.save:disabled {
+  color: var(--brand-muted);
+  background: var(--brand-glass);
+  box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
+  cursor: not-allowed;
+}
+
+.primary:focus-visible,
+.primarySm:focus-visible,
+.secondary:focus-visible,
+.choose:focus-visible,
+.save:focus-visible,
+.target:focus-visible,
+.compare:focus-visible,
+.attachBtn:focus-visible {
+  outline: 2px solid var(--brand-highlight);
+  outline-offset: 2px;
+}
+
+/* ── notes ── */
+.notes {
+  display: grid;
+  gap: 10px;
+  max-inline-size: 1300px;
+  scroll-margin-block: 120px;
+  inline-size: 100%;
+  justify-self: center;
+  padding: 14px 18px;
+  border-radius: 18px;
+  background: var(--neon-glass-fill);
+  box-shadow:
+    inset 0 1px 0 var(--neon-glass-top),
+    0 0 0 1px var(--neon-glass-edge);
+}
+
+.notesHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+}
+
+.notesTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--brand-lime);
+}
+
+.targets {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.target {
+  padding: 4px 14px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--brand-muted);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
+  cursor: pointer;
+}
+
+.targetOn {
+  color: var(--brand-highlight);
+  box-shadow: inset 0 0 0 1.5px var(--brand-lime);
+}
+
+.noteRow {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.field {
+  position: relative;
+}
+
+.textarea {
+  inline-size: 100%;
+  block-size: 100%;
+  min-block-size: 64px;
+  padding: 10px 14px 22px;
+  border: 0;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+  color: var(--brand-highlight);
+  background: color-mix(in srgb, var(--brand-bg) 70%, transparent);
+  box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
+}
+
+.textarea:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 1.5px var(--brand-lime);
+}
+
+.textarea::placeholder {
+  color: var(--brand-muted);
+}
+
+.count {
+  position: absolute;
+  inset-block-end: 6px;
+  inset-inline-end: 12px;
+  font-size: 12px;
+  color: var(--brand-muted);
+}
+
+.attach {
+  display: grid;
+  align-content: center;
+  gap: 6px;
+  min-inline-size: 170px;
+}
+
+.attachBtn {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--brand-text-silver);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
+  outline-offset: 2px;
+  cursor: pointer;
+}
+
+.attachBtn svg {
+  color: var(--brand-lime);
+}
+
+.attachBtn small {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--brand-muted);
+}
+
+.fileChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-inline-size: 100%;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--brand-text-silver);
+  box-shadow: inset 0 0 0 1px var(--chat-edge);
+}
+
+.fileChip > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-inline-size: 14em;
+}
+
+.fileChip button {
+  padding: 0 4px;
+  border: 0;
+  font: inherit;
+  color: var(--brand-lime);
+  background: none;
+  cursor: pointer;
+}
+
+.stale {
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--state-warning) 55%, transparent);
+}
+
+.stale > span {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.stale em {
+  font-style: normal;
+  color: var(--state-warning);
+}
+
+.fileError {
+  font-size: 12px;
+  color: var(--state-danger);
+}
+
+.save {
+  align-self: center;
+}
+
+.noteList {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.noteList li {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  padding-block: 8px;
+  padding-inline: 12px 40px;
+  border-radius: 12px;
+  font-size: 14px;
+  background: color-mix(in srgb, var(--brand-glass-base) 70%, transparent);
+  box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
+}
+
+.noteList p {
+  flex: 1 1 18em;
+  margin: 0;
+  color: var(--brand-text-silver);
+}
+
+.noteModel {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--brand-bg);
+  background: var(--brand-lime);
+}
+
+.noteStatus {
+  font-size: 12px;
+  color: var(--state-warning);
+}
+
+.noteRemove {
+  position: absolute;
+  inset-block-start: 6px;
+  inset-inline-end: 8px;
+  inline-size: 26px;
+  block-size: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  font: inherit;
+  color: var(--brand-muted);
+  background: none;
+  cursor: pointer;
+}
+
+/* ── actions ── */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 12px 16px;
+}
+
+.warn {
+  flex: 1 0 100%;
+  margin: 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--state-warning);
+}
+
+.confirm,
+.approved {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  max-inline-size: 760px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: var(--brand-glass-strong);
+}
+
+.confirm {
+  box-shadow: inset 0 0 0 1.5px
+    color-mix(in srgb, var(--state-warning) 65%, transparent);
+}
+
+.confirm p,
+.approved p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--brand-text-silver);
+}
+
+.confirm div {
+  display: flex;
+  gap: 8px;
+}
+
+.approved {
+  box-shadow: inset 0 0 0 1.5px var(--brand-lime);
+}
+
+.approved svg {
+  flex: none;
+  color: var(--brand-lime);
+}
+
+.approved b {
+  color: var(--brand-lime);
+}
+
+.illustrative {
+  flex: 1 0 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--brand-muted);
+}
+
+/* ── the larger preview ── */
+.dialog {
+  margin: auto; /* the reset removes the browser's centring of a modal dialog */
+  inset: 0;
+  inline-size: min(1200px, 94vw);
+  max-block-size: 92svh;
+  padding: 0;
+  border: 0;
+  border-radius: 20px;
+  color: var(--brand-text-silver);
+  background: var(--brand-bg);
+  box-shadow:
+    0 0 0 1px var(--brand-glow),
+    0 30px 80px var(--brand-shadow-deep);
+}
+
+.dialog::backdrop {
+  background: var(--brand-scrim);
+}
+
+.dialogBody {
+  direction: rtl;
+  display: grid;
+  gap: 12px;
+  padding: 16px 20px 20px;
+}
+
+.dialogHead {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.dialogHead h2 {
+  margin: 0;
+  font-size: 22px;
+  color: var(--brand-lime);
+}
+
+.close {
+  margin-inline-start: auto;
+  inline-size: 40px;
+  block-size: 40px;
+  border: 0;
+  border-radius: 50%;
+  font: inherit;
+  font-size: 22px;
+  color: var(--brand-text-silver);
+  background: var(--brand-glass);
+  box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
+  cursor: pointer;
+}
+
+.close:focus-visible {
+  outline: 2px solid var(--brand-highlight);
+}
+
+.dialogPreviews {
+  display: grid;
+  gap: 16px;
+}
+
+.dialogCompare {
+  grid-template-columns: 1fr 1fr;
+}
+
+.dialogPreviews figure {
+  display: grid;
+  gap: 10px;
+  min-inline-size: 0;
+  margin: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.dialogPreviews figcaption {
+  font-weight: 800;
+}
+
+.dialogActions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── no approved team ── */
+.gate {
+  grid-template-columns: 1fr;
+  place-items: center;
+}
+
+.gateBox {
+  direction: rtl;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  max-inline-size: 560px;
+  padding: 32px 28px;
+  border-radius: 20px;
+  text-align: center;
+  background: var(--neon-glass-fill);
+  box-shadow:
+    inset 0 1px 0 var(--neon-glass-top),
+    0 0 0 1px var(--neon-glass-edge);
+}
+
+@media (max-width: 1099px) {
+  .screen {
+    grid-template-columns: 1fr;
+  }
+
+  .main {
+    order: 1;
+  }
+
+  .tashfeer {
+    order: 2;
+    block-size: 300px;
+  }
+
+  .cards {
+    gap: 16px;
+  }
+
+  .compare {
+    display: none;
+  }
+
+  .noteRow {
+    grid-template-columns: 1fr;
+  }
+
+  .dialogCompare {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* phones: one model under the other; the larger preview (the dialog) is where they are seen in detail */
+@media (max-width: 719px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1279px) {
+  .cardActions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cardActions > :first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 519px) {
+  .steps {
+    gap: 6px 10px;
+    font-size: 12px;
+  }
+
+  .steps li + li::before {
+    inline-size: 12px;
+    margin-inline-end: 4px;
+  }
+}
+
+/* desktops under 960 px high: the direction line alone describes each model, so everything fits one screen */
+@media (min-width: 1100px) and (max-height: 959px) {
+  .summary {
+    display: none;
+  }
+
+  .main {
+    gap: 10px;
+  }
+
+  .head .lede {
+    font-size: 15px;
+  }
+}

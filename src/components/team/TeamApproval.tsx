@@ -5,15 +5,9 @@ import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
 import { AgentCarousel } from "@/components/agents/AgentCarousel";
 import { TashfeerCharacter } from "@/components/characters/TashfeerCharacter";
-import { Icon, type IconName } from "@/components/icons/Icon";
+import { Icon } from "@/components/icons/Icon";
 import { AGENTS, agentImage, chosenLabel } from "@/domain/agents";
-import {
-  PLANS,
-  features,
-  journey,
-  roleInProject,
-  stageOf,
-} from "@/domain/team-plan";
+import { PLANS, features, roleInProject } from "@/domain/team-plan";
 import { cx } from "@/lib/cx";
 import { transitionTo } from "@/lib/page-transition";
 import {
@@ -29,9 +23,9 @@ const noop = () => () => {};
 
 /**
  * Screen 3 — «اعتماد الفريق»: the agents the visitor chose (only those), on the same curved strip; the one at the centre
- * is shown in detail — what it receives, does and hands over, in this project — with its stage highlighted on the
- * proposed production journey. Approving saves the line-up; the next screen (the two prototypes) is not built, and
- * nothing starts: the screen says both. Changing the team after approving it withdraws the approval.
+ * is shown in detail — what it receives, does and hands over, in this project. (The production stages stay in
+ * src/domain/team-plan.ts, for the factory screen.) Approving saves the line-up and opens the prototypes review
+ * (/prototypes); changing the team after approving it withdraws the approval.
  */
 export function TeamApproval() {
   const router = useRouter();
@@ -48,13 +42,10 @@ export function TeamApproval() {
   );
   const ids = useMemo(() => team.map((a) => a.id), [team]);
   const [active, setActive] = useState<string | null>(null);
-  const [focus, setFocus] = useState<{ id: string } | null>(null);
   const current = team.find((a) => a.id === active) ?? team[0];
   const approval = approvalOf(project);
   const files = project.attachments.filter((a) => hasFile(a.id)).length;
   const f = useMemo(() => features(project.idea, files), [project.idea, files]);
-  const stages = journey(ids);
-  const currentStage = current ? stageOf(current.id) : null;
   const onCenter = useCallback((id: string) => setActive(id), []);
   const go = (href: string) => transitionTo(href, (h) => router.push(h));
 
@@ -122,38 +113,7 @@ export function TeamApproval() {
           mode="inspect"
           start={Math.floor((team.length - 1) / 2)}
           onCenter={onCenter}
-          focus={focus}
         />
-
-        <div className={styles.journey}>
-          <h2 className={styles.journeyTitle}>رحلة الإنتاج المقترحة</h2>
-          <ol className={styles.stages} data-journey="">
-            {stages.map((s, i) => {
-              const members = team.filter((a) => s.agents.includes(a.id));
-              return (
-                <li key={s.id}>
-                  <button
-                    type="button"
-                    className={cx(
-                      styles.stage,
-                      s.id === currentStage && styles.stageOn,
-                    )}
-                    aria-current={s.id === currentStage ? "step" : undefined}
-                    title={members.map((a) => a.ar).join("، ")}
-                    onClick={() =>
-                      members[0] && setFocus({ id: members[0].id })
-                    }
-                    data-stage={s.id}
-                  >
-                    <span className={styles.stageNum}>{i + 1}</span>
-                    <Icon name={s.icon as IconName} size={18} />
-                    {s.label}
-                  </button>
-                </li>
-              );
-            })}
-          </ol>
-        </div>
 
         <div className={styles.actions}>
           {approval === "changed" && (
@@ -162,29 +122,30 @@ export function TeamApproval() {
               الجديدة واعتمدها.
             </p>
           )}
-          {approval === "approved" ? (
-            <div
-              className={styles.approved}
+          {approval === "approved" && (
+            <p
+              className={styles.approvedLine}
               role="status"
               data-team-approved=""
             >
-              <Icon name="check" size={22} />
-              <p>
-                <b>اعتُمد فريقك: {chosenLabel(team.length)}.</b> الخطوة التالية
-                مراجعة النموذجين، وهي غير متاحة بعد في هذه النسخة. لم يبدأ أي
-                إنتاج.
-              </p>
-            </div>
-          ) : (
-            <button
-              type="button"
-              className={styles.primary}
-              onClick={() => updateProject({ approvedTeam: ids })}
-              data-approve-team=""
-            >
-              <Icon name="check" size={20} /> اعتماد الفريق ومتابعة التصور
-            </button>
+              <Icon name="check" size={18} /> اعتُمد فريقك:{" "}
+              {chosenLabel(team.length)}.
+            </p>
           )}
+          <button
+            type="button"
+            className={styles.primary}
+            onClick={() => {
+              if (approval !== "approved") updateProject({ approvedTeam: ids });
+              go("/prototypes");
+            }}
+            data-approve-team=""
+          >
+            <Icon name="check" size={20} />{" "}
+            {approval === "approved"
+              ? "متابعة التصور"
+              : "اعتماد الفريق ومتابعة التصور"}
+          </button>
           <button
             type="button"
             className={styles.secondary}

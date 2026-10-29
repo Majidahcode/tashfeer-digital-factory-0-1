@@ -122,3 +122,24 @@
   --z-content: 1;
   --z-header: 10;
 }
+
+/* ── Illustrative prototypes (/prototypes): two visual directions for one example site, from the palette only ──
+   A — light and organised: near-white surfaces, emerald accents. B — dark, technical, premium: the brand field. */
+:root {
+  --proto-a-bg: color-mix(in srgb, var(--brand-text-silver) 14%, white);
+  --proto-a-surface: white;
+  --proto-a-line: color-mix(in srgb, var(--brand-text-silver) 70%, white);
+  --proto-a-text: var(--brand-bg);
+  --proto-a-muted: color-mix(in srgb, var(--brand-bg) 55%, white);
+  --proto-a-accent: var(--brand-emerald);
+  --proto-a-accent-ink: white;
+  --proto-a-hero: linear-gradient(135deg, color-mix(in srgb, var(--brand-emerald) 18%, white), color-mix(in srgb, var(--brand-text-silver) 40%, white));
+  --proto-b-bg: var(--brand-bg);
+  --proto-b-surface: var(--brand-glass-base);
+  --proto-b-line: color-mix(in srgb, var(--brand-lime) 22%, transparent);
+  --proto-b-text: var(--brand-text-silver);
+  --proto-b-muted: var(--brand-muted);
+  --proto-b-accent: var(--brand-lime);
+  --proto-b-accent-ink: var(--brand-bg);
+  --proto-b-hero: linear-gradient(135deg, var(--brand-bg-forest), var(--brand-bg) 70%);
+}
