@@ -24,3 +24,6 @@ coverage/
 # os / editors
 .DS_Store
 *.log
+
+# Blender backups
+*.blend1

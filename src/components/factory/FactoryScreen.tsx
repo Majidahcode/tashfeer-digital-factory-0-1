@@ -201,6 +201,7 @@ export function FactoryScreen() {
             selected={selected}
             travel={state.current ? state.travel : { to: -1, t: 0 }}
             build={build}
+            waiting={!started}
             checking={state.current === "quality" && state.stations.quality?.status === "active"}
             delivered={state.stations.delivery?.status === "done"}
             model={model}

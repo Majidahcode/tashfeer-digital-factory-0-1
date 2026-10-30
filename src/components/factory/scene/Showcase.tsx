@@ -7,17 +7,19 @@
  *   Environment     what glossy surfaces reflect: a dark space with neon strips, soft overhead light, warm lamps
  *   Effects         the renderer's output: a glow (bloom) that only the neon is bright enough to reach
  *   ReflectiveFloor polished dark floor tiles that really reflect the scene, softly (a low-resolution mirror under a film)
- *   Belt            the production platform: 4.6 m wide, a perforated running surface, rounded black rims, a neon line
- *                   along its outer edge and its light on the floor
+ *   Belt            the production platform (Blender model): 4.6 m wide, a perforated steel plate, rounded black rims,
+ *                   a neon line along its outer faces; its light on the floor (code)
  *   Architecture    the calm background: a large curved gallery with a neon band, pillars with light strips, lamps
- *   GlassCase       clear, thick glass with rounded edges; its edges catch the light
- *   StadiumBase     a station's black base: a rounded slab, its number, the neon line at the glass's foot
- *   SampleStation   station 01 in the reference's design (the work in its case: a lit block structure, side panels)
- *   ProductCase     the client's one product: an oval base, the largest glass case, the screen inside it
+ *   SampleStation   station 01 in the reference's design: base, neon round its top and hollow glass case from the
+ *                   Blender model; the work in its case (a lit block structure, side panels) in code
+ *   ProductCase     the client's one product: base, neon, the largest glass case and the screen device (Blender
+ *                   model); the approved page on the screen (drawn by the site)
+ *
+ * The Blender models: blender/factory-sample/build.py → public/models/factory/sample.glb.
  *
  * Only the first station uses SampleStation for now; the others keep the earlier design until the sample is approved.
  */
-import { useFrame, useThree } from "@react-three/fiber";
+import { useFrame, useLoader, useThree } from "@react-three/fiber";
 import { type ComponentProps, createContext, useContext, useEffect, useMemo, useRef } from "react";
 import {
   AdditiveBlending,
@@ -25,17 +27,16 @@ import {
   Color,
   DoubleSide,
   EdgesGeometry,
-  ExtrudeGeometry,
   type Group,
   Mesh,
   MeshBasicMaterial,
-  Path,
+  type MeshPhysicalMaterial,
+  MeshStandardMaterial,
+  type Object3D,
   PMREMGenerator,
   PlaneGeometry,
   Scene,
   ShaderMaterial,
-  Shape,
-  ShapeGeometry,
   TorusGeometry,
   Vector2,
 } from "three";
@@ -43,7 +44,7 @@ import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
-import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { Reflector } from "three/examples/jsm/objects/Reflector.js";
 import type { StationStatus } from "@/domain/factory";
 import { TRACK, ribbonGeometry } from "./layout";
@@ -51,7 +52,6 @@ import type { ScenePalette } from "./palette";
 import {
   fadeTexture,
   numberTexture,
-  perforatedTexture,
   plusTexture,
   rowsTexture,
   setupPanelTexture,
@@ -238,74 +238,47 @@ function MirrorFloor({ pal, tiles }: { pal: ScenePalette; tiles: import("three")
   );
 }
 
-/* ── the belt: a wide platform, rounded black rims, a neon line along its outer edge ── */
+/* ── the belt: the Blender model (plate, rims, end caps, neon lines); its light on the floor stays in code ── */
 
 export function Belt({ pal }: { pal: ScenePalette }) {
-  const w = TRACK.width / 2;
-  const h = TRACK.top;
-  const r = TRACK.rim;
+  const quality = useContext(QualityContext);
+  const gltf = useSampleModels();
   const parts = useMemo(() => {
-    // each rim: a quarter round from the outer face up to the running surface, in 6 facets
-    const rim = (side: 1 | -1) => {
-      const g: ReturnType<typeof ribbonGeometry>[] = [];
-      const cx = side * (w - r);
-      const cy = h - r;
-      for (let i = 0; i < 6; i++) {
-        const a0 = (i / 6) * (Math.PI / 2);
-        const a1 = ((i + 1) / 6) * (Math.PI / 2);
-        const p0: [number, number] = [cx + side * r * Math.cos(a0), cy + r * Math.sin(a0)];
-        const p1: [number, number] = [cx + side * r * Math.cos(a1), cy + r * Math.sin(a1)];
-        g.push(side > 0 ? ribbonGeometry(p0[0], p0[1], p1[0], p1[1]) : ribbonGeometry(p1[0], p1[1], p0[0], p0[1]));
-      }
-      return g;
-    };
-    return {
-      surface: ribbonGeometry(w - r, h, -w + r, h, 0.9),
-      rims: [...rim(1), ...rim(-1)],
-      outerNear: ribbonGeometry(w, 0, w, h - r),
-      outerFar: ribbonGeometry(-w, h - r, -w, 0),
-      // the neon line along the outer edge, where the rim meets the face (both sides; the near one brighter)
-      lineNear: ribbonGeometry(w + 0.006, h - r - 0.035, w + 0.006, h - r + 0.015),
-      lineFar: ribbonGeometry(-w - 0.006, h - r + 0.015, -w - 0.006, h - r - 0.035),
-      // a fainter band low on the face, and the light the belt throws on the floor
-      skirtNear: ribbonGeometry(w + 0.004, 0.03, w + 0.004, 0.06),
-      glowNear: ribbonGeometry(w + 0.05, 0.004, w + 1.1, 0.004),
-      glowFar: ribbonGeometry(-w - 0.9, 0.004, -w - 0.05, 0.004),
-    };
-  }, [w, h, r]);
-  const plate = useMemo(() => perforatedTexture(pal), [pal]);
-  // the perforated plate (texture and relief) on the high level only: the belt's costliest detail per pixel
-  const relief = useContext(QualityContext) === "high";
+    const out: Object3D[] = [];
+    for (const name of ["Belt_Plate", "Belt_Rim", "Belt_Caps", "Belt_NeonNear", "Belt_NeonFar"]) {
+      const o = gltf.scene.getObjectByName(name);
+      if (!o) continue;
+      const c = o.clone(true);
+      c.traverse((m) => {
+        if (!(m as Mesh).isMesh) return;
+        const mesh = m as Mesh;
+        if (name === "Belt_NeonNear") mesh.material = new MeshBasicMaterial({ color: lit(pal.neon, 2.4) });
+        else if (name === "Belt_NeonFar") mesh.material = new MeshBasicMaterial({ color: lit(pal.neon, 1.6) });
+        else mesh.material = forQuality(mesh.material as MeshPhysicalMaterial, quality);
+      });
+      out.push(c);
+    }
+    return out;
+  }, [gltf, pal, quality]);
+  const w = TRACK.width / 2;
+  const glow = useMemo(
+    () => ({
+      skirt: ribbonGeometry(w + 0.004, 0.03, w + 0.004, 0.06),
+      near: ribbonGeometry(w + 0.05, 0.004, w + 1.1, 0.004),
+      far: ribbonGeometry(-w - 0.9, 0.004, -w - 0.05, 0.004),
+    }),
+    [w],
+  );
   const glows = useMemo(() => [fadeTexture(pal), fadeTexture(pal, true)], [pal]);
   return (
     <group>
-      <mesh geometry={parts.surface}>
-        <Gloss
-          map={relief ? plate : null}
-          bumpMap={relief ? plate : null}
-          bumpScale={relief ? 1.2 : 0}
-          color={relief ? pal.text : pal.glassBase}
-          roughness={0.55}
-          metalness={0.2}
-          clearcoat={0.25}
-          side={DoubleSide}
-        />
-      </mesh>
-      {[...parts.rims, parts.outerNear, parts.outerFar].map((g, i) => (
-        <mesh key={i} geometry={g}>
-          <Gloss color={pal.bg} roughness={0.16} metalness={0.55} clearcoat={1} clearcoatRoughness={0.1} side={DoubleSide} />
-        </mesh>
+      {parts.map((o) => (
+        <primitive key={o.name} object={o} />
       ))}
-      <mesh geometry={parts.lineNear}>
-        <meshBasicMaterial color={lit(pal.neon, 1.7)} side={DoubleSide} />
-      </mesh>
-      <mesh geometry={parts.lineFar}>
-        <meshBasicMaterial color={lit(pal.neon, 1.35)} side={DoubleSide} />
-      </mesh>
-      <mesh geometry={parts.skirtNear}>
+      <mesh geometry={glow.skirt}>
         <meshBasicMaterial color={lit(pal.emerald, 1.4)} side={DoubleSide} />
       </mesh>
-      {[parts.glowNear, parts.glowFar].map((g, i) => (
+      {[glow.near, glow.far].map((g, i) => (
         <mesh key={i} geometry={g}>
           <meshBasicMaterial
             map={glows[i]}
@@ -418,148 +391,108 @@ function rimMaterial(color: Color, power = 3, intensity = 1) {
   });
 }
 
-export function GlassCase({
-  size,
-  radius,
-  pal,
-  glow = 1,
-}: {
-  size: [number, number, number];
-  radius: number;
-  pal: ScenePalette;
-  glow?: number;
-}) {
-  const quality = useContext(QualityContext);
-  const geo = useMemo(() => new RoundedBoxGeometry(size[0], size[1], size[2], 8, radius), [size, radius]);
-  // the edges: mostly white light with a touch of lime, as the reference's glass catches its surroundings
-  const rim = useMemo(() => {
-    const c = pal.text.clone().lerp(pal.neon, 0.35).multiplyScalar(1.7);
-    return rimMaterial(c, 2.6, 0.75 * glow);
-  }, [pal, glow]);
-  useEffect(() => () => geo.dispose(), [geo]);
-  return (
-    <group>
-      <mesh geometry={geo} renderOrder={2}>
-        <Gloss
-          key={quality}
-          // clear glass: almost no body of its own; what reads is the reflections and the lit rounded edges (the rim
-          // below). No transmission pass: it blurred and greyed what is inside the case.
-          color={pal.text.clone().lerp(new Color(1, 1, 1), 0.6)}
-          roughness={0.04}
-          metalness={0}
-          clearcoat={1}
-          clearcoatRoughness={0.03}
-          specularIntensity={1}
-          envMapIntensity={quality === "high" ? 1.3 : 0}
-          transparent
-          opacity={quality === "high" ? 0.07 : 0.08}
-          depthWrite={false}
-        />
-      </mesh>
-      <mesh geometry={geo} material={rim} renderOrder={3} />
-    </group>
-  );
+/* ── the sample's models: built in Blender (blender/factory-sample/build.py), loaded once ── */
+
+/** the GLB the Blender build exports: the belt, station 01's base, neon and glass, and the product's case and screen */
+export const SAMPLE_MODELS = "/models/factory/sample.glb";
+
+export function useSampleModels() {
+  return useLoader(GLTFLoader, SAMPLE_MODELS);
 }
 
-/* ── a base: a rounded black slab, the neon line round the glass's foot, its number on the front ── */
+/**
+ * A model from the GLB, ready to place: its own copy (so its materials can be changed per instance), set at the
+ * origin (the Blender file places it in the reference shot; the scene places it on the line).
+ */
+function useModel(name: string, quality: Quality) {
+  const gltf = useSampleModels();
+  // a fresh copy per level: the level decides the materials
+  return useMemo(() => {
+    const src = gltf.scene.getObjectByName(name);
+    if (!src) throw new Error(`sample.glb: no ${name}`);
+    const o = src.clone(true);
+    o.position.set(0, 0, 0);
+    o.rotation.set(0, 0, 0);
+    void quality;
+    return o;
+  }, [gltf, name, quality]);
+}
 
-function roundedRect(w: number, d: number, r: number, hole = false) {
-  const s = hole ? new Path() : new Shape();
-  const x = -w / 2;
-  const y = -d / 2;
-  s.moveTo(x + r, y);
-  s.lineTo(x + w - r, y);
-  s.quadraticCurveTo(x + w, y, x + w, y + r);
-  s.lineTo(x + w, y + d - r);
-  s.quadraticCurveTo(x + w, y + d, x + w - r, y + d);
-  s.lineTo(x + r, y + d);
-  s.quadraticCurveTo(x, y + d, x, y + d - r);
-  s.lineTo(x, y + r);
-  s.quadraticCurveTo(x, y, x + r, y);
+/**
+ * A GLB surface on the level in use. On the high level the physical material as Blender exported it (clearcoat on the
+ * dark parts); on the light level its standard equivalent, far cheaper per pixel.
+ */
+function forQuality(m: MeshPhysicalMaterial | MeshStandardMaterial, quality: Quality) {
+  if (quality === "high" || !(m as MeshPhysicalMaterial).isMeshPhysicalMaterial) return m;
+  const s = new MeshStandardMaterial();
+  MeshStandardMaterial.prototype.copy.call(s, m);
   return s;
 }
 
-export function StadiumBase({
-  w,
-  d,
-  h,
-  radius,
-  pal,
-  color,
-  num,
-  foot,
-}: {
-  w: number;
-  d: number;
-  h: number;
-  radius: number;
-  pal: ScenePalette;
-  color: Color;
-  num?: number;
-  /** the glass's footprint: the neon line runs round it on the base's top */
-  foot: [number, number, number];
-}) {
-  const body = useMemo(() => {
-    const g = new ExtrudeGeometry(roundedRect(w, d, radius) as Shape, {
-      depth: h - 0.08,
-      bevelEnabled: true,
-      bevelThickness: 0.04,
-      bevelSize: 0.04,
-      bevelSegments: 4,
-      curveSegments: 18,
+/**
+ * The glass. Blender exports it as transmission 1 with an opaque alpha: on the high level that is kept (the case shows
+ * what is behind and inside it — opaque things only, which is why the work inside the cases is opaque), with the
+ * environment's reflections. Alpha below 1 would fade the reflections with the body (tested: at 0.15 the case all but
+ * vanishes). On the light level, no transmission pass: a faint transparent body instead. Its lit edges come from a
+ * fresnel layer on the same walls, inner and outer.
+ */
+function dressGlass(mesh: Mesh, quality: Quality, rim: ShaderMaterial) {
+  const src = mesh.material as MeshPhysicalMaterial;
+  const m = src.clone();
+  if (quality === "high") {
+    m.envMapIntensity = 0.8;
+    m.specularIntensity = 1;
+    m.thickness = 0; // thin walls: the geometry has its own inner and outer faces
+  } else {
+    m.transmission = 0;
+    m.transparent = true;
+    m.opacity = 0.07;
+    m.depthWrite = false;
+  }
+  mesh.material = m;
+  mesh.renderOrder = 2;
+  const edge = new Mesh(mesh.geometry, rim);
+  edge.renderOrder = 3;
+  edge.userData.edge = true;
+  mesh.add(edge);
+}
+
+/** the parts of a sample model, dressed: glass, neon in the given colour, the rest as exported */
+function useDressed(name: string, neon: Color, pal: ScenePalette, glow: number) {
+  const quality = useContext(QualityContext);
+  const model = useModel(name, quality);
+  const rim = useMemo(() => {
+    const c = pal.text.clone().lerp(pal.neon, 0.35).multiplyScalar(1.7);
+    // narrow: only the rounded edges light up, not the faces seen at a slant (the case's top)
+    return rimMaterial(c, 4.5, 0.55 * glow);
+  }, [pal, glow]);
+  const neonMat = useMemo(() => new MeshBasicMaterial({ color: lit(neon, 2.6) }), [neon]);
+  useMemo(() => {
+    model.traverse((o) => {
+      const mesh = o as Mesh;
+      if (!mesh.isMesh) return;
+      if (mesh.userData.edge) return; // the glass's fresnel layer
+      if (mesh.name.endsWith("_Glass")) {
+        if (!mesh.userData.dressed) dressGlass(mesh, quality, rim);
+        mesh.userData.dressed = true;
+      } else if (mesh.name.endsWith("_Neon")) mesh.material = neonMat;
+      else if (mesh.name !== "Product_Screen" && !mesh.userData.dressed) {
+        mesh.material = forQuality(mesh.material as MeshPhysicalMaterial, quality);
+        mesh.userData.dressed = true;
+      }
     });
-    g.rotateX(-Math.PI / 2);
-    g.translate(0, 0.04, 0);
-    return g;
-  }, [w, d, h, radius]);
-  // the neon line round the glass's foot: a thin rounded ring
-  const ring = useMemo(() => {
-    const [fw, fd, fr] = foot;
-    const outer = roundedRect(fw + 0.12, fd + 0.12, fr + 0.06) as Shape;
-    outer.holes.push(roundedRect(fw + 0.02, fd + 0.02, fr + 0.01, true) as Path);
-    const g = new ShapeGeometry(outer, 18);
-    g.rotateX(-Math.PI / 2);
-    return g;
-  }, [foot]);
-  const edge = useMemo(() => {
-    const outer = roundedRect(w + 0.08, d + 0.08, radius + 0.04) as Shape;
-    outer.holes.push(roundedRect(w + 0.02, d + 0.02, radius + 0.01, true) as Path);
-    const g = new ShapeGeometry(outer, 24);
-    g.rotateX(-Math.PI / 2);
-    return g;
-  }, [w, d, radius]);
-  const numTex = useMemo(() => (num ? numberTexture(num, pal) : null), [num, pal]);
+  }, [model, quality, rim, neonMat]);
+  return model;
+}
+
+/** a base's number on its front face, in neon */
+function NumberPlate({ num, pal, y, z }: { num: number; pal: ScenePalette; y: number; z: number }) {
+  const tex = useMemo(() => numberTexture(num, pal), [num, pal]);
   return (
-    <group>
-      <mesh geometry={body}>
-        <Gloss
-          color={pal.text.clone().multiplyScalar(0.16)}
-          roughness={0.3}
-          metalness={0.1}
-          clearcoat={1}
-          clearcoatRoughness={0.1}
-          envMapIntensity={1.4}
-        />
-      </mesh>
-      {/* the top edge catches the light: a thin silver line round the slab */}
-      <mesh geometry={edge} position-y={h + 0.002}>
-        <meshBasicMaterial color={pal.text.clone().multiplyScalar(0.42)} />
-      </mesh>
-      <mesh geometry={ring} position-y={h + 0.004}>
-        <meshBasicMaterial color={lit(color, 2.6)} />
-      </mesh>
-      {/* a fainter line at the base's foot, on the belt */}
-      <mesh position={[0, 0.015, d / 2 + 0.03]}>
-        <boxGeometry args={[w - radius * 2, 0.02, 0.01]} />
-        <meshBasicMaterial color={lit(color, 1.6)} />
-      </mesh>
-      {numTex && (
-        <mesh position={[0, h * 0.48, d / 2 + 0.045]}>
-          <planeGeometry args={[0.8, 0.28]} />
-          <meshBasicMaterial map={numTex} transparent color={lit(pal.neon, 1.6)} />
-        </mesh>
-      )}
-    </group>
+    <mesh position={[0, y, z]}>
+      <planeGeometry args={[0.8, 0.28]} />
+      <meshBasicMaterial map={tex} transparent color={lit(pal.neon, 1.6)} />
+    </mesh>
   );
 }
 
@@ -587,7 +520,8 @@ function Badge({ pal }: { pal: ScenePalette }) {
 
 /* ── station 01 in the reference's design ── */
 
-export const STATION = { base: { w: 2.75, d: 1.95, h: 0.5, r: 0.55 }, glass: [2.3, 1.45, 1.3] as [number, number, number] };
+/** station 01's sizes, as built in Blender (metres): its base, and its glass case (width, height, depth) */
+export const STATION = { base: { w: 2.75, d: 1.95, h: 0.5 }, glass: [2.3, 1.45, 1.3] as [number, number, number] };
 
 export function SampleStation({
   num,
@@ -605,10 +539,12 @@ export function SampleStation({
   reducedMotion: boolean;
 }) {
   const color = status === "waiting" ? pal.emerald : status === "done" ? pal.highlight : pal.neon;
+  const model = useDressed("Station01", color, pal, selected ? 1.5 : 1);
   const inner = useRef<Group>(null);
   const panel = useMemo(() => setupPanelTexture(pal), [pal]);
   const rows = useMemo(() => rowsTexture(pal), [pal]);
-  // the work inside: a lit 2×2×2 block structure — the project's structure being set up
+  // the work inside: a lit 2×2×2 block structure — the project's structure being set up. Opaque (bright edges, dark
+  // emerald faces): only opaque things show through transmissive glass.
   const cubes = useMemo(() => {
     const out: [number, number, number][] = [];
     for (const x of [-0.17, 0.17]) for (const y of [-0.17, 0.17]) for (const z of [-0.17, 0.17]) out.push([x, y, z]);
@@ -621,19 +557,9 @@ export function SampleStation({
   const { base, glass } = STATION;
   return (
     <group>
-      <StadiumBase
-        w={base.w}
-        d={base.d}
-        h={base.h}
-        radius={base.r}
-        pal={pal}
-        color={color}
-        num={num}
-        foot={[glass[0], glass[2], 0.2]}
-      />
+      <primitive object={model} />
+      <NumberPlate num={num} pal={pal} y={base.h * 0.48} z={base.d / 2 + 0.012} />
       <group position-y={base.h + glass[1] / 2 + 0.01}>
-        <GlassCase size={glass} radius={0.2} pal={pal} glow={selected ? 1.5 : 1} />
-        {/* the work in the case */}
         <group ref={inner} position={[0, -0.05, 0]}>
           {cubes.map(([x, y, z], i) => (
             <group key={i} position={[x, y, z]}>
@@ -641,29 +567,22 @@ export function SampleStation({
                 <lineBasicMaterial color={lit(pal.neon, 2.6)} />
               </lineSegments>
               <mesh>
-                <boxGeometry args={[0.31, 0.31, 0.31]} />
-                <meshStandardMaterial
-                  color={pal.emerald}
-                  emissive={pal.emerald}
-                  emissiveIntensity={0.9}
-                  transparent
-                  opacity={0.38}
-                  depthWrite={false}
-                />
+                <boxGeometry args={[0.3, 0.3, 0.3]} />
+                <meshStandardMaterial color={pal.bg} emissive={pal.emerald} emissiveIntensity={0.22} />
               </mesh>
             </group>
           ))}
         </group>
-        {/* thin interface panels inside the case, at its sides, as in the reference */}
+        {/* thin interface panels inside the case, at its sides (cut out, not blended: they show through the glass) */}
         <mesh position={[-0.78, 0, -0.2]} rotation-y={0.25}>
           <planeGeometry args={[0.5, 0.62]} />
-          <meshBasicMaterial map={rows} transparent depthWrite={false} />
+          <meshBasicMaterial map={rows} alphaTest={0.4} />
         </mesh>
         <mesh position={[0.78, 0, -0.2]} rotation-y={-0.25}>
           <planeGeometry args={[0.5, 0.62]} />
-          <meshBasicMaterial map={panel} transparent depthWrite={false} />
+          <meshBasicMaterial map={panel} alphaTest={0.4} />
         </mesh>
-        {/* the badge on the case's top corner; the tag above it */}
+        {/* the badge on the case's front top corner; the tag above it */}
         <group position={[glass[0] / 2 - 0.2, glass[1] / 2 - 0.05, glass[2] / 2 + 0.02]}>
           <Badge pal={pal} />
         </group>
@@ -677,11 +596,13 @@ export function SampleStation({
   );
 }
 
-/* ── the client's product: an oval base, the largest glass case, the screen inside ── */
+/* ── the client's product: its base, the largest glass case, the screen device inside ── */
 
+/** the product's sizes, as built in Blender: its base, its case (width, height, depth) and the screen */
 export const PRODUCT = {
-  base: { w: 3.8, d: 2.2, h: 0.42, r: 0.95 },
+  base: { h: 0.42 },
   case: [3.3, 1.95, 1.55] as [number, number, number],
+  screen: { w: 2.8, h: (2.8 * 640) / 1024 },
 };
 
 export function ProductCase({
@@ -691,36 +612,24 @@ export function ProductCase({
   children,
 }: {
   pal: ScenePalette;
-  screen: { map: import("three").Texture; w: number; h: number };
+  screen: import("three").Texture;
   delivered: boolean;
   children?: React.ReactNode;
 }) {
-  const { base } = PRODUCT;
+  const model = useDressed("Product", delivered ? pal.highlight : pal.neon, pal, delivered ? 1.5 : 1.1);
+  // the screen: the approved page, drawn by the site, on the Blender device's face
+  useMemo(() => {
+    const face = model.getObjectByName("Product_Screen") as Mesh | undefined;
+    // glTF UVs run top-down; the canvas texture is flipped for the usual bottom-up UVs: unflip it
+    screen.flipY = false;
+    screen.needsUpdate = true;
+    if (face) face.material = new MeshBasicMaterial({ map: screen, color: SCREEN_LIGHT });
+  }, [model, screen]);
   const box = PRODUCT.case;
   return (
     <group>
-      <StadiumBase
-        w={base.w}
-        d={base.d}
-        h={base.h}
-        radius={base.r}
-        pal={pal}
-        color={delivered ? pal.highlight : pal.neon}
-        foot={[box[0], box[2], 0.22]}
-      />
-      <group position-y={base.h + box[1] / 2 + 0.01}>
-        <GlassCase size={box} radius={0.22} pal={pal} glow={delivered ? 1.5 : 1.1} />
-        {/* the screen: a thin dark device, the approved model's page on it */}
-        <group position-z={-0.12} rotation-x={-0.04}>
-          <mesh>
-            <boxGeometry args={[screen.w + 0.1, screen.h + 0.1, 0.05]} />
-            <Gloss color={pal.bg} roughness={0.2} metalness={0.6} clearcoat={1} />
-          </mesh>
-          <mesh position-z={0.027}>
-            <planeGeometry args={[screen.w, screen.h]} />
-            <meshBasicMaterial map={screen.map} color={SCREEN_LIGHT} />
-          </mesh>
-        </group>
+      <primitive object={model} />
+      <group position-y={PRODUCT.base.h + box[1] / 2 + 0.01}>
         <group position={[-box[0] / 2 + 0.2, 0.05, box[2] / 2 + 0.02]}>
           <Badge pal={pal} />
         </group>

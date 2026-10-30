@@ -17,7 +17,7 @@
  * shot beside the product, and OrbitControls for the visitor's own looking, zooming and moving, inside the factory.
  */
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import {
   BoxGeometry,
   EdgesGeometry,
@@ -57,6 +57,7 @@ import {
   Belt,
   Effects,
   Environment,
+  PRODUCT,
   ProductCase,
   type Quality,
   QualityContext,
@@ -65,7 +66,6 @@ import {
   lit,
 } from "./scene/Showcase";
 import {
-  SCREEN,
   drawProductScreen,
   iconTexture,
   productScreenTexture,
@@ -81,6 +81,8 @@ export type FactorySceneProps = {
   travel: { to: number; t: number };
   /** how much of the product is built, 0..1 */
   build: number;
+  /** production has not started: the screen shows the approved model, waiting */
+  waiting: boolean;
   /** the quality station is checking the product */
   checking: boolean;
   delivered: boolean;
@@ -170,20 +172,23 @@ function World(props: FactorySceneProps) {
 
       {!forced && quality === "high" && <QualityProbe onLow={() => setQuality("low")} />}
       {!off.has("floor") && <ReflectiveFloor pal={pal} quality={quality} />}
-      {!off.has("belt") && <Belt pal={pal} />}
       {!off.has("arch") && <Architecture pal={pal} />}
-      {props.stations.map((s, i) => (
-        <StationMark
-          key={s.id}
-          index={i}
-          station={s}
-          selected={props.selected === s.id}
-          pal={pal}
-          reducedMotion={props.reducedMotion}
-          onSelect={props.onSelect}
-        />
-      ))}
-      <Product {...props} pal={pal} />
+      {/* the belt, the stations and the product use the sample's Blender models: shown once they have loaded */}
+      <Suspense fallback={null}>
+        {!off.has("belt") && <Belt pal={pal} />}
+        {props.stations.map((s, i) => (
+          <StationMark
+            key={s.id}
+            index={i}
+            station={s}
+            selected={props.selected === s.id}
+            pal={pal}
+            reducedMotion={props.reducedMotion}
+            onSelect={props.onSelect}
+          />
+        ))}
+        <Product {...props} pal={pal} />
+      </Suspense>
       <Tashfeer src={props.tashfeerSrc} />
       <CameraRig {...props} />
       {/* the glow (a post-process) on the high level only; the light level renders directly */}
@@ -308,6 +313,7 @@ function Product({
   stations,
   travel,
   build,
+  waiting,
   checking,
   delivered,
   model,
@@ -316,14 +322,15 @@ function Product({
 }: FactorySceneProps & { pal: ScenePalette }) {
   const group = useRef<Group>(null);
   const scan = useRef<Mesh>(null);
-  const screen = useMemo(() => productScreenTexture(model, build, pal, 2), [model, pal]); // eslint-disable-line react-hooks/exhaustive-deps -- redrawn below as `build` changes
-  const drawn = useRef(build);
+  const screen = useMemo(() => productScreenTexture(model, build, pal, 2, waiting), [model, pal]); // eslint-disable-line react-hooks/exhaustive-deps -- redrawn below as `build` and `waiting` change
+  const drawn = useRef({ build, waiting });
   useEffect(() => {
-    if (Math.abs(drawn.current - build) < 0.01 && drawn.current !== 0) return;
-    drawn.current = build;
-    drawProductScreen(screen.canvas, model, build, pal);
+    const d = drawn.current;
+    if (Math.abs(d.build - build) < 0.01 && d.build !== 0 && d.waiting === waiting) return;
+    drawn.current = { build, waiting };
+    drawProductScreen(screen.canvas, model, build, pal, waiting);
     screen.texture.needsUpdate = true;
-  }, [build, model, pal, screen]);
+  }, [build, waiting, model, pal, screen]);
   const u = useRef(productU(stations.length, travel));
   const target = productU(stations.length, travel);
   useFrame(({ clock }, dt) => {
@@ -340,11 +347,10 @@ function Product({
     }
     window.__tashfeerFactoryProductU = u.current;
   });
-  const w = 2.95;
-  const h = (w * SCREEN.h) / SCREEN.w;
+  const w = PRODUCT.screen.w;
   return (
     <group ref={group}>
-      <ProductCase pal={pal} screen={{ map: screen.texture, w, h }} delivered={delivered}>
+      <ProductCase pal={pal} screen={screen.texture} delivered={delivered}>
         {/* the quality station's scan: a thin light passing over the screen */}
         <mesh ref={scan} position={[0, 0, 0.04]} visible={false}>
           <planeGeometry args={[w + 0.1, 0.02]} />

@@ -37,12 +37,14 @@ export const SCREEN = { w: 1024, h: 640 };
 /**
  * The approved model's example page (the same sections as the prototypes review), drawn to `build` (0..1): the
  * sections already built are filled in the model's colours; the rest are outlines of what is still to come.
+ * `waiting` (production not started): the approved design whole and clear, with a waiting label on it.
  */
 export function drawProductScreen(
   target: HTMLCanvasElement,
   model: ModelId,
   build: number,
   pal: ScenePalette,
+  waiting = false,
 ) {
   const ctx = target.getContext("2d")!;
   // drawn in SCREEN units, at the canvas's own resolution (2× for the large, readable screen)
@@ -64,8 +66,9 @@ export function drawProductScreen(
     { y: 426, h: 128 },
     { y: 570, h: 46 },
   ];
-  const built = Math.floor(build * sections.length + 1e-6);
-  const partial = build * sections.length - built;
+  // waiting: every section shown as approved
+  const built = waiting ? sections.length : Math.floor(build * sections.length + 1e-6);
+  const partial = waiting ? 0 : build * sections.length - built;
 
   // the screen itself: the model's background once anything is built, a dark blueprint before
   ctx.fillStyle = built > 0 ? C.bg : k.bg;
@@ -103,6 +106,34 @@ export function drawProductScreen(
     drawSection(i, s);
     if (pending) ctx.restore();
   });
+
+  if (waiting) {
+    // the waiting label: the approved model, production not started — a dark pill, low on the screen
+    const label = `النموذج المعتمد ${model} · بانتظار بدء الإنتاج`;
+    ctx.font = `800 26px ${FONT}`;
+    const tw = ctx.measureText(label).width;
+    const pw = tw + 96;
+    const ph = 60;
+    const x = (W - pw) / 2;
+    const y = H - ph - 24;
+    ctx.save();
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = k.bg;
+    rr(ctx, x, y, pw, ph, ph / 2);
+    ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = k.neon;
+    ctx.lineWidth = 2.5;
+    rr(ctx, x, y, pw, ph, ph / 2);
+    ctx.stroke();
+    ctx.fillStyle = k.neon;
+    ctx.beginPath();
+    ctx.arc(x + pw - 36, y + ph / 2, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = k.text;
+    ctx.textAlign = "right";
+    ctx.fillText(label, x + pw - 58, y + ph / 2 + 9);
+  }
 
   function drawSection(i: number, s: { y: number; h: number }) {
     switch (i) {
@@ -224,9 +255,9 @@ export function drawProductScreen(
   }
 }
 
-export function productScreenTexture(model: ModelId, build: number, pal: ScenePalette, scale = 1) {
+export function productScreenTexture(model: ModelId, build: number, pal: ScenePalette, scale = 1, waiting = false) {
   const { c } = canvas(SCREEN.w * scale, SCREEN.h * scale);
-  drawProductScreen(c, model, build, pal);
+  drawProductScreen(c, model, build, pal, waiting);
   return { canvas: c, texture: texture(c) };
 }
 
@@ -299,31 +330,6 @@ export function fadeTexture(pal: ScenePalette, flip = false) {
  * The belt's running surface: a dark perforated metal plate, tiled along the line. Used as the colour map and as the
  * bump map (the holes read as holes).
  */
-export function perforatedTexture(pal: ScenePalette) {
-  const { c, ctx } = canvas(256, 256);
-  // dark steel (a share of the silver), the holes black: the reference's plate reads grey, not black
-  ctx.fillStyle = pal.text.clone().multiplyScalar(0.3).getStyle();
-  ctx.fillRect(0, 0, 256, 256);
-  const step = 16;
-  for (let y = step / 2; y < 256; y += step)
-    for (let x = (y / step) % 2 ? step : step / 2; x < 256; x += step) {
-      ctx.beginPath();
-      ctx.arc(x, y, 4.2, 0, Math.PI * 2);
-      ctx.fillStyle = pal.css.bg;
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(x - 0.8, y - 0.8, 4.2, Math.PI * 0.9, Math.PI * 1.6);
-      ctx.strokeStyle = pal.css.muted;
-      ctx.globalAlpha = 0.25;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-    }
-  const t = texture(c);
-  t.wrapS = t.wrapT = RepeatWrapping;
-  return t;
-}
-
 /** A floating name tag: dark glass, a fine bright edge, the name. */
 export function tagTexture(text: string, pal: ScenePalette) {
   const { c, ctx } = canvas(720, 180);
