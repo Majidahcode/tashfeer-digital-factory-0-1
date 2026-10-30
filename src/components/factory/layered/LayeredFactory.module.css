@@ -1,0 +1,258 @@
+/*
+ * The layered factory trial: a bar above (title, production), the scene, a bar below (where to look). The bars never
+ * cover the scene. The content panel is a dark glass sheet the scene sizes and places over a station's content area;
+ * its text scales with it (container units).
+ */
+.screen {
+  position: relative;
+  z-index: var(--z-content);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  block-size: calc(100svh - var(--header-h));
+  min-block-size: 520px;
+}
+
+.top,
+.bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 10px clamp(12px, 2vw, 32px);
+}
+
+.top {
+  justify-content: space-between;
+}
+
+.bottom {
+  justify-content: center;
+}
+
+.titleBlock {
+  display: grid;
+  gap: 2px;
+}
+
+.titleBlock h1 {
+  margin: 0;
+  font-size: clamp(1.05rem, 1.6vw, 1.35rem);
+  font-weight: 800;
+  background: var(--gradient-heading);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.kicker {
+  font-size: 0.78rem;
+  color: var(--brand-muted);
+}
+
+.prod {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.sim {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--brand-gold);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand-gold) 55%, transparent);
+}
+
+.prodState {
+  min-inline-size: 11em;
+  font-size: 0.85rem;
+  color: var(--brand-muted);
+}
+
+.primary,
+.secondary,
+.bottom button {
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.primary {
+  color: var(--brand-bg);
+  background: linear-gradient(180deg, var(--brand-highlight), var(--brand-lime));
+}
+
+.secondary,
+.bottom button {
+  color: var(--brand-text-silver);
+  background: var(--brand-glass);
+  box-shadow:
+    inset 0 1px 0 var(--brand-glass-inner),
+    0 0 0 1px var(--brand-glass-edge);
+}
+
+.bottom button[aria-pressed="true"] {
+  color: var(--brand-lime);
+  box-shadow:
+    inset 0 1px 0 var(--brand-glass-inner),
+    0 0 0 1px var(--brand-lime);
+}
+
+.primary:focus-visible,
+.secondary:focus-visible,
+.bottom button:focus-visible {
+  outline: 2px solid var(--brand-highlight);
+  outline-offset: 2px;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+  color: var(--brand-lime);
+}
+
+.stage {
+  position: relative;
+  min-block-size: 0;
+  overflow: hidden;
+}
+
+.loading {
+  display: grid;
+  place-items: center;
+  block-size: 100%;
+  margin: 0;
+  color: var(--brand-muted);
+}
+
+/* ── the content panel: over the chosen station's content area (placed every frame by the scene) ── */
+.panel {
+  position: absolute;
+  inset-inline-start: auto;
+  z-index: 2;
+  container-type: size;
+  overflow: hidden;
+  border-radius: 1.4cqmin;
+  background: color-mix(in srgb, var(--brand-glass-base) 94%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--brand-lime) 30%, transparent),
+    0 0 18px -6px var(--brand-glow);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    visibility 0s linear var(--dur-base);
+}
+
+/* the scene sets left/top in screen coordinates: the panel is placed by its physical corner */
+.panel {
+  direction: rtl;
+}
+
+.panel[data-visible="true"] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel,
+  .panel[data-visible="true"] {
+    transition: none;
+  }
+}
+
+.content {
+  display: grid;
+  align-content: start;
+  gap: 2.4cqh;
+  block-size: 100%;
+  padding: 4cqh 4cqw;
+  overflow: auto;
+  font-size: clamp(10px, 3.1cqw, 18px);
+  color: var(--brand-text-silver);
+}
+
+.cHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1cqh 2cqw;
+}
+
+.cHead h2 {
+  margin: 0;
+  font-size: 1.25em;
+  font-weight: 800;
+}
+
+.chip {
+  padding: 0.2em 0.8em;
+  border-radius: 999px;
+  font-size: 0.85em;
+  font-weight: 700;
+  color: var(--brand-muted);
+  box-shadow: 0 0 0 1px var(--brand-glass-edge);
+}
+
+.chip[data-status="active"] {
+  color: var(--brand-lime);
+  box-shadow: 0 0 0 1px var(--brand-lime);
+}
+
+.chip[data-status="done"] {
+  color: var(--brand-highlight);
+}
+
+.rows {
+  display: grid;
+  gap: 1.4cqh;
+  margin: 0;
+}
+
+.rows > div {
+  display: grid;
+  grid-template-columns: minmax(6em, auto) 1fr;
+  gap: 1em;
+}
+
+.rows dt {
+  color: var(--brand-muted);
+}
+
+.rows dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.absent {
+  margin: 0;
+  color: var(--brand-muted);
+}
+
+.simNote {
+  margin: 0;
+  font-size: 0.8em;
+  color: var(--brand-gold);
+}
+
+.gate {
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  min-block-size: calc(100svh - var(--header-h));
+  text-align: center;
+  color: var(--brand-text-silver);
+}
+
+.gate a {
+  color: var(--brand-lime);
+}
