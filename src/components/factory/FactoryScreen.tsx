@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import { forwardRef } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { Icon } from "@/components/icons/Icon";
 import { PrototypePreview } from "@/components/prototypes/PrototypePreview";
 import {
@@ -73,9 +74,10 @@ function buildLevel(stations: readonly Station[], state: FactoryState): number {
 
 /**
  * Screen 5 — the production factory. The visitor arrives here after approving a model: their product travels along a
- * production line through the stations their team works at. They watch it (the camera follows it), stop at any
- * station to see who works there, on what, what it has produced and what went wrong and how it was fixed — or look
- * around freely. What happens comes from an event source; today a local simulation, labelled as such.
+ * production line through the stations their team works at. The camera tells it (a directed tour, no free camera): it
+ * follows the product and holds still while it is worked on; the visitor may stop at any station and come back to the
+ * product. One card, beside the scene, says what is happening at the station in view. What happens comes from an event
+ * source; today a local simulation, labelled as such — camera shots never decide what has been done.
  */
 export function FactoryScreen() {
   const router = useRouter();
@@ -117,29 +119,67 @@ export function FactoryScreen() {
   const [cameraStore] = useState(() => createCameraStore("intro"));
   const cam = useCamera(cameraStore);
   const [selected, setSelected] = useState<StationId | null>(null);
-  const select = (id: StationId) => {
-    setSelected(id);
-    cameraStore.go("station", id);
-  };
+  // the visitor may pause the tour's camera motion (production goes on); reduced motion: shots change at once anyway
+  const [tourPaused, setTourPaused] = useState(false);
+  const select = useCallback(
+    (id: StationId) => {
+      setSelected(id);
+      cameraStore.go("station", id);
+    },
+    [cameraStore],
+  );
+  const backToProduct = useCallback(() => {
+    setSelected(null);
+    cameraStore.go("follow");
+  }, [cameraStore]);
 
-  // keyboard: 1–9 choose a station, Esc closes its panel
+  // keyboard: 1–9 choose a station, Esc returns to the product
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
       if (el?.closest("input, textarea, [contenteditable]")) return;
-      if (e.key === "Escape") setSelected(null);
+      if (e.key === "Escape" && cameraStore.get().mode === "station") backToProduct();
       const n = Number(e.key);
       if (Number.isInteger(n) && n >= 1 && n <= stations.length) {
         const s = stations[n - 1];
-        if (s) {
-          setSelected(s.id);
-          cameraStore.go("station", s.id);
-        }
+        if (s) select(s.id);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [stations, cameraStore]);
+  }, [stations, cameraStore, select, backToProduct]);
+
+  // what the controls cover of the scene (px): the camera frames its shots in the rest
+  const stageRef = useRef<HTMLDivElement>(null);
+  const topRef = useRef<HTMLElement>(null);
+  const cardRef = useRef<HTMLElement>(null);
+  const barRef = useRef<HTMLElement>(null);
+  const [covered, setCovered] = useState({ top: 0, bottom: 0, start: 0 });
+  useEffect(() => {
+    const measure = () => {
+      const stage = stageRef.current?.getBoundingClientRect();
+      const top = topRef.current?.getBoundingClientRect();
+      const bar = barRef.current?.getBoundingClientRect();
+      const card = cardRef.current?.getBoundingClientRect();
+      if (!stage || !top || !bar) return;
+      // wide: the card stands at the start side (the right, in Arabic); narrow: it sits above the bar
+      const beside = !!card && card.height > 0 && card.top < bar.top - 4 && card.width < stage.width * 0.6;
+      const next = {
+        top: Math.max(0, Math.round(top.bottom - stage.top)),
+        bottom: Math.max(0, Math.round(stage.bottom - (card && !beside && card.height > 0 ? card.top : bar.top))),
+        start: beside && card ? Math.max(0, Math.round(stage.right - card.left)) : 0,
+      };
+      setCovered((c) => (c.top === next.top && c.bottom === next.bottom && c.start === next.start ? c : next));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    for (const el of [stageRef.current, topRef.current, barRef.current, cardRef.current]) if (el) ro.observe(el);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  });
 
   if (!hydrated) return <section className={styles.screen} aria-busy="true" />;
 
@@ -167,10 +207,11 @@ export function FactoryScreen() {
   }
 
   const running = snap?.running ?? false;
-  const current = state.current ? stations.find((s) => s.id === state.current) : null;
-  const panelStation = selected ? stations.find((s) => s.id === selected) : null;
   const started = (snap?.elapsed ?? 0) > 0;
-  const guide = panelStation ?? (started ? current : null);
+  const current = state.current ? stations.find((s) => s.id === state.current) : null;
+  // the station in view: the one chosen, else where the product is (the first before production, the last after it)
+  const chosen = selected ? stations.find((s) => s.id === selected) : null;
+  const inView = chosen ?? current ?? (state.finished ? stations[stations.length - 1] : stations[0]) ?? null;
   const build = buildLevel(stations, state);
   const prototype = PROTOTYPES.find((p) => p.id === model);
   const sceneStations = stations.map((s) => ({
@@ -179,6 +220,7 @@ export function FactoryScreen() {
     icon: s.icon,
     status: state.stations[s.id]?.status ?? "waiting",
   }));
+  const message = guideLine(state, current ?? null, started, running);
 
   return (
     <section
@@ -189,10 +231,11 @@ export function FactoryScreen() {
       data-camera-station={cam.station ?? ""}
       data-camera-settled={cam.settled ? "" : undefined}
       data-camera-request={cam.request}
+      data-tour={tourPaused ? "paused" : "moving"}
       data-production={state.finished ? "finished" : running ? "running" : "paused"}
       data-webgl={webgl ? "yes" : "no"}
     >
-      <div className={styles.stage}>
+      <div className={styles.stage} ref={stageRef}>
         {webgl && !fonts ? (
           <div className={styles.loading}>يُجهَّز المصنع…</div>
         ) : webgl ? (
@@ -208,7 +251,8 @@ export function FactoryScreen() {
             camera={cameraStore}
             reducedMotion={reducedMotion}
             onSelect={select}
-            tashfeerSrc={asset("tashfeer").src}
+            tourPaused={tourPaused}
+            covered={covered}
           />
         ) : (
           <div className={styles.fallback} data-webgl-fallback="">
@@ -225,206 +269,223 @@ export function FactoryScreen() {
         )}
       </div>
 
-      {/* the top: where the project is, and the production's control */}
-      <header className={styles.top}>
-        <div className={styles.titleBlock}>
-          <h1 id="factory-title" className={styles.title}>
-            مصنع تشفير
-          </h1>
-          <p className={styles.history} aria-label="سجل المشروع">
-            <span>
-              <Icon name="check" size={14} /> تحليل الفكرة
+      <div className={styles.hud}>
+        {/* the top: the project, Tashfeer's line, the production's control */}
+        <header className={styles.top} ref={topRef}>
+          <div className={styles.titleBlock}>
+            <h1 id="factory-title" className={styles.title}>
+              مصنع تشفير
+            </h1>
+            <p className={styles.history} aria-label="سجل المشروع">
+              <span>
+                <Icon name="check" size={14} /> تحليل الفكرة
+              </span>
+              <span>
+                <Icon name="check" size={14} /> اعتماد الفريق
+              </span>
+              <span>
+                <Icon name="check" size={14} /> اعتماد {modelName(model)}
+              </span>
+            </p>
+            {/* Tashfeer: his mark and one line to the visitor, changed only when something meaningful changes */}
+            <p className={styles.guide} aria-live="polite" data-guide="">
+              <Image src={asset("brand-mark").src} width={28} height={28} alt="" className={styles.guideFace} />
+              <span key={message}>{message}</span>
+            </p>
+          </div>
+          <div className={styles.control}>
+            <span className={styles.simTag} data-simulation-tag="">
+              محاكاة تفاعلية
             </span>
-            <span>
-              <Icon name="check" size={14} /> اعتماد الفريق
+            <span className={styles.prodState} role="status" data-production-state="">
+              {state.finished
+                ? "اكتمل خط الإنتاج (محاكاة)"
+                : running
+                  ? `يعمل الآن: ${current?.name ?? "—"}`
+                  : started
+                    ? "الإنتاج متوقف مؤقتًا"
+                    : "الإنتاج لم يبدأ"}
             </span>
-            <span>
-              <Icon name="check" size={14} /> اعتماد {modelName(model)}
-            </span>
-          </p>
-        </div>
-        <div className={styles.control}>
-          <span className={styles.simTag} data-simulation-tag="">
-            محاكاة تفاعلية
-          </span>
-          <span className={styles.prodState} role="status" data-production-state="">
-            {state.finished
-              ? "اكتمل خط الإنتاج (محاكاة)"
-              : running
-                ? `يعمل الآن: ${current?.name ?? "—"}`
-                : (snap?.elapsed ?? 0) > 0
-                  ? "الإنتاج متوقف مؤقتًا"
-                  : "الإنتاج لم يبدأ"}
-          </span>
-          {!state.finished && (
-            <button
-              type="button"
-              className={running ? styles.secondary : styles.primarySm}
-              onClick={() => (running ? source?.pause() : source?.start())}
-              aria-pressed={running}
-              data-production-toggle=""
-            >
-              <Icon name={running ? "pause" : "play"} size={16} />
-              {running ? "إيقاف مؤقت" : (snap?.elapsed ?? 0) > 0 ? "استئناف" : "ابدأ الإنتاج"}
-            </button>
+            {!state.finished && (
+              <button
+                type="button"
+                className={running ? styles.secondary : styles.primarySm}
+                onClick={() => (running ? source?.pause() : source?.start())}
+                aria-pressed={running}
+                data-production-toggle=""
+              >
+                <Icon name={running ? "pause" : "play"} size={16} />
+                {running ? "إيقاف مؤقت" : started ? "استئناف" : "ابدأ الإنتاج"}
+              </button>
+            )}
+          </div>
+        </header>
+
+        <div className={styles.middle}>
+          {inView && (
+            <StationCard
+              ref={cardRef}
+              station={inView}
+              index={stations.indexOf(inView)}
+              chosen={!!chosen}
+              state={state}
+              team={team}
+              model={model}
+              onBack={backToProduct}
+              events={events}
+              elapsed={snap?.elapsed ?? 0}
+              reducedMotion={reducedMotion}
+            />
           )}
         </div>
-      </header>
 
-      {/* Tashfeer, the guide */}
-      <aside className={cx(styles.guide, panelStation && styles.guideHidden)} aria-live="polite" data-guide="">
-        <Image src={asset("brand-mark").src} width={44} height={44} alt="" className={styles.guideFace} />
-        <p>
-          {guide
-            ? guide.guide
-            : "أهلًا بك في مصنعك. منتجك على خط الإنتاج؛ ابدأ الإنتاج، أو اختر محطة لتستكشفها."}
-        </p>
-      </aside>
-
-      {/* the stations and the camera */}
-      <nav className={styles.bar} aria-label="محطات المصنع">
-        <ol className={styles.stations}>
-          {stations.map((s, i) => {
-            const st = state.stations[s.id];
-            return (
-              <li key={s.id}>
-                <button
-                  type="button"
-                  className={cx(styles.stationBtn, selected === s.id && styles.stationOn)}
-                  onClick={() => select(s.id)}
-                  aria-pressed={selected === s.id}
-                  aria-keyshortcuts={String(i + 1)}
-                  data-station-btn={s.id}
-                  data-status={st?.status}
-                >
-                  <span className={cx(styles.dot, st && styles[st.status])} aria-hidden="true" />
-                  <span className={styles.stationNum}>{String(i + 1).padStart(2, "0")}</span>
-                  {s.name}
-                  <span className="sr-only"> — {STATUS[st?.status ?? "waiting"]}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-        {webgl && (
-          <div className={styles.camBtns}>
-            <button
-              type="button"
-              className={cx(styles.camBtn, cam.mode === "follow" && styles.camOn)}
-              onClick={() => {
-                setSelected(null);
-                cameraStore.go("follow");
-              }}
-              aria-pressed={cam.mode === "follow"}
-              data-cam-follow=""
-            >
-              <Icon name="target" size={16} /> متابعة المنتج
-            </button>
-            <button
-              type="button"
-              className={cx(styles.camBtn, cam.mode === "overview" && styles.camOn)}
-              onClick={() => {
-                setSelected(null);
-                cameraStore.go("overview");
-              }}
-              aria-pressed={cam.mode === "overview"}
-              data-cam-overview=""
-            >
-              <Icon name="search" size={16} /> المشهد الكامل
-            </button>
-            {/* for reviewing the visual sample: the reference image's angle */}
-            <button
-              type="button"
-              className={cx(styles.camBtn, cam.mode === "sample" && styles.camOn)}
-              onClick={() => {
-                setSelected(null);
-                cameraStore.go("sample");
-              }}
-              aria-pressed={cam.mode === "sample"}
-              data-cam-sample=""
-            >
-              <Icon name="image" size={16} /> زاوية العينة
-            </button>
-          </div>
-        )}
-        {webgl && (
-          <p className={styles.hint}>اسحب للنظر حولك · مرّر العجلة أو قرّب بإصبعين للتقريب · زر الفأرة الأيمن أو إصبعان للتنقل</p>
-        )}
-      </nav>
-
-      {panelStation && (
-        <StationPanel
-          station={panelStation}
-          index={stations.indexOf(panelStation)}
-          state={state}
-          team={team}
-          model={model}
-          onClose={() => setSelected(null)}
-          events={events}
-          elapsed={snap?.elapsed ?? 0}
-        />
-      )}
+        {/* the stations, and the tour */}
+        <nav className={styles.bar} aria-label="محطات المصنع" ref={barRef}>
+          <ol className={styles.stations}>
+            {stations.map((s, i) => {
+              const st = state.stations[s.id];
+              return (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    className={cx(styles.stationBtn, selected === s.id && styles.stationOn)}
+                    onClick={() => select(s.id)}
+                    aria-pressed={selected === s.id}
+                    aria-keyshortcuts={String(i + 1)}
+                    data-station-btn={s.id}
+                    data-status={st?.status}
+                  >
+                    <span className={cx(styles.dot, st && styles[st.status])} aria-hidden="true" />
+                    <span className={styles.stationNum}>{String(i + 1).padStart(2, "0")}</span>
+                    {s.name}
+                    <span className="sr-only"> — {STATUS[st?.status ?? "waiting"]}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+          {webgl && (
+            <div className={styles.camBtns}>
+              <button
+                type="button"
+                className={cx(styles.camBtn, !selected && styles.camOn)}
+                onClick={backToProduct}
+                aria-pressed={!selected}
+                data-cam-follow=""
+              >
+                <Icon name="target" size={16} /> متابعة المنتج
+              </button>
+              <button
+                type="button"
+                className={cx(styles.camBtn, tourPaused && styles.camOn)}
+                onClick={() => setTourPaused((p) => !p)}
+                aria-pressed={tourPaused}
+                data-tour-toggle=""
+              >
+                <Icon name={tourPaused ? "play" : "pause"} size={16} />
+                {tourPaused ? "تشغيل حركة الجولة" : "إيقاف حركة الجولة"}
+              </button>
+            </div>
+          )}
+        </nav>
+      </div>
     </section>
   );
 }
 
-function StationPanel({
-  station,
-  index,
-  state,
-  team,
-  model,
-  onClose,
-  events,
-  elapsed,
-}: {
-  station: Station;
-  index: number;
-  state: FactoryState;
-  team: readonly string[];
-  model: "A" | "B";
-  onClose: () => void;
-  events: ReturnType<typeof simulationScript>;
-  elapsed: number;
-}) {
+/**
+ * Tashfeer's line to the visitor: where their product is, in a sentence. It depends on the production's state only, so
+ * it changes when something meaningful happens (a new stage, an issue, a pause, the end) — never on a timer.
+ */
+function guideLine(state: FactoryState, current: Station | null, started: boolean, running: boolean): string {
+  if (state.finished) return "اكتمل خط الإنتاج في المحاكاة، ووصل منتجك إلى نهاية الخط.";
+  if (!started) return "منتجك جاهز على خط الإنتاج. ابدأ الإنتاج متى شئت.";
+  if (!current) return "منتجك على خط الإنتاج.";
+  if (!running) return `الإنتاج متوقف مؤقتًا، ومنتجك ينتظر في مرحلة ${current.name}.`;
+  const st = state.stations[current.id];
+  if (st && st.checks.some(openIssue)) return "ظهرت مشكلة في الفحص، وتُعالج الآن.";
+  if (st?.status !== "active") return `منتجك في طريقه إلى مرحلة ${current.name}.`;
+  return `منتجك الآن في مرحلة ${current.name}.`;
+}
+
+/**
+ * The card beside the scene: the station in view — where the product is during the tour, or the one the visitor chose.
+ * Up front: the station, its state, what is happening now on the product, and the output it has made (only what has
+ * really been made — never a stage's result ahead of time). Everything else on request.
+ */
+const StationCard = forwardRef<
+  HTMLElement,
+  {
+    station: Station;
+    index: number;
+    chosen: boolean;
+    state: FactoryState;
+    team: readonly string[];
+    model: "A" | "B";
+    onBack: () => void;
+    events: ReturnType<typeof simulationScript>;
+    elapsed: number;
+    reducedMotion: boolean;
+  }
+>(function StationCard({ station, index, chosen, state, team, model, onBack, events, elapsed, reducedMotion }, ref) {
   const st = state.stations[station.id];
   if (!st) return null;
   const prototype = PROTOTYPES.find((p) => p.id === model);
   const log = events.filter((e) => e.station === station.id && e.at <= elapsed && e.type !== "travel");
+  const now =
+    st.status === "active"
+      ? (st.task ?? "يبدأ العمل الآن")
+      : st.status === "done"
+        ? "اكتملت هذه المرحلة"
+        : "بانتظار وصول منتجك إلى هذه المرحلة";
   return (
     <aside
+      ref={ref}
       className={styles.panel}
       aria-labelledby="station-title"
       data-station-panel={station.id}
+      data-card-mode={chosen ? "station" : "follow"}
     >
-      <header className={styles.panelHead}>
-        <span className={styles.panelNum}>{String(index + 1).padStart(2, "0")}</span>
-        <h2 id="station-title">{station.name}</h2>
-        <span className={cx(styles.status, styles[st.status])} data-panel-status={st.status}>
-          {STATUS[st.status]}
-        </span>
-        <button type="button" className={styles.close} onClick={onClose} aria-label="إغلاق التفاصيل" data-panel-close="">
-          ×
-        </button>
-      </header>
+      {/* a new station in view: its content comes in gently (at once with reduced motion) */}
+      <div key={station.id} className={cx(styles.cardBody, !reducedMotion && styles.cardIn)}>
+        <header className={styles.panelHead}>
+          <span className={styles.panelNum}>{String(index + 1).padStart(2, "0")}</span>
+          <h2 id="station-title">{station.name}</h2>
+          <span className={cx(styles.status, styles[st.status])} data-panel-status={st.status}>
+            {STATUS[st.status]}
+          </span>
+          {chosen && (
+            <button type="button" className={styles.close} onClick={onBack} aria-label="العودة لمتابعة المنتج" data-panel-close="">
+              ×
+            </button>
+          )}
+        </header>
 
-      <p className={styles.simNote}>
-        <Icon name="info" size={14} /> محاكاة تفاعلية — ليست نتائج عمل حقيقي.
-      </p>
+        <p className={styles.now} data-panel-task="">
+          {now}
+        </p>
+        {st.outputs.length > 0 && (
+          <p className={styles.outputNow} data-card-output="">
+            <Icon name="check" size={14} /> المخرج المتاح: {st.outputs.join("، ")}
+          </p>
+        )}
 
-      {/* the essentials: who, and what now; everything else opens on request */}
-      <dl className={styles.rows}>
-        <div>
-          <dt>الوكيل</dt>
-          <dd data-panel-agent="">{responsible(station, team)}</dd>
-        </div>
-        <div>
-          <dt>المهمة الحالية</dt>
-          <dd data-panel-task="">
-            {st.task ?? (st.status === "done" ? "اكتملت مهام المحطة" : "لم تبدأ بعد")}
-          </dd>
-        </div>
-      </dl>
+        <dl className={styles.rows}>
+          <div>
+            <dt>الوكيل</dt>
+            <dd data-panel-agent="">{responsible(station, team)}</dd>
+          </div>
+        </dl>
+
+        <p className={styles.simNote}>
+          <Icon name="info" size={14} /> محاكاة تفاعلية — ليست نتائج عمل حقيقي.
+        </p>
+
+        {chosen && (
+          <button type="button" className={styles.backBtn} onClick={onBack} data-follow-return="">
+            <Icon name="target" size={16} /> العودة لمتابعة المنتج
+          </button>
+        )}
 
       <details className={styles.more} data-panel-details="">
         <summary>
@@ -492,9 +553,10 @@ function StationPanel({
           </div>
         )}
       </details>
+      </div>
     </aside>
   );
-}
+});
 
 function openCount(st: FactoryState["stations"][string]) {
   return st.checks.filter(openIssue).length;

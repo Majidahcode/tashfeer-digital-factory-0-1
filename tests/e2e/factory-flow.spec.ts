@@ -3,8 +3,9 @@ import { openHome, settled } from "./support";
 
 /*
  * Screen 5 — the production factory (phase 1): reached by approving a model; a real 3D scene (WebGL) with one product on
- * a curved line; the opening shot, the tracking shot, a move to a station and back to the whole factory; one details
- * panel; the visitor's own camera (mouse and touch) that the tour never fights; keyboard; reduced motion; no WebGL.
+ * a curved line; a directed tour — the opening shot, the camera following the product, a move to a chosen station and
+ * back to the product — and no free camera (no drag, wheel or finger moves it); one card for the station in view;
+ * pausing the tour's motion; keyboard; reduced motion; no WebGL.
  * Production comes from a local simulation, labelled as such: it pauses and resumes, comes back paused after a reload,
  * and never continues on an approval that has changed.
  */
@@ -124,131 +125,209 @@ test.describe("factory", () => {
     await expect(page.locator("[data-factory-canvas]")).toHaveCount(0);
   });
 
-  test("the opening shot ends on the product; a station is reached smoothly and framed; back to the whole factory and to the product", async ({
+  test("the tour: the opening shot settles beside the product; production moves it and the camera and the card go with it", async ({
     page,
   }) => {
-    // smoothness is measured frame by frame; WebGL here is drawn in software, and on large screens a frame can take
-    // longer than a whole move under the suite's parallel load — so the path is measured at 1024×640 at most
+    await seedApproved(page);
+    await openFactory(page, "?speed=4");
+    await cameraSettled(page);
+    await expect(screen(page)).toHaveAttribute("data-camera-mode", "follow");
+    expect(await page.evaluate(() => window.__tashfeerFactory!.productInView())).toBe(true);
+    // the card shows where the product is; nothing chosen, so no way back to show
+    const card = page.locator("[data-station-panel]");
+    await expect(card).toHaveAttribute("data-station-panel", "setup");
+    await expect(card).toHaveAttribute("data-card-mode", "follow");
+    await expect(card.locator("[data-follow-return]")).toHaveCount(0);
+    const before = await page.evaluate(() => window.__tashfeerFactory!.pose());
+    await page.locator("[data-production-toggle]").click();
+    // the product reaches the second station: the card follows it, the camera follows it
+    await expect(card).toHaveAttribute("data-station-panel", "interfaces", { timeout: 60_000 });
+    await expect
+      .poll(() => page.evaluate(() => window.__tashfeerFactory!.productInView()), { timeout: 30_000 })
+      .toBe(true);
+    const after = await page.evaluate(() => window.__tashfeerFactory!.pose());
+    expect(Math.hypot(...after.pos.map((v, i) => v - before.pos[i]!))).toBeGreaterThan(1);
+    await expect(screen(page)).toHaveAttribute("data-camera-mode", "follow");
+  });
+
+  test("choosing a station: a smooth move, the station framed, production untouched; then back to the product", async ({
+    page,
+  }) => {
+    // smoothness is measured frame by frame; WebGL here is drawn in software (a frame or two a second on a large
+    // screen), so it is measured on a small one, where there are enough frames to see the path
     const vp = page.viewportSize()!;
-    if (vp.width > 1024) await page.setViewportSize({ width: 1024, height: 640 });
+    if (vp.width > 800) await page.setViewportSize({ width: 800, height: 500 });
     await seedApproved(page);
     await openFactory(page);
     await cameraSettled(page);
-    await expect(screen(page)).toHaveAttribute("data-camera-mode", "follow");
-
     const toQuality = await samplePath(page, () => page.locator("[data-station-btn=quality]").click());
     await expect(screen(page)).toHaveAttribute("data-camera-mode", "station");
     await expect(screen(page)).toHaveAttribute("data-camera-station", "quality");
     const q = pathStats(toQuality);
     expect(q.samples).toBeGreaterThan(5);
     expect(q.total).toBeGreaterThan(2);
-    // no jump: no single frame covers most of the way (the move is spread over many frames, whatever the frame rate)
+    // no jump: no single frame covers most of the way
     expect(q.maxStep).toBeLessThan(q.total * 0.4);
     expect(await page.evaluate(() => window.__tashfeerFactory!.inView("quality"))).toBe(true);
-    await expect(page.locator("[data-station-panel=quality]")).toBeVisible();
+    const card = page.locator("[data-station-panel=quality]");
+    await expect(card).toHaveAttribute("data-card-mode", "station");
+    // a future stage: waiting, and no output shown as made
+    await expect(card.locator("[data-panel-status]")).toHaveText("لم تبدأ");
+    await expect(card.locator("[data-panel-task]")).toHaveText("بانتظار وصول منتجك إلى هذه المرحلة");
+    await expect(card.locator("[data-card-output]")).toHaveCount(0);
+    // the camera stays with the visitor while they read
+    const held = await page.evaluate(() => window.__tashfeerFactory!.pose());
+    await page.waitForTimeout(1500);
+    const still = await page.evaluate(() => window.__tashfeerFactory!.pose());
+    expect(Math.hypot(...still.pos.map((v, i) => v - held.pos[i]!))).toBeLessThan(1e-3);
+    // choosing a station changes nothing in production
+    await expect(page.locator("[data-production-state]")).toHaveText("الإنتاج لم يبدأ");
+    await expect(page.locator("[data-station-btn=setup]")).toHaveAttribute("data-status", "waiting");
 
-    // another station straight from here, then the whole factory, then the product again
-    for (const id of ["delivery", "interfaces"]) {
-      const path = await samplePath(page, () => page.locator(`[data-station-btn=${id}]`).click());
-      const p = pathStats(path);
-      expect(p.samples).toBeGreaterThan(5);
-      expect(p.maxStep).toBeLessThan(p.total * 0.4);
-      expect(await page.evaluate((s) => window.__tashfeerFactory!.inView(s), id)).toBe(true);
-    }
-    await page.locator("[data-cam-overview]").click();
-    await cameraSettled(page);
-    await expect(screen(page)).toHaveAttribute("data-camera-mode", "overview");
-    await expect(page.locator("[data-station-panel]")).toHaveCount(0);
-    for (const id of ["interfaces", "quality", "delivery"])
-      expect(await page.evaluate((s) => window.__tashfeerFactory!.inView(s), id)).toBe(true);
-    await page.locator("[data-cam-follow]").click();
-    await cameraSettled(page);
+    const back = await samplePath(page, () => card.locator("[data-follow-return]").click());
+    const b = pathStats(back);
+    expect(b.maxStep).toBeLessThan(b.total * 0.4);
     await expect(screen(page)).toHaveAttribute("data-camera-mode", "follow");
+    expect(await page.evaluate(() => window.__tashfeerFactory!.productInView())).toBe(true);
+    await expect(page.locator("[data-station-panel]")).toHaveAttribute("data-card-mode", "follow");
   });
 
-  test("the visitor's own camera: a drag stops the tour, and the camera stays where they left it", async ({
-    page,
-  }, info) => {
-    test.skip(Boolean(info.project.use.hasTouch), "mouse; touch has its own test");
-    // waiting for the controls to come to rest is slow on the widest screens with a software renderer
-    test.setTimeout(300_000);
+  test("the card never covers the product, following it or at its station", async ({ page }) => {
+    await seedApproved(page);
+    await openFactory(page);
+    await cameraSettled(page);
+    // production runs until the product is at work in the first station, then pauses there (from inside the page: on a
+    // slow software renderer an outside click can come late)
+    await page.locator("[data-production-toggle]").click();
+    await page.evaluate(
+      () =>
+        new Promise<void>((done) => {
+          const t = setInterval(() => {
+            if (document.querySelector<HTMLElement>("[data-station-btn=setup]")?.dataset.status !== "active") return;
+            clearInterval(t);
+            document.querySelector<HTMLElement>("[data-production-toggle]")!.click();
+            done();
+          }, 20);
+        }),
+    );
+    await expect(screen(page)).toHaveAttribute("data-production", "paused");
+    for (const step of ["follow", "station"] as const) {
+      if (step === "station") await page.locator("[data-station-btn=setup]").click();
+      // the camera has come to rest on the shot
+      await cameraSettled(page);
+      await expect
+        .poll(async () => {
+          const a = await page.evaluate(() => window.__tashfeerFactory!.pose());
+          await page.waitForTimeout(400);
+          const b = await page.evaluate(() => window.__tashfeerFactory!.pose());
+          return Math.hypot(...a.pos.map((v, i) => v - b.pos[i]!));
+        }, { timeout: 60_000 })
+        .toBeLessThan(1e-3);
+      const p = await page.evaluate(() => window.__tashfeerFactory!.productOnScreen());
+      const canvas = (await page.locator("[data-factory-canvas] canvas").boundingBox())!;
+      const card = (await page.locator("[data-station-panel]").boundingBox())!;
+      const x = canvas.x + p.x;
+      const y = canvas.y + p.y;
+      const inside = x > card.x && x < card.x + card.width && y > card.y && y < card.y + card.height;
+      expect(inside, `${step}: the product's middle is under the card`).toBe(false);
+      expect(p.x, step).toBeGreaterThan(0);
+      expect(p.x, step).toBeLessThan(canvas.width);
+      expect(p.y, step).toBeGreaterThan(0);
+      expect(p.y, step).toBeLessThan(canvas.height);
+    }
+  });
+
+  test("no free camera: dragging, the wheel or a finger on the scene do not move it", async ({ page }, info) => {
     await seedApproved(page);
     await openFactory(page);
     await cameraSettled(page);
     const canvas = page.locator("[data-factory-canvas] canvas");
     const box = (await canvas.boundingBox())!;
     const before = await page.evaluate(() => window.__tashfeerFactory!.pose());
-    await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.45);
-    await page.mouse.down();
-    await page.mouse.move(box.x + box.width * 0.62, box.y + box.height * 0.4, { steps: 8 });
-    await page.mouse.up();
-    await expect(screen(page)).toHaveAttribute("data-camera-mode", "free");
-    await page.mouse.wheel(0, -300);
-    // let the controls' own easing come to rest (on a slow software renderer it takes several seconds): wait until two
-    // reads a second apart agree
-    await page.waitForTimeout(3500);
-    await expect
-      .poll(
-        async () => {
-          const a = await page.evaluate(() => window.__tashfeerFactory!.pose());
-          await page.waitForTimeout(1000);
-          const b = await page.evaluate(() => window.__tashfeerFactory!.pose());
-          return Math.hypot(...a.pos.map((v, i) => v - b.pos[i]!));
-        },
-        { timeout: 90_000 },
-      )
-      .toBeLessThan(0.02);
-    const left = await page.evaluate(() => window.__tashfeerFactory!.pose());
-    expect(Math.hypot(...left.pos.map((v, i) => v - before.pos[i]!))).toBeGreaterThan(0.3);
-    await page.waitForTimeout(2000);
-    const later = await page.evaluate(() => window.__tashfeerFactory!.pose());
-    // not pulled back by the tour: it stays where the visitor left it
-    expect(Math.hypot(...later.pos.map((v, i) => v - left.pos[i]!))).toBeLessThan(0.15);
-    await expect(screen(page)).toHaveAttribute("data-camera-mode", "free");
-    // a station is still one click away
-    await page.locator("[data-station-btn=quality]").click();
-    await cameraSettled(page);
-    await expect(screen(page)).toHaveAttribute("data-camera-station", "quality");
+    if (info.project.use.hasTouch) {
+      const cdp = await page.context().newCDPSession(page);
+      const touch = (type: "touchStart" | "touchMove" | "touchEnd", x: number) =>
+        cdp.send("Input.dispatchTouchEvent", {
+          type,
+          touchPoints: type === "touchEnd" ? [] : [{ x: box.x + box.width * x, y: box.y + box.height * 0.45 }],
+        });
+      await touch("touchStart", 0.5);
+      for (let i = 1; i <= 6; i++) await touch("touchMove", 0.5 + i * 0.04);
+      await touch("touchEnd", 0.74);
+    } else {
+      await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.45);
+      await page.mouse.down();
+      await page.mouse.move(box.x + box.width * 0.7, box.y + box.height * 0.3, { steps: 8 });
+      await page.mouse.up();
+      await page.mouse.wheel(0, -500);
+    }
+    await page.waitForTimeout(1500);
+    const after = await page.evaluate(() => window.__tashfeerFactory!.pose());
+    expect(Math.hypot(...after.pos.map((v, i) => v - before.pos[i]!))).toBeLessThan(1e-3);
+    expect(Math.hypot(...after.target.map((v, i) => v - before.target[i]!))).toBeLessThan(1e-3);
+    await expect(screen(page)).toHaveAttribute("data-camera-mode", "follow");
   });
 
-  test("touch: tapping a station works, and a finger on the scene takes the camera", async ({ page }, info) => {
-    test.skip(!info.project.use.hasTouch, "touch screens");
+  test("rapid choices between stations end on the last one, framed and still", async ({ page }) => {
     await seedApproved(page);
     await openFactory(page);
     await cameraSettled(page);
-    await page.locator("[data-station-btn=quality]").tap();
+    for (const id of ["quality", "delivery", "interfaces", "quality"]) await page.locator(`[data-station-btn=${id}]`).click();
+    await page.locator("[data-follow-return]").click();
+    await page.locator("[data-station-btn=delivery]").click();
     await cameraSettled(page);
-    await expect(page.locator("[data-station-panel=quality]")).toBeVisible();
-    await page.locator("[data-panel-close]").tap();
-    // a real finger drag (touch input through the browser, not synthetic events)
-    const canvas = page.locator("[data-factory-canvas] canvas");
-    const b = (await canvas.boundingBox())!;
-    const cdp = await page.context().newCDPSession(page);
-    const touch = (type: "touchStart" | "touchMove" | "touchEnd", x: number) =>
-      cdp.send("Input.dispatchTouchEvent", {
-        type,
-        touchPoints: type === "touchEnd" ? [] : [{ x: b.x + b.width * x, y: b.y + b.height * 0.45 }],
-      });
-    await touch("touchStart", 0.5);
-    for (let i = 1; i <= 6; i++) await touch("touchMove", 0.5 + i * 0.03);
-    await touch("touchEnd", 0.68);
-    await expect(screen(page)).toHaveAttribute("data-camera-mode", "free");
+    await expect(screen(page)).toHaveAttribute("data-camera-station", "delivery");
+    await expect(page.locator("[data-station-panel]")).toHaveAttribute("data-station-panel", "delivery");
+    expect(await page.evaluate(() => window.__tashfeerFactory!.inView("delivery"))).toBe(true);
+    const a = await page.evaluate(() => window.__tashfeerFactory!.pose());
+    await page.waitForTimeout(1000);
+    const b = await page.evaluate(() => window.__tashfeerFactory!.pose());
+    expect(Math.hypot(...a.pos.map((v, i) => v - b.pos[i]!))).toBeLessThan(1e-3);
   });
 
-  test("keyboard: a number key chooses a station, Esc closes its panel; the station buttons are reachable with Tab", async ({
+  test("pausing the tour's motion holds the camera while production goes on; resuming returns to the product", async ({
     page,
   }) => {
     await seedApproved(page);
-    await openFactory(page);
-    await page.keyboard.press("4");
-    await expect(page.locator("[data-station-panel=quality]")).toBeVisible();
-    await expect(screen(page)).toHaveAttribute("data-camera-station", "quality");
-    await page.keyboard.press("Escape");
-    await expect(page.locator("[data-station-panel]")).toHaveCount(0);
-    const btn = page.locator("[data-station-btn=delivery]");
-    await btn.focus();
-    await page.keyboard.press("Enter");
-    await expect(page.locator("[data-station-panel=delivery]")).toBeVisible();
+    await openFactory(page, "?speed=4");
+    await cameraSettled(page);
+    await page.locator("[data-tour-toggle]").click();
+    await expect(screen(page)).toHaveAttribute("data-tour", "paused");
+    const held = await page.evaluate(() => window.__tashfeerFactory!.pose());
+    await page.locator("[data-production-toggle]").click();
+    await expect(page.locator("[data-station-btn=interfaces]")).toHaveAttribute("data-status", "active", {
+      timeout: 60_000,
+    });
+    // production went on (the product moved on to the next station), the camera did not
+    await expect(screen(page)).toHaveAttribute("data-production", "running");
+    const still = await page.evaluate(() => window.__tashfeerFactory!.pose());
+    expect(Math.hypot(...still.pos.map((v, i) => v - held.pos[i]!))).toBeLessThan(1e-3);
+    await page.locator("[data-tour-toggle]").click();
+    await expect(screen(page)).toHaveAttribute("data-tour", "moving");
+    await expect
+      .poll(() => page.evaluate(() => window.__tashfeerFactory!.productInView()), { timeout: 30_000 })
+      .toBe(true);
+    const moved = await page.evaluate(() => window.__tashfeerFactory!.pose());
+    expect(Math.hypot(...moved.pos.map((v, i) => v - held.pos[i]!))).toBeGreaterThan(0.5);
+  });
+
+  test("Tashfeer here is his mark and one line, changed with the production's state; his full figure is not loaded", async ({
+    page,
+  }) => {
+    const figure: string[] = [];
+    page.on("request", (r) => r.url().includes("/assets/characters/tashfeer") && figure.push(r.url()));
+    await seedApproved(page);
+    await openFactory(page, "?speed=4");
+    const guide = page.locator("[data-guide]");
+    await expect(guide).toHaveText("منتجك جاهز على خط الإنتاج. ابدأ الإنتاج متى شئت.");
+    await page.locator("[data-production-toggle]").click();
+    // a new line once production starts, and new lines as the product moves on (here sped up: whichever stage it is in)
+    await expect(guide).not.toHaveText("منتجك جاهز على خط الإنتاج. ابدأ الإنتاج متى شئت.");
+    await expect(guide).toContainText("منتجك");
+    // paused: the line says so
+    await page.evaluate(() => document.querySelector<HTMLElement>("[data-production-toggle]")?.click());
+    await expect(guide).toContainText(/متوقف مؤقتًا|اكتمل/);
+    expect(figure).toEqual([]);
   });
 
   test("production: runs, pauses, comes back paused after a reload where it was; quality shows the issue, its fix and the retest; delivery claims no download", async ({
@@ -374,21 +453,6 @@ test.describe("factory", () => {
     await details.locator("summary").click();
     await expect(panel.locator("[data-panel-output]")).toBeVisible();
     await expect(panel.locator("[data-panel-checks]")).toBeVisible();
-  });
-
-  test("the visual sample: the reference angle frames the product's case and the first station; the camera can still go round it", async ({
-    page,
-  }) => {
-    await seedApproved(page);
-    await openFactory(page);
-    await cameraSettled(page);
-    await page.locator("[data-cam-sample]").click();
-    await expect(screen(page)).toHaveAttribute("data-camera-mode", "sample");
-    await cameraSettled(page);
-    expect(await page.evaluate(() => window.__tashfeerFactory!.inView("setup"))).toBe(true);
-    // camera moves never change production
-    await expect(page.locator("[data-production-state]")).toHaveText("الإنتاج لم يبدأ");
-    await expect(page.locator("[data-station-btn=setup]")).toHaveAttribute("data-status", "waiting");
   });
 
   test("no console errors on the factory", async ({ page }) => {

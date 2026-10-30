@@ -3,18 +3,14 @@
    changed every frame inside useFrame, outside React's rendering: that is how React Three Fiber animates */
 
 /**
- * The factory in 3D (React Three Fiber): one continuous scene — a smooth black production line that bends across a very
- * dark floor, lit from below its edges; the stations beside it; the visitor's one product travelling on it, its screen
- * showing the approved model as it is built; Tashfeer at the start of the line.
+ * The factory in 3D (React Three Fiber): one continuous scene — a black production line bending across a very dark
+ * floor, lit from below its edges; the stations beside it; the visitor's one product travelling on it, its screen
+ * showing the approved model as it is built.
  *
- * Built geometry: the reflective floor, the belt and its neon, the stations, the product in its glass case, the sign.
- * The first station and the product follow the visual sample under review (scene/Showcase.tsx); the other stations keep
- * the earlier design until the sample is approved.
- * Temporary asset: Tashfeer is his approved 2D image on a plane that turns to face the camera — there is no 3D model of
- * him yet (no rigged GLB in the project or the reference package), so none is invented.
- *
- * The camera follows the camera store (camera-store.ts): eased moves along a gentle arc between poses, the tracking
- * shot beside the product, and OrbitControls for the visitor's own looking, zooming and moving, inside the factory.
+ * The camera is directed, never handled: a short opening shot, then the tour beside the product (it moves with the
+ * product and holds still while the product is worked on), or one station the visitor chose. No drag, turn or zoom.
+ * The shots are framed in the part of the screen the information card leaves free (a view offset), so the card never
+ * covers the product or the station.
  */
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -24,30 +20,25 @@ import {
   Frustum,
   Matrix4,
   type Group,
+  type PerspectiveCamera,
   type Mesh,
   type MeshStandardMaterial,
-  SRGBColorSpace,
-  type Texture,
-  TextureLoader,
   Vector3,
 } from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { IconName } from "@/components/icons/Icon";
 import type { StationId, StationStatus } from "@/domain/factory";
 import type { ModelId } from "@/lib/project-store";
 import type { CameraStore } from "./camera-store";
 import {
-  BOUNDS,
   ENTRY_U,
+  FOLLOW_HALF,
+  STATION_HALF,
+  type Frame,
   type Pose,
-  clampTarget,
+  fitPose,
   followPose,
-  frameAt,
-  introStartPose,
-  overviewPose,
+  introPose,
   productPlace,
-  samplePose,
-  SAMPLE,
   stationPlace,
   stationPose,
 } from "./scene/layout";
@@ -90,14 +81,17 @@ export type FactorySceneProps = {
   camera: CameraStore;
   reducedMotion: boolean;
   onSelect: (id: StationId) => void;
-  tashfeerSrc: string;
+  /** the tour's camera motion paused by the visitor: shots change at once, nothing moves by itself (production goes on) */
+  tourPaused: boolean;
+  /** the screen covered by the controls around the scene (px): the shots are framed in the rest */
+  covered: { top: number; bottom: number; start: number };
 };
 
 export default function FactoryScene(props: FactorySceneProps) {
   return (
     <Canvas
       dpr={[1, 1.5]}
-      camera={{ fov: SAMPLE.fov, near: 0.1, far: 140, position: introStartPose().pos.toArray() }}
+      camera={{ fov: 40, near: 0.1, far: 140, position: introPose(ENTRY_U, "wide").pos.toArray() }}
       gl={{ antialias: true, powerPreference: "high-performance", toneMappingExposure: 1.05 }}
       data-factory-canvas=""
     >
@@ -189,7 +183,6 @@ function World(props: FactorySceneProps) {
         ))}
         <Product {...props} pal={pal} />
       </Suspense>
-      <Tashfeer src={props.tashfeerSrc} />
       <CameraRig {...props} />
       {/* the glow (a post-process) on the high level only; the light level renders directly */}
       {quality === "high" && !off.has("fx") && <Effects />}
@@ -369,37 +362,6 @@ function Product({
   );
 }
 
-/* ── Tashfeer: his approved image, standing at the start of the line (temporary: no 3D model of him exists yet) ── */
-
-function Tashfeer({ src }: { src: string }) {
-  const mesh = useRef<Mesh>(null);
-  const tex = useMemo(() => {
-    const t: Texture = new TextureLoader().load(src);
-    t.colorSpace = SRGBColorSpace;
-    return t;
-  }, [src]);
-  const place = useMemo(() => {
-    // behind the product, on the far side of the line, presenting it (as in the reference)
-    const { p, n, t } = frameAt(ENTRY_U);
-    // behind the product, beyond the belt's far edge, between the product and the first station (as in the reference)
-    return p.clone().addScaledVector(n, -3.9).addScaledVector(t, 1.9);
-  }, []);
-  // his size in the reference: he towers over the product, about two and a half times its case's height
-  const h = 6.4;
-  useFrame(({ camera }) => {
-    const m = mesh.current;
-    if (!m) return;
-    // turn about the vertical axis only, to face the camera
-    m.rotation.y = Math.atan2(camera.position.x - place.x, camera.position.z - place.z);
-  });
-  return (
-    <mesh ref={mesh} position={[place.x, h / 2, place.z]}>
-      <planeGeometry args={[(h * 346) / 900, h]} />
-      <meshBasicMaterial map={tex} transparent alphaTest={0.02} toneMapped={false} />
-    </mesh>
-  );
-}
-
 /* ── the camera ── */
 
 declare global {
@@ -410,6 +372,10 @@ declare global {
       mode: () => string;
       /** whether a station (its plinth and glass block) is inside the camera's view */
       inView: (id: string) => boolean;
+      /** whether the product's case is inside the camera's view */
+      productInView: () => boolean;
+      /** where the product's case is drawn on the canvas (CSS px from its top left; its middle, its left and right) */
+      productOnScreen: () => { x: number; y: number; left: number; right: number };
     };
     __tashfeerFactoryProductU?: number;
     /** the rendering level in use */
@@ -420,43 +386,39 @@ declare global {
 /** sine in-out: a slow start, a gentle top speed, a slow stop — the camera eases out before it halts */
 const ease = (x: number) => -(Math.cos(Math.PI * x) - 1) / 2;
 
-function CameraRig({ camera: store, stations, travel, reducedMotion }: FactorySceneProps) {
-  const camera = useThree((s) => s.camera);
+function CameraRig({ camera: store, stations, travel, reducedMotion, tourPaused, covered }: FactorySceneProps) {
+  const camera = useThree((s) => s.camera) as PerspectiveCamera;
   const width = useThree((s) => s.size.width);
   const height = useThree((s) => s.size.height);
-  const panelShift = width >= 720 ? 1.8 : 0;
-  // a tall screen (a phone) sees less across: every pose steps back, in proportion, so the product and the stations
-  // stay whole in the frame
-  const aspect = width / Math.max(1, height);
-  const fit = aspect >= 1.2 ? 1 : Math.min(2.4, 1.2 / aspect);
-  // on a phone the panel is a sheet over the lower half
-  const panelBelow = width < 720 ? 1.4 * fit : 0;
-  const gl = useThree((s) => s.gl);
-  const controls = useMemo(() => new OrbitControls(camera, gl.domElement), [camera, gl]);
-  const move = useRef<{ from: Pose; start: number; dur: number; request: number } | null>(null);
+  // a phone (a tall screen) has its own shots
+  const frame: Frame = width / Math.max(1, height) < 1 ? "tall" : "wide";
+  const target = useRef(new Vector3());
+  const move = useRef<{ from: Pose; start: number; dur: number } | null>(null);
   const lastRequest = useRef(-1);
   const travelRef = useRef(travel);
   travelRef.current = travel;
   const stationsRef = useRef(stations);
   stationsRef.current = stations;
 
+  // the shots are framed in the part of the screen the controls leave free: the view is offset by half of what they
+  // cover (the card at the start side on a wide screen, the bars and the card's sheet at the bottom on a phone)
   useEffect(() => {
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.12;
-    controls.minDistance = BOUNDS.minDistance;
-    controls.maxDistance = BOUNDS.maxDistance;
-    controls.maxPolarAngle = 1.42;
-    controls.screenSpacePanning = false;
-    controls.zoomToCursor = true;
-    const start = introStartPose();
+    const dx = covered.start / 2;
+    const dy = (covered.bottom - covered.top) / 2;
+    camera.setViewOffset(width, height, dx, dy, width, height);
+    camera.updateProjectionMatrix();
+    return () => {
+      camera.clearViewOffset();
+    };
+  }, [camera, width, height, covered.start, covered.top, covered.bottom]);
+
+  useEffect(() => {
+    const start = introPose(ENTRY_U, frame);
     camera.position.copy(start.pos);
-    controls.target.copy(start.target);
-    controls.update();
-    // the visitor's hand on the camera ends any automatic move
-    const take = () => store.release();
-    controls.addEventListener("start", take);
+    target.current.copy(start.target);
+    camera.lookAt(target.current);
     window.__tashfeerFactory = {
-      pose: () => ({ pos: camera.position.toArray(), target: controls.target.toArray() }),
+      pose: () => ({ pos: camera.position.toArray(), target: target.current.toArray() }),
       mode: () => store.get().mode,
       inView: (id) => {
         const list = stationsRef.current;
@@ -469,77 +431,92 @@ function CameraRig({ camera: store, stations, travel, reducedMotion }: FactorySc
         const at = stationPlace(i).pos;
         return [0.1, 1.6].every((y) => f.containsPoint(at.clone().setY(at.y + y)));
       },
+      productInView: () => {
+        camera.updateMatrixWorld();
+        const f = new Frustum().setFromProjectionMatrix(
+          new Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse),
+        );
+        const u = window.__tashfeerFactoryProductU ?? ENTRY_U;
+        const p = productPlace(u).pos;
+        return [0.5, 2.2].every((y) => f.containsPoint(p.clone().setY(p.y + y)));
+      },
+      productOnScreen: () => {
+        camera.updateMatrixWorld();
+        const { pos: p, t } = productPlace(window.__tashfeerFactoryProductU ?? ENTRY_U);
+        const el = document.querySelector("[data-factory-canvas] canvas");
+        const w = el?.clientWidth ?? 1;
+        const h = el?.clientHeight ?? 1;
+        const at = (v: Vector3) => {
+          const q = v.clone().project(camera);
+          return { x: ((q.x + 1) / 2) * w, y: ((1 - q.y) / 2) * h };
+        };
+        const mid = at(p.clone().setY(p.y + 1.3));
+        const a = at(p.clone().setY(p.y + 1.3).addScaledVector(t, 1.3));
+        const b = at(p.clone().setY(p.y + 1.3).addScaledVector(t, -1.3));
+        return { x: mid.x, y: mid.y, left: Math.min(a.x, b.x), right: Math.max(a.x, b.x) };
+      },
     };
     return () => {
-      controls.removeEventListener("start", take);
-      controls.dispose();
       delete window.__tashfeerFactory;
     };
-  }, [controls, camera, store]);
+    // placed once, at the opening shot's start
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [camera, store]);
 
-  useEffect(() => {
-    // the visitor's own camera may step back as far as the automatic poses do: no jump when they take it
-    controls.maxDistance = BOUNDS.maxDistance * fit;
-  }, [controls, fit]);
-  const fitted = (p: Pose): Pose =>
-    fit === 1 ? p : { pos: p.target.clone().add(p.pos.clone().sub(p.target).multiplyScalar(fit)), target: p.target };
-  const desired = (): Pose => fitted(rawDesired());
-  const rawDesired = (): Pose => {
+  /** where the product is, for the tour: with reduced motion, only where it stops (no continuous tracking) */
+  const productAt = () => {
+    const t = travelRef.current;
+    if (reducedMotion) return t.to < 0 ? ENTRY_U : stationPlace(t.to).u;
+    return window.__tashfeerFactoryProductU ?? productU(stationsRef.current.length, t);
+  };
+  // the free part of the screen, as half-angles: each shot is pulled back (along its own line) until its subject fits
+  const tanHalf = Math.tan((camera.fov * Math.PI) / 360);
+  const freeW = Math.max(1, width - covered.start) / Math.max(1, width);
+  const freeH = Math.max(1, height - covered.top - covered.bottom) / Math.max(1, height);
+  const tanX = tanHalf * (width / Math.max(1, height)) * freeW;
+  const tanY = tanHalf * freeH;
+  const desired = (): Pose => {
     const s = store.get();
-    const count = stations.length;
     if (s.mode === "station" && s.station) {
-      const i = stations.findIndex((x) => x.id === s.station);
-      // on a wide screen the panel covers the right part: the station is framed left of the middle
-      if (i >= 0) return stationPose(i, count, panelShift, panelBelow);
+      const i = stationsRef.current.findIndex((x) => x.id === s.station);
+      if (i >= 0) return fitPose(stationPose(i, frame), STATION_HALF, tanX, tanY);
     }
-    if (s.mode === "overview") return overviewPose();
-    if (s.mode === "sample") return samplePose();
-    return followPose(window.__tashfeerFactoryProductU ?? productU(count, travelRef.current));
+    return fitPose(followPose(productAt(), frame), FOLLOW_HALF, tanX, tanY);
   };
 
   useFrame(({ clock }, dt) => {
     const s = store.get();
-    if (s.mode === "free") {
-      move.current = null;
-      controls.update();
-      clampTarget(controls.target);
-      if (camera.position.y < 0.6) camera.position.y = 0.6;
-      return;
-    }
-    if (s.request !== lastRequest.current || (s.mode === "intro" && !move.current && !s.settled)) {
+    const still = reducedMotion || tourPaused;
+    if (s.request !== lastRequest.current) {
       lastRequest.current = s.request;
-      const from = { pos: camera.position.clone(), target: controls.target.clone() };
-      const to = desired();
-      const dist = from.pos.distanceTo(to.pos);
-      const dur = reducedMotion ? 0 : s.mode === "intro" ? 5.5 : Math.min(3, Math.max(1.6, dist / 7));
-      move.current = { from, start: clock.elapsedTime, dur, request: s.request };
+      const from = { pos: camera.position.clone(), target: target.current.clone() };
+      const dist = from.pos.distanceTo(desired().pos);
+      // the opening: hold on the wide shot a moment, then a slow approach; other shots: calm, by distance
+      const intro = s.mode === "intro";
+      const dur = still || dist < 0.05 ? 0 : intro ? 4.2 : Math.min(2.8, Math.max(1.6, dist / 6));
+      move.current = { from, start: clock.elapsedTime + (intro && !still ? 1.2 : 0), dur };
     }
     const to = desired();
     const m = move.current;
     if (m) {
-      const k = m.dur === 0 ? 1 : Math.min(1, (clock.elapsedTime - m.start) / m.dur);
+      const k = m.dur === 0 ? 1 : Math.max(0, Math.min(1, (clock.elapsedTime - m.start) / m.dur));
       const e = ease(k);
-      // a gentle arc: up and a little to the side of the straight path, most at the middle of the move
-      const mid = m.from.pos.clone().lerp(to.pos, 0.5);
-      const d = to.pos.clone().sub(m.from.pos);
-      const side = new Vector3(-d.z, 0, d.x).normalize().multiplyScalar(d.length() * 0.12);
-      mid.add(side).add(new Vector3(0, d.length() * 0.1, 0));
-      const a = m.from.pos.clone().lerp(mid, e);
-      const b = mid.clone().lerp(to.pos, e);
-      camera.position.copy(a.lerp(b, e));
-      controls.target.copy(m.from.target.clone().lerp(to.target, e));
+      // a gentle rise over the middle of the move (never sideways into the line or the stations)
+      const lift = new Vector3(0, m.from.pos.distanceTo(to.pos) * 0.08 * Math.sin(Math.PI * e), 0);
+      camera.position.copy(m.from.pos.clone().lerp(to.pos, e).add(lift));
+      target.current.copy(m.from.target.clone().lerp(to.target, e));
       if (k >= 1) {
         move.current = null;
         if (s.mode === "intro") store.go("follow");
-        store.settle();
+        else store.settle();
       }
-    } else if (s.mode === "follow") {
-      // the tracking shot: stay beside the product as it moves, smoothly
-      const f = reducedMotion ? 1 : 1 - Math.exp(-dt * 2.5);
+    } else if (s.mode === "follow" && !tourPaused) {
+      // the tour: with the product while it travels (smoothly), still while it is worked on (it does not move then)
+      const f = reducedMotion ? 1 : 1 - Math.exp(-dt * 2);
       camera.position.lerp(to.pos, f);
-      controls.target.lerp(to.target, f);
+      target.current.lerp(to.target, f);
     }
-    camera.lookAt(controls.target);
+    camera.lookAt(target.current);
   });
   return null;
 }

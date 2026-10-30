@@ -9,7 +9,6 @@ import {
   CURVE,
   ENTRY_U,
   LANES,
-  SAMPLE,
   TRACK,
   frameAt,
   productPlace,
@@ -38,7 +37,8 @@ writeFileSync(
     // where the sample's pieces stand in the reference shot: station 01, and the product waiting at the entry
     station01: place(stationPlace(0).pos, stationPlace(0).n),
     productEntry: place(productPlace(ENTRY_U).pos, productPlace(ENTRY_U).n),
-    camera: { pos: SAMPLE.pos.toArray(), target: SAMPLE.target.toArray(), fovVertical: SAMPLE.fov },
+    // the reference image's angle (fitted to it when the sample was built)
+    camera: { pos: [-7.5, 5.4, 17], target: [-7.22, 1.6, 3.64], fovVertical: 46 },
     samples,
   }),
 );

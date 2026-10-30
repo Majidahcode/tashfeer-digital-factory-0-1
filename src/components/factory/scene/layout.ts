@@ -96,67 +96,76 @@ export function ribbonGeometry(a: number, ay: number, b: number, by: number, til
   return g;
 }
 
-/* ── camera poses ── */
+/* ── camera shots ── */
+
+/*
+ * The tour's shots. The camera always stands on the camera side of the line (n), in front of the product and the
+ * stations and a little to the side, above them: never behind, never inside anything. Wide screens and phones have
+ * their own shots (a phone is tall: it stands further back and higher, and keeps the product in the middle).
+ */
 
 export type Pose = { pos: Vector3; target: Vector3 };
+export type Frame = "wide" | "tall";
 
-/** Beside the line, slightly behind the product, looking at it: the tracking shot. */
-export function followPose(u: number): Pose {
+/** The tour: beside the product, from the front and a little behind, looking a little ahead to where it is going. */
+export function followPose(u: number, frame: Frame): Pose {
   const { pos: p, t, n } = productPlace(u);
-  const target = p.clone().add(new Vector3(0, 1.1, 0)).addScaledVector(n, -1.2).addScaledVector(t, 1.4);
-  const pos = p.clone().addScaledVector(n, 7.4).addScaledVector(t, -3.2).add(new Vector3(0, 2.6, 0));
-  return { pos, target };
+  if (frame === "tall") {
+    return {
+      target: p.clone().add(new Vector3(0, 1.2, 0)).addScaledVector(t, 0.5).addScaledVector(n, -0.4),
+      pos: p.clone().addScaledVector(n, 8.2).addScaledVector(t, -1.4).add(new Vector3(0, 3.1, 0)),
+    };
+  }
+  return {
+    target: p.clone().add(new Vector3(0, 1.15, 0)).addScaledVector(t, 1.5).addScaledVector(n, -0.7),
+    pos: p.clone().addScaledVector(n, 6.6).addScaledVector(t, -2.6).add(new Vector3(0, 2.5, 0)),
+  };
 }
 
-/** In front of a station, across the line, a little above: the stop to inspect it. */
-export function stationPose(index: number, count: number, panelSide = 0, panelBelow = 0): Pose {
+/** One station, chosen by the visitor: in front of it, its glass and base whole, the product's lane before it. */
+export function stationPose(index: number, frame: Frame): Pose {
   const s = stationPlace(index);
-  // the camera's right, seen from the line's side; `panelSide` moves the look point that way, so the station sits
-  // beside the details panel instead of under it
-  const right = new Vector3().crossVectors(s.n.clone().negate(), UP).normalize();
-  // `panelBelow` aims lower, so the station rises above a panel that covers the lower part of a phone's screen
-  const target = s.pos
-    .clone()
-    .add(new Vector3(0, 0.9 - panelBelow, 0))
-    .addScaledVector(s.n, 0.6)
-    .addScaledVector(right, panelSide);
-  const pos = s.pos
-    .clone()
-    .addScaledVector(s.n, 8.2)
-    .addScaledVector(s.t, -1.6)
-    .addScaledVector(right, panelSide)
-    .add(new Vector3(0, 2.9, 0));
-  return { pos, target };
+  if (frame === "tall") {
+    return {
+      target: s.pos.clone().add(new Vector3(0, 1.0, 0)).addScaledVector(s.n, 0.9),
+      pos: s.pos.clone().addScaledVector(s.n, 8.6).addScaledVector(s.t, -1.0).add(new Vector3(0, 3.0, 0)),
+    };
+  }
+  return {
+    target: s.pos.clone().add(new Vector3(0, 1.0, 0)).addScaledVector(s.n, 0.9),
+    pos: s.pos.clone().addScaledVector(s.n, 6.8).addScaledVector(s.t, -1.8).add(new Vector3(0, 2.6, 0)),
+  };
+}
+
+/** The opening shot: further back and higher, the belt running away with the product at its start. */
+export function introPose(u: number, frame: Frame): Pose {
+  const { pos: p, t, n } = productPlace(u);
+  const back = frame === "tall" ? 1.35 : 1;
+  return {
+    target: p.clone().addScaledVector(t, 4).add(new Vector3(0, 0.6, 0)),
+    pos: p
+      .clone()
+      .addScaledVector(n, 12 * back)
+      .addScaledVector(t, -6)
+      .add(new Vector3(0, 6.5 * back, 0)),
+  };
 }
 
 /**
- * The reference angle (the owner's approved image): low, on the camera side, just behind the product at the start of
- * the line, looking along it — the product large in front, the first station beside it, the line bending away.
+ * Pulls a shot back along its own line of sight (never sideways: the angle stays the one designed) until a subject of
+ * the given half-size fits the free part of the screen. `tanX`/`tanY` are the tangents of the free part's half-angles.
+ * On a wide screen the designed shots already fit; on a phone this is what keeps the product whole.
  */
-export function samplePose(): Pose {
-  // found by projecting the product, Tashfeer and the stations and matching their places in the reference image
-  // (scratch search: the reference's screen positions of the product, Tashfeer and stations 01–05)
-  return { pos: SAMPLE.pos.clone(), target: SAMPLE.target.clone() };
+export function fitPose(p: Pose, half: { x: number; y: number }, tanX: number, tanY: number): Pose {
+  const back = p.pos.clone().sub(p.target);
+  const d = back.length();
+  const need = Math.max(half.x / Math.max(tanX, 1e-3), half.y / Math.max(tanY, 1e-3));
+  if (need <= d) return p;
+  return { target: p.target, pos: p.target.clone().addScaledVector(back, need / d) };
 }
 
-/** the reference angle's camera, in world coordinates, and its field of view */
-export const SAMPLE = { pos: new Vector3(-7.5, 5.4, 17), target: new Vector3(-7.22, 1.6, 3.64), fov: 46 };
-
-/** The whole factory: high and wide. */
-export function overviewPose(): Pose {
-  return { pos: new Vector3(-3, 16, 22), target: new Vector3(1.5, 0, -1) };
-}
-
-/** Where the opening shot starts: far, low and wide, before the dolly in. */
-export function introStartPose(): Pose {
-  return { pos: new Vector3(-22, 5, 22), target: new Vector3(-6, 1, 3) };
-}
-
-/** The free camera stays inside the factory. */
-export const BOUNDS = { min: new Vector3(-18, 0, -12), max: new Vector3(20, 4, 12), minDistance: 2.4, maxDistance: 30 };
-
-export function clampTarget(v: Vector3) {
-  v.clamp(BOUNDS.min, BOUNDS.max);
-}
+/** what each shot keeps whole (half-sizes, metres): the product with a little of its station; one station */
+export const FOLLOW_HALF = { x: 2.8, y: 1.7 };
+export const STATION_HALF = { x: 2.1, y: 1.7 };
 
 export { UP };
