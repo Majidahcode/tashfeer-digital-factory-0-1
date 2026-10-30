@@ -83,7 +83,8 @@ export function drawProductScreen(
   };
 
   sections.forEach((s, i) => {
-    if (i >= built) {
+    const pending = i >= built;
+    if (pending) {
       outline(s.y, s.h);
       if (i === built && partial > 0) {
         // the section being built: filled from the right (the reading side) as far as it has gone
@@ -95,8 +96,15 @@ export function drawProductScreen(
         ctx.fill();
         ctx.restore();
       }
-      return;
+      // the approved design, faint: what this section will be once built
+      ctx.save();
+      ctx.globalAlpha = 0.5;
     }
+    drawSection(i, s);
+    if (pending) ctx.restore();
+  });
+
+  function drawSection(i: number, s: { y: number; h: number }) {
     switch (i) {
       case 0: {
         ctx.fillStyle = C.accent;
@@ -213,7 +221,7 @@ export function drawProductScreen(
         break;
       }
     }
-  });
+  }
 }
 
 export function productScreenTexture(model: ModelId, build: number, pal: ScenePalette, scale = 1) {
@@ -293,7 +301,8 @@ export function fadeTexture(pal: ScenePalette, flip = false) {
  */
 export function perforatedTexture(pal: ScenePalette) {
   const { c, ctx } = canvas(256, 256);
-  ctx.fillStyle = pal.css.glassBase;
+  // dark steel (a share of the silver), the holes black: the reference's plate reads grey, not black
+  ctx.fillStyle = pal.text.clone().multiplyScalar(0.3).getStyle();
   ctx.fillRect(0, 0, 256, 256);
   const step = 16;
   for (let y = step / 2; y < 256; y += step)
@@ -399,5 +408,49 @@ export function setupPanelTexture(pal: ScenePalette) {
     rr(ctx, 48, y - 28, 200 * (1 - i * 0.22), 14, 7);
     ctx.fill();
   });
+  return texture(c);
+}
+
+/** The floor's large tiles: dark panels with fine joints (the reference's polished factory floor). Tiled 1 per 3 m. */
+export function tileTexture(pal: ScenePalette) {
+  const { c, ctx } = canvas(512, 512);
+  ctx.fillStyle = pal.css.bg;
+  ctx.fillRect(0, 0, 512, 512);
+  // a faint unevenness, so the floor is not a flat colour
+  for (let i = 0; i < 900; i++) {
+    ctx.fillStyle = pal.css.glassBase;
+    ctx.globalAlpha = 0.25;
+    ctx.fillRect(Math.random() * 512, Math.random() * 512, 3, 3);
+  }
+  ctx.globalAlpha = 0.5;
+  ctx.strokeStyle = pal.css.muted;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, 510, 510);
+  ctx.globalAlpha = 1;
+  const t = texture(c);
+  t.wrapS = t.wrapT = RepeatWrapping;
+  return t;
+}
+
+/** The thin interface rows on a station's inner panels: dots, lines and short bars, lit. */
+export function rowsTexture(pal: ScenePalette, rows = 6) {
+  const { c, ctx } = canvas(256, 320);
+  const k = pal.css;
+  ctx.globalAlpha = 0.9;
+  for (let i = 0; i < rows; i++) {
+    const y = 26 + i * (280 / rows);
+    ctx.strokeStyle = k.neon;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(26, y, 8, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = k.text;
+    ctx.globalAlpha = 0.75;
+    ctx.fillRect(48, y - 5, 120 - (i % 3) * 22, 6);
+    ctx.fillStyle = k.neon;
+    ctx.globalAlpha = 0.6;
+    ctx.fillRect(48, y + 6, 70 - (i % 2) * 20, 4);
+    ctx.globalAlpha = 0.9;
+  }
   return texture(c);
 }

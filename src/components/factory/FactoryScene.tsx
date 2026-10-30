@@ -40,18 +40,20 @@ import {
   BOUNDS,
   ENTRY_U,
   type Pose,
-  TRACK,
   clampTarget,
   followPose,
   frameAt,
   introStartPose,
   overviewPose,
+  productPlace,
   samplePose,
+  SAMPLE,
   stationPlace,
   stationPose,
 } from "./scene/layout";
 import { type ScenePalette, readPalette } from "./scene/palette";
 import {
+  Architecture,
   Belt,
   Effects,
   Environment,
@@ -67,7 +69,6 @@ import {
   drawProductScreen,
   iconTexture,
   productScreenTexture,
-  signTexture,
   stationLabel,
 } from "./scene/textures";
 
@@ -94,7 +95,7 @@ export default function FactoryScene(props: FactorySceneProps) {
   return (
     <Canvas
       dpr={[1, 1.5]}
-      camera={{ fov: 42, near: 0.1, far: 120, position: introStartPose().pos.toArray() }}
+      camera={{ fov: SAMPLE.fov, near: 0.1, far: 140, position: introStartPose().pos.toArray() }}
       gl={{ antialias: true, powerPreference: "high-performance", toneMappingExposure: 1.05 }}
       data-factory-canvas=""
     >
@@ -138,7 +139,13 @@ function softwareRenderer(gl: { getContext: () => WebGLRenderingContext | WebGL2
   return /swiftshader|llvmpipe|software/i.test(name);
 }
 
+/** ?off=fx,floor,belt,env,arch — a review aid: leaves parts of the scene out, to see what each one contributes */
+function offParts(): Set<string> {
+  return new Set((new URLSearchParams(window.location.search).get("off") ?? "").split(",").filter(Boolean));
+}
+
 function World(props: FactorySceneProps) {
+  const [off] = useState(offParts);
   const pal = useMemo(() => readPalette(), []);
   const gl = useThree((s) => s.gl);
   const [forced] = useState(forcedQuality);
@@ -155,20 +162,20 @@ function World(props: FactorySceneProps) {
     <QualityContext value={quality}>
       <fog attach="fog" args={[pal.bg, 18, 52]} />
       {/* the reflections' environment on the high level only (sampled by every glossy pixel) */}
-      {quality === "high" && <Environment pal={pal} />}
-      <ambientLight color={pal.text} intensity={0.12} />
-      <hemisphereLight args={[pal.text, pal.bg, 0.25]} />
-      <directionalLight color={pal.text} intensity={0.45} position={[-6, 12, 10]} />
+      {quality === "high" && !off.has("env") && <Environment pal={pal} />}
+      <ambientLight color={pal.text} intensity={0.08} />
+      <hemisphereLight args={[pal.text, pal.bg, 0.18]} />
+      {/* the key light: high, from the front left (on Tashfeer, the cases' tops and the belt's rim) */}
+      <directionalLight color={pal.text} intensity={0.7} position={[-10, 14, 12]} />
+
       {!forced && quality === "high" && <QualityProbe onLow={() => setQuality("low")} />}
-      <ReflectiveFloor pal={pal} quality={quality} />
-      <Belt pal={pal} />
-      <Backdrop pal={pal} />
+      {!off.has("floor") && <ReflectiveFloor pal={pal} quality={quality} />}
+      {!off.has("belt") && <Belt pal={pal} />}
+      {!off.has("arch") && <Architecture pal={pal} />}
       {props.stations.map((s, i) => (
         <StationMark
-          quality={quality}
           key={s.id}
           index={i}
-          count={props.stations.length}
           station={s}
           selected={props.selected === s.id}
           pal={pal}
@@ -176,27 +183,12 @@ function World(props: FactorySceneProps) {
           onSelect={props.onSelect}
         />
       ))}
-      <Product {...props} pal={pal} quality={quality} />
+      <Product {...props} pal={pal} />
       <Tashfeer src={props.tashfeerSrc} />
       <CameraRig {...props} />
       {/* the glow (a post-process) on the high level only; the light level renders directly */}
-      {quality === "high" && <Effects />}
+      {quality === "high" && !off.has("fx") && <Effects />}
     </QualityContext>
-  );
-}
-
-/* ── the far background ── */
-
-function Backdrop({ pal }: { pal: ScenePalette }) {
-  const sign = useMemo(() => signTexture(pal), [pal]);
-  return (
-    <group>
-      {/* the name, far behind the line, like a lit sign on the factory's back wall */}
-      <mesh position={[11, 3.2, -21]} rotation-y={-0.3}>
-        <planeGeometry args={[7, 2.05]} />
-        <meshBasicMaterial map={sign} transparent opacity={0.45} toneMapped={false} fog={false} />
-      </mesh>
-    </group>
   );
 }
 
@@ -205,24 +197,20 @@ function Backdrop({ pal }: { pal: ScenePalette }) {
 
 function StationMark({
   index,
-  count,
   station,
   selected,
   pal,
   reducedMotion,
   onSelect,
-  quality,
 }: {
   index: number;
-  count: number;
   station: SceneStation;
   selected: boolean;
   pal: ScenePalette;
   reducedMotion: boolean;
   onSelect: (id: StationId) => void;
-  quality: Quality;
 }) {
-  const place = useMemo(() => stationPlace(index, count), [index, count]);
+  const place = useMemo(() => stationPlace(index), [index]);
   const label = useMemo(() => stationLabel(index + 1, station.name, pal), [index, station.name, pal]);
   const icon = useMemo(() => iconTexture(station.icon, pal), [station.icon, pal]);
   const ring = useRef<MeshStandardMaterial>(null);
@@ -255,7 +243,6 @@ function StationMark({
           selected={selected}
           pal={pal}
           reducedMotion={reducedMotion}
-          quality={quality}
         />
       </group>
     );
@@ -311,8 +298,8 @@ function StationMark({
 
 function productU(stations: number, travel: { to: number; t: number }) {
   if (travel.to < 0) return ENTRY_U;
-  const from = travel.to === 0 ? ENTRY_U : stationPlace(travel.to - 1, stations).u;
-  const to = stationPlace(travel.to, stations).u;
+  const from = travel.to === 0 ? ENTRY_U : stationPlace(travel.to - 1).u;
+  const to = stationPlace(travel.to).u;
   const e = travel.t < 0.5 ? 2 * travel.t * travel.t : 1 - (-2 * travel.t + 2) ** 2 / 2;
   return from + (to - from) * e;
 }
@@ -326,8 +313,7 @@ function Product({
   model,
   pal,
   reducedMotion,
-  quality,
-}: FactorySceneProps & { pal: ScenePalette; quality: Quality }) {
+}: FactorySceneProps & { pal: ScenePalette }) {
   const group = useRef<Group>(null);
   const scan = useRef<Mesh>(null);
   const screen = useMemo(() => productScreenTexture(model, build, pal, 2), [model, pal]); // eslint-disable-line react-hooks/exhaustive-deps -- redrawn below as `build` changes
@@ -342,10 +328,10 @@ function Product({
   const target = productU(stations.length, travel);
   useFrame(({ clock }, dt) => {
     u.current = reducedMotion ? target : u.current + (target - u.current) * (1 - Math.exp(-dt * 4));
-    const { p, n } = frameAt(u.current);
+    const { pos, n } = productPlace(u.current);
     const g = group.current;
     if (g) {
-      g.position.set(p.x, TRACK.top, p.z);
+      g.position.copy(pos);
       g.rotation.y = Math.atan2(n.x, n.z);
     }
     if (scan.current) {
@@ -354,11 +340,11 @@ function Product({
     }
     window.__tashfeerFactoryProductU = u.current;
   });
-  const w = 2.6;
+  const w = 2.95;
   const h = (w * SCREEN.h) / SCREEN.w;
   return (
     <group ref={group}>
-      <ProductCase pal={pal} screen={{ map: screen.texture, w, h }} delivered={delivered} quality={quality}>
+      <ProductCase pal={pal} screen={{ map: screen.texture, w, h }} delivered={delivered}>
         {/* the quality station's scan: a thin light passing over the screen */}
         <mesh ref={scan} position={[0, 0, 0.04]} visible={false}>
           <planeGeometry args={[w + 0.1, 0.02]} />
@@ -390,9 +376,11 @@ function Tashfeer({ src }: { src: string }) {
   const place = useMemo(() => {
     // behind the product, on the far side of the line, presenting it (as in the reference)
     const { p, n, t } = frameAt(ENTRY_U);
-    return p.clone().addScaledVector(n, -2.7).addScaledVector(t, 2.2);
+    // behind the product, beyond the belt's far edge, between the product and the first station (as in the reference)
+    return p.clone().addScaledVector(n, -3.9).addScaledVector(t, 1.9);
   }, []);
-  const h = 3.5;
+  // his size in the reference: he towers over the product, about two and a half times its case's height
+  const h = 6.4;
   useFrame(({ camera }) => {
     const m = mesh.current;
     if (!m) return;
@@ -473,8 +461,8 @@ function CameraRig({ camera: store, stations, travel, reducedMotion }: FactorySc
         const f = new Frustum().setFromProjectionMatrix(
           new Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse),
         );
-        const at = stationPlace(i, list.length).pos;
-        return [0.1, 1.2].every((y) => f.containsPoint(at.clone().setY(y)));
+        const at = stationPlace(i).pos;
+        return [0.1, 1.6].every((y) => f.containsPoint(at.clone().setY(at.y + y)));
       },
     };
     return () => {

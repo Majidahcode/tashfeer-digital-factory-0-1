@@ -170,6 +170,8 @@ test.describe("factory", () => {
     page,
   }, info) => {
     test.skip(Boolean(info.project.use.hasTouch), "mouse; touch has its own test");
+    // waiting for the controls to come to rest is slow on the widest screens with a software renderer
+    test.setTimeout(240_000);
     await seedApproved(page);
     await openFactory(page);
     await cameraSettled(page);
@@ -182,8 +184,20 @@ test.describe("factory", () => {
     await page.mouse.up();
     await expect(screen(page)).toHaveAttribute("data-camera-mode", "free");
     await page.mouse.wheel(0, -300);
-    // let the controls' own easing come to rest
+    // let the controls' own easing come to rest (on a slow software renderer it takes several seconds): wait until two
+    // reads a second apart agree
     await page.waitForTimeout(3500);
+    await expect
+      .poll(
+        async () => {
+          const a = await page.evaluate(() => window.__tashfeerFactory!.pose());
+          await page.waitForTimeout(1000);
+          const b = await page.evaluate(() => window.__tashfeerFactory!.pose());
+          return Math.hypot(...a.pos.map((v, i) => v - b.pos[i]!));
+        },
+        { timeout: 30_000 },
+      )
+      .toBeLessThan(0.02);
     const left = await page.evaluate(() => window.__tashfeerFactory!.pose());
     expect(Math.hypot(...left.pos.map((v, i) => v - before.pos[i]!))).toBeGreaterThan(0.3);
     await page.waitForTimeout(2000);
@@ -244,8 +258,19 @@ test.describe("factory", () => {
     await openFactory(page, "?speed=4");
     await page.locator("[data-production-toggle]").click();
     await expect(screen(page)).toHaveAttribute("data-production", "running");
-    await expect(page.locator("[data-station-btn=setup]")).toHaveAttribute("data-status", "done", { timeout: 15_000 });
-    await page.locator("[data-production-toggle]").click();
+    // pause the moment the first station is done, from inside the page: on a slow (software) renderer a click from
+    // outside can arrive after the whole run has finished
+    await page.evaluate(
+      () =>
+        new Promise<void>((done) => {
+          const t = setInterval(() => {
+            if (document.querySelector<HTMLElement>("[data-station-btn=setup]")?.dataset.status !== "done") return;
+            clearInterval(t);
+            document.querySelector<HTMLElement>("[data-production-toggle]")!.click();
+            done();
+          }, 20);
+        }),
+    );
     await expect(screen(page)).toHaveAttribute("data-production", "paused");
     const states = () =>
       page.evaluate(() =>
