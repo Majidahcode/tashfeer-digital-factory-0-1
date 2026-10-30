@@ -369,6 +369,16 @@ def belt(materials):
             for i in range(len(samples) - 1):
                 for j in range(len(prof) - 1):
                     f = bm.faces.new((rows[i][j], rows[i][j + 1], rows[i + 1][j + 1], rows[i + 1][j]))
+                    # face outward: the section runs near foot → over the top → far foot, so outward is (dz, -da)
+                    # across/up; the site draws front faces only, so this must be right (no automatic guess on
+                    # open strips)
+                    da = prof[j + 1][0] - prof[j][0]
+                    dz = prof[j + 1][1] - prof[j][1]
+                    sm = samples[i]
+                    want = (sm["nx"] * dz, -sm["nz"] * dz, -da)  # three's (n·dz, up·−da) in Blender axes
+                    f.normal_update()
+                    if f.normal.dot(want) < 0:
+                        f.normal_flip()
                     for loop in f.loops:
                         ii = i if loop.vert in (rows[i][j], rows[i][j + 1]) else i + 1
                         jj = j if loop.vert in (rows[i][j], rows[i + 1][j]) else j + 1
@@ -377,7 +387,6 @@ def belt(materials):
                             loop[uv].uv = (s_m / 0.9, prof[jj][0] / 0.9)
                         else:
                             loop[uv].uv = (s_m / 2.0, acc[jj] / 2.0)
-        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
         o = mesh_object(name, bm, material)
         bpy.context.view_layer.objects.active = o
         o.select_set(True)
@@ -397,8 +406,13 @@ def belt(materials):
             if not bm2_pts or math.dist(bm2_pts[-1], (a, z)) > 1e-5:
                 bm2_pts.append((a, z))
         vs = [bm.verts.new(to_blender(s["x"] + s["nx"] * a, z, s["z"] + s["nz"] * a)) for a, z in bm2_pts]
-        bm.faces.new(vs)
-    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        f = bm.faces.new(vs)
+        # outward: back along the line at its start, forward at its end
+        other = samples[1] if s is samples[0] else samples[-2]
+        want = (s["x"] - other["x"], -(s["z"] - other["z"]), 0)
+        f.normal_update()
+        if f.normal.dot(want) < 0:
+            f.normal_flip()
     objs.append(mesh_object("Belt_Caps", bm, materials["rim"]))
     # the neon lines along the outer faces, just under the rounded rim (near brighter: the site sets their light)
     for side, nm in ((1, "Belt_NeonNear"), (-1, "Belt_NeonFar")):

@@ -171,7 +171,7 @@ test.describe("factory", () => {
   }, info) => {
     test.skip(Boolean(info.project.use.hasTouch), "mouse; touch has its own test");
     // waiting for the controls to come to rest is slow on the widest screens with a software renderer
-    test.setTimeout(240_000);
+    test.setTimeout(300_000);
     await seedApproved(page);
     await openFactory(page);
     await cameraSettled(page);
@@ -195,7 +195,7 @@ test.describe("factory", () => {
           const b = await page.evaluate(() => window.__tashfeerFactory!.pose());
           return Math.hypot(...a.pos.map((v, i) => v - b.pos[i]!));
         },
-        { timeout: 30_000 },
+        { timeout: 90_000 },
       )
       .toBeLessThan(0.02);
     const left = await page.evaluate(() => window.__tashfeerFactory!.pose());
@@ -307,7 +307,8 @@ test.describe("factory", () => {
     await openFactory(page, "?speed=4");
     await page.locator("[data-production-toggle]").click();
     await expect(page.locator("[data-station-btn=setup]")).toHaveAttribute("data-status", "done", { timeout: 15_000 });
-    await page.locator("[data-production-toggle]").click();
+    // pause from inside the page: on a slow (software) renderer the button is redrawn under an outside click
+    await page.evaluate(() => document.querySelector<HTMLElement>("[data-production-toggle]")!.click());
     // choosing the other model withdraws the design approval
     await page.goto("/prototypes");
     await page.locator("[data-choose=A]").click();

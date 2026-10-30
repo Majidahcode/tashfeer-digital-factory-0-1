@@ -294,7 +294,6 @@ function StationMark({
         <ringGeometry args={[1.55, selected ? 1.7 : 1.62, 72]} />
         <meshStandardMaterial ref={ring} color={pal.bg} emissive={color} emissiveIntensity={1} toneMapped={false} />
       </mesh>
-      {selected && <pointLight color={pal.neon} intensity={8} distance={5} position={[0, 2.6, 1.2]} />}
     </group>
   );
 }

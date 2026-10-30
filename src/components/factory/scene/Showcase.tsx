@@ -26,6 +26,7 @@ import {
   BoxGeometry,
   Color,
   DoubleSide,
+  FrontSide,
   EdgesGeometry,
   type Group,
   Mesh,
@@ -254,7 +255,15 @@ export function Belt({ pal }: { pal: ScenePalette }) {
         const mesh = m as Mesh;
         if (name === "Belt_NeonNear") mesh.material = new MeshBasicMaterial({ color: lit(pal.neon, 2.4) });
         else if (name === "Belt_NeonFar") mesh.material = new MeshBasicMaterial({ color: lit(pal.neon, 1.6) });
-        else mesh.material = forQuality(mesh.material as MeshPhysicalMaterial, quality);
+        else {
+          const m = forQuality(mesh.material as MeshPhysicalMaterial, quality);
+          // the light level: the plate flat, one dark steel colour (its texture is the belt's costliest pixels)
+          if (name === "Belt_Plate" && quality === "low") {
+            m.map = null;
+            m.color = pal.text.clone().multiplyScalar(0.26);
+          }
+          mesh.material = m;
+        }
       });
       out.push(c);
     }
@@ -420,12 +429,21 @@ function useModel(name: string, quality: Quality) {
 
 /**
  * A GLB surface on the level in use. On the high level the physical material as Blender exported it (clearcoat on the
- * dark parts); on the light level its standard equivalent, far cheaper per pixel.
+ * dark parts); on the light level its standard equivalent with its colour map only, far cheaper per pixel.
  */
 function forQuality(m: MeshPhysicalMaterial | MeshStandardMaterial, quality: Quality) {
-  if (quality === "high" || !(m as MeshPhysicalMaterial).isMeshPhysicalMaterial) return m;
+  // Blender exports its materials double-sided; these are closed or outward-facing surfaces: front faces only (the
+  // back faces would be drawn for nothing — on the belt, a large part of the screen)
+  m.side = FrontSide;
+  if (quality === "high") return m;
+  // the light level: the standard material, its colour map only — no relief, roughness, metalness or occlusion maps
+  // (per pixel, they cost most on large surfaces like the belt's plate)
   const s = new MeshStandardMaterial();
   MeshStandardMaterial.prototype.copy.call(s, m);
+  s.normalMap = null;
+  s.roughnessMap = null;
+  s.metalnessMap = null;
+  s.aoMap = null;
   return s;
 }
 
