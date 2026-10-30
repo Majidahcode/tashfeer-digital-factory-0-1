@@ -5,7 +5,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 rm -rf out
-STATIC_EXPORT=1 npx next build
+# the preview's host does not serve .glb: the factory's models go as an embedded glTF in a .json file (written below)
+STATIC_EXPORT=1 NEXT_PUBLIC_SAMPLE_MODELS=/models/factory/sample.json npx next build
 rm -f AGENTS.md # written by newer `next` versions; not part of the project
 mkdir -p out/p
 mv out/_next out/p/_next
@@ -20,5 +21,25 @@ for f in pathlib.Path("out").rglob("*.js"):
     s = f.read_text(encoding="utf-8")
     if "\ufffd" in s:
         f.write_text(s.replace("\ufffd", "\\ufffd"), encoding="utf-8")
+PY
+# the factory's models as an embedded glTF (JSON, the binary chunk as a base64 data URI): the same model, a served type
+python3 - <<'PY'
+import base64, json, pathlib, struct
+src = pathlib.Path("out/models/factory/sample.glb")
+data = src.read_bytes()
+magic, version, length = struct.unpack_from("<4sII", data, 0)
+assert magic == b"glTF", "not a GLB"
+off, doc, binary = 12, None, b""
+while off < length:
+    size, kind = struct.unpack_from("<I4s", data, off)
+    chunk = data[off + 8 : off + 8 + size]
+    if kind == b"JSON":
+        doc = json.loads(chunk)
+    elif kind == b"BIN\x00":
+        binary = chunk
+    off += 8 + size
+doc["buffers"][0]["uri"] = "data:application/octet-stream;base64," + base64.b64encode(binary).decode()
+pathlib.Path("out/models/factory/sample.json").write_text(json.dumps(doc, separators=(",", ":")))
+src.unlink()
 PY
 echo "static preview in out/ ($(du -sh out | cut -f1))"

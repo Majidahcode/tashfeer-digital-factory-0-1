@@ -403,7 +403,9 @@ function rimMaterial(color: Color, power = 3, intensity = 1) {
 /* ── the sample's models: built in Blender (blender/factory-sample/build.py), loaded once ── */
 
 /** the GLB the Blender build exports: the belt, station 01's base, neon and glass, and the product's case and screen */
-export const SAMPLE_MODELS = "/models/factory/sample.glb";
+export const SAMPLE_MODELS = process.env.NEXT_PUBLIC_SAMPLE_MODELS || "/models/factory/sample.glb";
+// (the static preview's host does not serve .glb: scripts/export-preview.sh writes the same model as an embedded glTF
+// in a .json file and points NEXT_PUBLIC_SAMPLE_MODELS at it; the loader reads either)
 
 export function useSampleModels() {
   return useLoader(GLTFLoader, SAMPLE_MODELS);
