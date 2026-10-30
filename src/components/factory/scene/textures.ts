@@ -460,3 +460,33 @@ export function rowsTexture(pal: ScenePalette, rows = 6) {
   }
   return texture(c);
 }
+
+/**
+ * A station's interface list, as in the reference's cases: rows of a rounded icon outline and two lines, drawn in light
+ * on nothing (the glass shows through). Large, so it stays sharp close up.
+ */
+export function listPanelTexture(pal: ScenePalette, rows = 6, seed = 0) {
+  const { c, ctx } = canvas(400, 560);
+  const k = pal.css;
+  for (let i = 0; i < rows; i++) {
+    const y = 34 + i * (500 / rows);
+    ctx.globalAlpha = 0.95;
+    ctx.strokeStyle = k.neon;
+    ctx.lineWidth = 4;
+    rr(ctx, 14, y - 18, 64, 40, 14);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(46, y + 2, 7, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 0.85;
+    ctx.fillStyle = k.text;
+    rr(ctx, 98, y - 10, 210 - ((i + seed) % 3) * 40, 9, 4);
+    ctx.fill();
+    ctx.globalAlpha = 0.7;
+    ctx.fillStyle = k.neon;
+    rr(ctx, 98, y + 8, 130 - ((i + seed) % 2) * 34, 7, 3);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  return texture(c);
+}

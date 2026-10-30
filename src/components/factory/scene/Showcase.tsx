@@ -376,7 +376,7 @@ export function Architecture({ pal }: { pal: ScenePalette }) {
 /* ── glass ── */
 
 /** The lit edge of glass: bright where the surface turns away from the eye (its rounded edges), clear elsewhere. */
-function rimMaterial(color: Color, power = 3, intensity = 1) {
+export function rimMaterial(color: Color, power = 3, intensity = 1) {
   return new ShaderMaterial({
     uniforms: { color: { value: color }, power: { value: power }, intensity: { value: intensity } },
     vertexShader: /* glsl */ `
@@ -518,7 +518,7 @@ function NumberPlate({ num, pal, y, z }: { num: number; pal: ScenePalette; y: nu
 
 /* ── the tag and the badge ── */
 
-function Tag({ text, pal, width = 1.5 }: { text: string; pal: ScenePalette; width?: number }) {
+export function Tag({ text, pal, width = 1.5 }: { text: string; pal: ScenePalette; width?: number }) {
   const tex = useMemo(() => tagTexture(text, pal), [text, pal]);
   return (
     <mesh>
@@ -528,7 +528,7 @@ function Tag({ text, pal, width = 1.5 }: { text: string; pal: ScenePalette; widt
   );
 }
 
-function Badge({ pal }: { pal: ScenePalette }) {
+export function Badge({ pal }: { pal: ScenePalette }) {
   const tex = useMemo(() => plusTexture(pal), [pal]);
   return (
     <mesh>

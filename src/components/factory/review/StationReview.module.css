@@ -1,0 +1,96 @@
+/*
+ * The station review page: a bar of tools above, the scene below it filling the rest of the screen (nothing over the
+ * scene), a one-line hint under it.
+ */
+.page {
+  position: relative;
+  z-index: var(--z-content);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  block-size: calc(100svh - var(--header-h));
+  min-block-size: 520px;
+  background: var(--brand-bg);
+}
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 20px;
+  padding: 12px clamp(12px, 2vw, 32px);
+  border-block-end: 1px solid var(--brand-glass-edge);
+}
+
+.title {
+  display: grid;
+  gap: 2px;
+}
+
+.title h1 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--brand-text-silver);
+}
+
+.kicker {
+  font-size: 0.8rem;
+  color: var(--brand-muted);
+}
+
+.groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.group button {
+  padding: 6px 14px;
+  border: 1px solid var(--brand-glass-edge);
+  border-radius: 999px;
+  background: var(--brand-glass);
+  color: var(--brand-text-silver);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.group button[aria-pressed="true"] {
+  border-color: var(--brand-lime);
+  color: var(--brand-lime);
+}
+
+.group button:focus-visible {
+  outline: 2px solid var(--brand-lime);
+  outline-offset: 2px;
+}
+
+.stage {
+  position: relative;
+  min-block-size: 0;
+}
+
+.stage canvas {
+  touch-action: none;
+}
+
+.loading {
+  display: grid;
+  place-items: center;
+  block-size: 100%;
+  color: var(--brand-muted);
+}
+
+.note {
+  margin: 0;
+  padding: 8px clamp(12px, 2vw, 32px) 12px;
+  font-size: 0.8rem;
+  color: var(--brand-muted);
+}
