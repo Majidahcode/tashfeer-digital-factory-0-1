@@ -83,11 +83,18 @@ test("loads without console errors, page errors or failed requests", async ({ pa
   expect(problems).toEqual([]);
 });
 
-test("the intake is honest: nothing pretends to record or answer; what is typed is kept, not sent", async ({ page }) => {
+test("the intake is honest: nothing pretends to answer; the microphone says what it does; what is typed is kept, not sent", async ({
+  page,
+}) => {
   await openHome(page);
   const chat = page.locator("[data-chat-shell]");
   await expect(chat.getByRole("button", { name: /تسجيل صوتي/ })).toBeDisabled();
-  await expect(page.getByRole("button", { name: /تحدّث الآن/ })).toBeDisabled();
+  // «تحدّث الآن» asks for the microphone (Tashfeer listens while it records); here no microphone is allowed: it says so
+  const mic = page.getByRole("button", { name: /تحدّث الآن/ });
+  await expect(mic).toBeEnabled();
+  await mic.click();
+  await expect(page.locator("[data-mic-note]")).toBeVisible();
+  await expect(mic).not.toHaveAttribute("data-mic", "on");
   // what this version does is stated in the chat's header for assistive technology (and the avatar's tooltip)
   await expect(chat.locator("[data-chat-status]")).toHaveText("نسخة تجريبية — لا يوجد ذكاء اصطناعي متصل بعد");
   await expect(chat.getByRole("status")).toHaveCount(0);
