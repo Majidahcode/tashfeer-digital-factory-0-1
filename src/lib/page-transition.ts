@@ -16,6 +16,7 @@
  * is written to <html data-scene-transition> so styles and tests can follow it.
  */
 import { CONTENT_BOX, GLASS_BOX } from "./portal-geometry";
+import { sendTashfeer } from "./tashfeer-controller";
 
 export type TransitionStep = "idle" | "leaving" | "approachingPortal" | "behindFrame" | "cameraFollow" | "arriving";
 export type TransitionKind = "crossing" | "forward" | "back";
@@ -153,7 +154,7 @@ async function dimTo(href: string, navigate: Navigate) {
 // ── home → agents: Tashfeer through the portal ─────────────────────────────────────────────────────────────────
 
 function crossingParts() {
-  const robot = document.querySelector<HTMLImageElement>("img[data-tashfeer]");
+  const robot = document.querySelector<HTMLElement>("[data-tashfeer][data-tashfeer-3d=ready]");
   const portal = document.querySelector<HTMLElement>("[data-portal]");
   const ring = document.querySelector<HTMLImageElement>("[data-portal-ring]");
   const chat = document.querySelector<HTMLElement>("[data-chat-shell]");
@@ -166,6 +167,12 @@ function crossingParts() {
   return { robot, portal, ring, ringBox: ring.parentElement, chat };
 }
 
+/**
+ * Tashfeer — his 3D model, on a canvas over the whole screen that first shows him exactly where he stood — turns to
+ * the portal, walks to its opening (his steps match the distance: the walk cycle advances with the ground covered, so
+ * his feet do not slide), turns his back to us and walks into it, behind the ring's band (a copy of the ring art is
+ * drawn above him, and outside the opening he is cut away). The camera follows him in; the light fills the view.
+ */
 async function cross(href: string, navigate: Navigate) {
   const parts = crossingParts()!;
   const { robot, portal, ring, ringBox, chat } = parts;
@@ -173,28 +180,25 @@ async function cross(href: string, navigate: Navigate) {
   const header = document.querySelector<HTMLElement>("[data-site-header]");
   const R = robot.getBoundingClientRect();
   const P = portal.getBoundingClientRect();
-  // the opening (the chat's glass, inside the ring) and where Tashfeer stands in it
+  sendTashfeer({ type: "leave" });
+  // the opening (the chat's glass, inside the ring)
   const hole = {
     x: P.left + (GLASS_BOX.left + GLASS_BOX.width / 2) * P.width,
     y: P.top + (GLASS_BOX.top + GLASS_BOX.height / 2) * P.height,
     rx: (GLASS_BOX.width / 2) * P.width * 0.94,
     ry: (GLASS_BOX.height / 2) * P.height * 0.94,
   };
-  const content = { bottom: P.top + (CONTENT_BOX.top + CONTENT_BOX.height) * P.height };
+  const floor = P.top + (CONTENT_BOX.top + CONTENT_BOX.height) * P.height; // where his feet go: the opening's lower part
 
-  // the layer: Tashfeer (a copy of his picture, where he stands), under a copy of the ring art, under the light
+  // the layer: Tashfeer's canvas, under a copy of the ring art, under the light
   const fx = layer("portal");
   const scene = document.createElement("div");
   scene.className = "page-veil__scene";
   const body = document.createElement("div");
   body.className = "page-veil__clip";
-  const twin = robot.cloneNode() as HTMLImageElement;
-  twin.removeAttribute("data-tashfeer");
-  twin.removeAttribute("class");
-  twin.removeAttribute("style");
-  twin.className = "page-veil__robot";
-  Object.assign(twin.style, { left: `${R.left}px`, top: `${R.top}px`, width: `${R.width}px`, height: `${R.height}px` });
-  body.appendChild(twin);
+  const canvas = document.createElement("canvas");
+  canvas.className = "page-veil__canvas";
+  body.appendChild(canvas);
   const B = ringBox.getBoundingClientRect();
   const I = ring.getBoundingClientRect();
   const ringWrap = document.createElement("div");
@@ -218,7 +222,7 @@ async function cross(href: string, navigate: Navigate) {
   light.style.setProperty("--hx", `${hole.x}px`);
   light.style.setProperty("--hy", `${hole.y}px`);
   fx.append(scene, light);
-  robot.style.visibility = "hidden";
+
   // the copies are placed where the originals are now: the page must not scroll under them while it plays (input is
   // held, and any scroll that still happens — a focus, a script — is put back)
   const x0 = scrollX;
@@ -236,44 +240,105 @@ async function cross(href: string, navigate: Navigate) {
     removeEventListener("scroll", pin);
   };
 
+  let stage: import("@/components/characters/tashfeer3d/stage").TashfeerStage | null = null;
   const restore = () => {
     robot.style.visibility = "";
     if (main) main.style.transformOrigin = "";
     for (const el of [main, header, chat]) el?.getAnimations().forEach((a) => a.cancel());
+    sendTashfeer({ type: "reset" });
   };
 
   try {
-    // 1 — to the portal: he goes to the opening, a little smaller as he goes in, passing behind the ring's band
-    setTransitionStep("approachingPortal");
-    const s1 = Math.min(1, (hole.ry * 1.25) / R.height);
-    const end1 = { x: hole.x - (R.left + R.width / 2), y: content.bottom - hole.ry * 0.15 - (R.top + R.height) };
-    const t1 = `translate(${end1.x}px, ${end1.y}px) scale(${s1})`;
-    twin.style.transformOrigin = "50% 100%";
-    await Promise.all([
-      play(twin, [{ transform: "none" }, { transform: t1 }], { duration: 720, easing: ease.inOut }),
-      play(chat, [{ opacity: 1 }, { opacity: 0 }], { duration: 560, easing: ease.out }),
-    ]);
+    // his stage over the whole screen, framed so he stands exactly in his box (the model is already loaded: shared)
+    const { TashfeerStage } = await import("@/components/characters/tashfeer3d/stage");
+    stage = new TashfeerStage(canvas);
+    const W = innerWidth;
+    const H = innerHeight;
+    stage.frame(W, H, { x: R.left, y: R.top, width: R.width, height: R.height });
+    await Promise.race([stage.ready, wait(2500).then(() => Promise.reject(new Error("model")))]);
+    stage.draw();
+    await frames(1);
+    robot.style.visibility = "hidden"; // the page's Tashfeer gives way to his twin, in the same place and pose
 
-    // 2 — through: into the depth of the opening; outside it he is hidden behind the frame
+    const m = stage.metresPerPx();
+    const dx = (hole.x - (R.left + R.width / 2)) * m; // metres to walk across
+    const side = Math.sign(dx) || 1;
+    const SPEED = 1.5; // metres a second
+    const STRIDE = 1.4; // metres per step cycle (two steps)
+    const turnA = 0.45;
+    const walkA = Math.max(0.35, Math.abs(dx) / SPEED);
+    const turnB = 0.4;
+    const walkB = 1.35;
+    const DEPTH = 3.6;
+    const total = turnA + walkA + turnB + walkB;
+    // the vertical offset that brings his feet to the opening's floor (a camera move: on a phone the portal is above)
+    const lift = floor - hole.ry * 0.1 - R.bottom;
+    let t = 0;
+    let done: () => void = () => {};
+    const finished = new Promise<void>((r) => (done = r));
+    const st = stage;
+    st.lookAtScreen(null);
+    let stepped = 0;
+    st.onFrame = (dt, s) => {
+      t += dt;
+      const root = s.root;
+      const advance = (metres: number) => {
+        stepped += metres;
+        s.phase = (stepped / STRIDE) % 1;
+      };
+      if (t < turnA) {
+        const k = smooth(t / turnA);
+        root.rotation.y = side * (Math.PI / 2) * k;
+        s.setMode("turning");
+        advance(dt * 0.6); // steps in place while turning
+      } else if (t < turnA + walkA) {
+        const k = (t - turnA) / walkA;
+        const before = root.position.x;
+        root.position.x = dx * k;
+        root.rotation.y = side * (Math.PI / 2);
+        s.setMode("walking");
+        advance(Math.abs(root.position.x - before));
+      } else if (t < turnA + walkA + turnB) {
+        const k = smooth((t - turnA - walkA) / turnB);
+        root.position.x = dx;
+        root.rotation.y = side * (Math.PI / 2) + side * (Math.PI / 2) * k; // to face away (into the portal)
+        s.setMode("turning");
+        advance(dt * 0.6);
+      } else {
+        const k = Math.min(1, (t - turnA - walkA - turnB) / walkB);
+        const before = root.position.z;
+        root.position.z = -DEPTH * k;
+        root.rotation.y = side * Math.PI;
+        s.setMode("walking");
+        advance(Math.abs(root.position.z - before));
+        if (k >= 1) done();
+      }
+      // the camera's vertical follow, during the walk across
+      const lk = smooth(Math.min(1, t / (turnA + walkA)));
+      canvas.style.transform = `translateY(${lift * lk}px)`;
+    };
+    st.start();
+    play(chat, [{ opacity: 1 }, { opacity: 0 }], { duration: 500, easing: ease.out });
+
+    // 1 — to the portal
+    setTransitionStep("approachingPortal");
+    await wait((turnA + walkA) * 1000);
+    // 2 — through: he turns his back and walks in; outside the opening he is hidden behind the frame
     setTransitionStep("behindFrame");
-    const s2 = s1 * 0.42;
-    const t2 = `translate(${end1.x}px, ${end1.y - hole.ry * 0.25}px) scale(${s2})`;
-    const far = Math.hypot(innerWidth, innerHeight);
-    await Promise.all([
-      play(twin, [{ transform: t1, opacity: 1 }, { transform: t2, opacity: 0.9 }], { duration: 460, easing: ease.in }),
-      play(
-        body,
-        [
-          { clipPath: `ellipse(${far}px ${far}px at ${hole.x}px ${hole.y}px)` },
-          { clipPath: `ellipse(${hole.rx}px ${hole.ry}px at ${hole.x}px ${hole.y}px)` },
-        ],
-        { duration: 380, easing: ease.out },
-      ),
-    ]);
+    const far = Math.hypot(W, H);
+    play(
+      body,
+      [
+        { clipPath: `ellipse(${far}px ${far}px at ${hole.x}px ${hole.y}px)` },
+        { clipPath: `ellipse(${hole.rx}px ${hole.ry}px at ${hole.x}px ${hole.y}px)` },
+      ],
+      { duration: turnB * 1000 + 200, easing: ease.out },
+    );
+    // the camera starts following him in before he is gone
+    await wait(Math.max(0, (turnB + walkB) * 1000 - 650));
 
     // 3 — the camera follows him through: the scene comes closer around the opening, its light fills the view
     setTransitionStep("cameraFollow");
-    // the same zoom on the page and on the layer, both around the opening's centre (each in its own box)
     if (main) {
       const M = main.getBoundingClientRect();
       main.style.transformOrigin = `${hole.x - M.left}px ${hole.y - M.top}px`;
@@ -285,9 +350,11 @@ async function cross(href: string, navigate: Navigate) {
       play(scene, zoom, { duration: 650, easing: ease.in }),
       header ? play(header, [{ opacity: 1 }, { opacity: 0 }], { duration: 400 }) : null,
       play(light, [{ opacity: 0 }, { opacity: 1 }], { duration: 650, easing: ease.in }),
+      Promise.race([finished, wait(total * 1000 + 400)]),
     ]);
 
-    // 4 — the agents screen: Tashfeer arrives in his place (AgentSelection), the light melts
+    // 4 — the agents screen: he walks out of the depth into his place there (Tashfeer3D), the light melts
+    stage.stop();
     arrival = "portal";
     navigate(href);
     release();
@@ -306,6 +373,10 @@ async function cross(href: string, navigate: Navigate) {
     throw e;
   } finally {
     release();
+    stage?.dispose();
     fx.remove();
   }
 }
+
+const smooth = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));

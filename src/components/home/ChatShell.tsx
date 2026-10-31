@@ -8,6 +8,7 @@ import { CHAT } from "@/domain/home-content";
 import { asset } from "@/lib/assets";
 import { cx } from "@/lib/cx";
 import { transitionTo } from "@/lib/page-transition";
+import { sendTashfeer } from "@/lib/tashfeer-controller";
 import { CONTENT_BOX, boxVars, chatRowVars } from "@/lib/portal-geometry";
 import {
   type AttachmentKind,
@@ -93,12 +94,31 @@ export function ChatShell({
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
   }, [notes, messages.length, attachments.length]);
 
+  // Tashfeer turns to the chat when typing starts and stays on it; only a long silence or an emptied field lets him
+  // go back to rest (never a turn per key, never a swing back and forth on a short pause)
+  const quiet = useRef<number | null>(null);
+  const QUIET_MS = 9000;
+  const typingQuiet = () => {
+    if (quiet.current) window.clearTimeout(quiet.current);
+    quiet.current = window.setTimeout(() => sendTashfeer({ type: "type-stop" }), QUIET_MS);
+  };
+  useEffect(() => () => {
+    if (quiet.current) window.clearTimeout(quiet.current);
+  }, []);
+
   const setIdea = (value: string) => {
     if (value.trim() && !typing.current) {
       typing.current = true;
       onTypingStart?.();
     }
-    if (!value.trim()) typing.current = false;
+    if (value.trim()) {
+      sendTashfeer({ type: "type-start" });
+      typingQuiet();
+    } else {
+      typing.current = false;
+      if (quiet.current) window.clearTimeout(quiet.current);
+      sendTashfeer({ type: "type-stop" });
+    }
     if (persist) updateProject({ idea: value });
     else setLocal(value);
   };

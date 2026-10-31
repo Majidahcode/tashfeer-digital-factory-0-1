@@ -154,11 +154,13 @@ html::-webkit-scrollbar-corner {
   inset: 0;
 }
 
-.page-veil__robot {
+/* Tashfeer's twin for the crossing: a transparent canvas over the whole screen */
+.page-veil__canvas {
   position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
   display: block;
-  max-inline-size: none;
-  filter: drop-shadow(0 0 16px var(--brand-glow-soft));
 }
 
 .page-veil__ring {

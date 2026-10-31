@@ -10,6 +10,7 @@ import { PortalFrame } from "@/components/portal/PortalFrame";
 import { asset } from "@/lib/assets";
 import { RING_ASPECT, RING_IMAGE } from "@/lib/portal-geometry";
 import { ChatShell } from "./ChatShell";
+import { MicButton } from "./MicButton";
 import { HeroDisclosure } from "./HeroDisclosure";
 import { ProcessSteps } from "./ProcessSteps";
 import { SpeakerArrow } from "./SpeakerArrow";
@@ -21,11 +22,8 @@ import styles from "./HomeScene.module.css";
  * left-to-right composition; narrow screens lead with the portal (see HomeScene.module.css).
  */
 export function HomeScene({
-  characterMedia,
   chat,
 }: {
-  /** what Tashfeer is drawn with (default: the approved still image) — the video test passes its player */
-  characterMedia?: ReactNode;
   /** the portal's content (default: the intake chat) */
   chat?: ReactNode;
 } = {}) {
@@ -83,20 +81,19 @@ export function HomeScene({
             sizes="(max-width: 899px) 55vw, 30vw"
             data-seated-customer=""
           />
-          <button type="button" className={styles.mic} disabled aria-label="تحدّث الآن — غير مفعّل في معاينة التصميم">
-            <span className={styles.micText}>
-              <span>تحدّث الآن</span>
-              <span className={styles.wave} aria-hidden="true" />
-            </span>
-            <span className={styles.micIcon}>
-              <Icon name="mic" size={22} />
-            </span>
-          </button>
+          <MicButton
+            className={styles.mic}
+            textClass={styles.micText}
+            waveClass={styles.wave}
+            iconClass={styles.micIcon}
+            noteClass={styles.micNote}
+            icon={<Icon name="mic" size={22} />}
+          />
         </figure>
       </div>
 
       <div className={styles.stage} data-scene-part="stage">
-        <TashfeerCharacter className={styles.robot} media={characterMedia} />
+        <TashfeerCharacter className={styles.robot} />
         {/* the portal box is the ring's visible band; the glow overflows it. Glass < ring < chat content. */}
         <PortalFrame className={styles.portal}>{chat ?? <ChatShell />}</PortalFrame>
       </div>

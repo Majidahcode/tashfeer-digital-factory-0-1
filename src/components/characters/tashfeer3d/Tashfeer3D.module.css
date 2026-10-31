@@ -1,0 +1,34 @@
+/* Tashfeer3D.tsx — the box is sized by the screen; the still and the canvas fill it, the canvas never takes a click */
+.box {
+  position: relative;
+  pointer-events: none;
+}
+
+.still,
+.canvas {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  max-inline-size: none;
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease-out);
+  pointer-events: none;
+}
+
+.still {
+  object-fit: contain;
+  object-position: 50% 100%;
+}
+
+.still[data-visible],
+.canvas[data-visible] {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .still,
+  .canvas {
+    transition: none;
+  }
+}

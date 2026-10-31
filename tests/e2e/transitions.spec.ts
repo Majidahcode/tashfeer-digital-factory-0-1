@@ -76,9 +76,13 @@ test.describe("between screens", () => {
   test("home → agents: Tashfeer crosses the portal; a second press changes nothing; the idea is kept; he arrives in his place", async ({
     page,
   }) => {
+    // the crossing draws Tashfeer's model on a software renderer here (no GPU): slow, so generous time
+    test.setTimeout(240_000);
     const pageErrors: string[] = [];
     page.on("pageerror", (e) => pageErrors.push(e.message));
     await page.goto("/");
+    // the crossing is made with his 3D model: it is ready first
+    await expect(page.locator("[data-tashfeer]")).toHaveAttribute("data-tashfeer-3d", "ready", { timeout: 60_000 });
     await page.locator("[data-chat-shell]").getByLabel("وصف المشروع").fill(IDEA);
     await recordSteps(page);
     // two presses in a row, from inside the page (an outside click would wait for the transition's layer)
@@ -87,17 +91,16 @@ test.describe("between screens", () => {
       enter.click();
       enter.click();
     });
-    await expect(page).toHaveURL(/\/agents\/?$/, { timeout: 10_000 });
-    await settled(page);
+    await expect(page).toHaveURL(/\/agents\/?$/, { timeout: 60_000 });
+    await page.locator("html:not([data-scene-transition])").waitFor({ state: "attached", timeout: 120_000 });
     expect(await steps(page)).toEqual(["approachingPortal", "behindFrame", "cameraFollow", "arriving", "idle"]);
     await noLayerLeft(page);
     // the idea came along, and Tashfeer stands in his place, whole and visible
     await expect(page.locator("[data-project-summary]")).toContainText("منصة حجز مواعيد");
+    // the same 3D model on the agents screen, never the old picture
     const robot = page.locator("[data-agents-screen] [data-tashfeer]");
     await expect(robot).toBeVisible();
-    await expect
-      .poll(() => robot.evaluate((el) => [getComputedStyle(el).opacity, el.getAnimations().length].join()))
-      .toBe("1,0");
+    await expect(robot).toHaveAttribute("data-tashfeer-3d", "ready", { timeout: 60_000 });
     // the screen takes clicks again
     await page.locator("[data-confirm-team]").click();
     await expect(page).toHaveURL(/\/team\/?$/);
