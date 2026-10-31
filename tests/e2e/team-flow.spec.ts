@@ -129,6 +129,8 @@ test("dragging the team strip changes the agent shown, without leaving the scree
 test("approving saves the team and opens the prototypes review; changing the team withdraws it until approved again", async ({
   page,
 }) => {
+  // many steps through the strip, on screens that draw Tashfeer with a software renderer here
+  test.setTimeout(120_000);
   await toTeam(page, ["ux", "back"]);
   await page.locator("[data-approve-team]").click();
   await expect(page).toHaveURL(/\/prototypes\/?$/);

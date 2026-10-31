@@ -260,6 +260,12 @@
   block-size: var(--ring-h);
   position: relative;
   z-index: 1;
+  /* the stage's own box never takes a click (on narrow screens it reaches over the microphone); the portal does */
+  pointer-events: none;
+}
+
+.stage > * {
+  pointer-events: auto;
 }
 
 .robot {

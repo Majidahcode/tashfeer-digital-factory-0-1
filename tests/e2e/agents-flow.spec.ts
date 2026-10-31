@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { hasMousePointer, openHome, settled } from "./support";
+import { hasMousePointer, openHome } from "./support";
 
 /*
  * Screen 1 → screen 2: «ادخل» opens «تحليل وبناء فكرة العميل» with the idea and the attachments; the team is chosen
@@ -13,9 +13,10 @@ async function toAgents(page: Page) {
   const chat = page.locator("[data-chat-shell]");
   await chat.getByLabel("وصف المشروع").fill(IDEA);
   await chat.getByRole("button", { name: "ادخل" }).click();
-  await expect(page).toHaveURL(/\/agents\/?$/);
+  // Tashfeer walks through the portal first (≈4 s; longer on a software renderer)
+  await expect(page).toHaveURL(/\/agents\/?$/, { timeout: 60_000 });
   await page.locator("[data-agents-screen]").waitFor();
-  await settled(page);
+  await page.locator("html:not([data-scene-transition])").waitFor({ state: "attached", timeout: 60_000 });
 }
 
 const team = (page: Page) =>
@@ -109,7 +110,7 @@ test("the project survives navigation and a reload: back to the idea keeps the t
   await expect(page).toHaveURL(/\/$/);
   await expect(page.locator("[data-chat-shell]").getByLabel("وصف المشروع")).toHaveValue(IDEA);
   await page.locator("[data-chat-shell]").getByRole("button", { name: "ادخل" }).click();
-  await expect(page).toHaveURL(/\/agents\/?$/);
+  await expect(page).toHaveURL(/\/agents\/?$/, { timeout: 60_000 });
   await expect.poll(() => team(page)).toEqual(chosen);
 });
 
