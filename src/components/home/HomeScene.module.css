@@ -264,7 +264,7 @@
   pointer-events: none;
 }
 
-.stage > * {
+.stage > [data-portal] {
   pointer-events: auto;
 }
 

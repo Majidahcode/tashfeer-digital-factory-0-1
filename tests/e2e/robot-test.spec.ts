@@ -25,9 +25,6 @@ test.describe("the test page", () => {
     await field.pressSequentially(" منصة");
     await field.press("Enter");
     await expect(panel).toHaveAttribute("data-machine-state", "thinking");
-    // a second send while thinking changes nothing
-    await page.locator("[data-test-send]").click({ force: true });
-    await expect(page.locator("[data-chat-message=visitor]")).toHaveCount(1);
     await expect(panel).toHaveAttribute("data-machine-state", "replying", { timeout: 10_000 });
     await expect(panel).toContainText("نص فقط، بلا صوت");
     await expect(page.locator("[data-chat-message=tashfeer]")).toContainText("رد تجريبي");
@@ -39,8 +36,15 @@ test.describe("the test page", () => {
     await expect(panel).toHaveAttribute("data-machine-state", "thinking");
     await expect(panel).toHaveAttribute("data-machine-state", "idle", { timeout: 10_000 });
     await page.locator("[data-outcome=text]").check();
-    await page.locator("[data-test-send]").click();
+    // two sends in a row (from inside the page, in the same moment): the second, while thinking, is refused
+    const before = await page.locator("[data-chat-message=visitor]").count();
+    await page.evaluate(() => {
+      const send = document.querySelector<HTMLButtonElement>("[data-test-send]")!;
+      send.click();
+      send.click();
+    });
     await expect(panel).toHaveAttribute("data-machine-state", "thinking");
+    await expect(page.locator("[data-chat-message=visitor]")).toHaveCount(before + 1);
     await page.locator("[data-test-cancel]").click();
     await expect(panel).toHaveAttribute("data-machine-state", "idle");
   });
