@@ -270,6 +270,9 @@ export class TashfeerStage {
       const raw = Math.max(0, (now - this.last) / 1000);
       this.last = now;
       this.onFrame?.(raw, this);
+      // while the page changes (under its glass) a Tashfeer standing on the page is not drawn: the change gets the
+      // device's whole time (the crossing's stage and his walk in from the portal move, and always draw)
+      if (!this.moving && !this.first && document.documentElement.hasAttribute("data-scene-transition")) return;
       // lite: about 6 frames a second at most (each one is expensive without a GPU), and none while nothing changes
       // (a moving crossing or arrival always draws)
       if (this.lite) {
@@ -346,6 +349,28 @@ export class TashfeerStage {
     return url;
   }
 
+  /** back to a fresh start (a stage taken again from the pool): standing at the origin, idle, nothing attached */
+  reset() {
+    this.stop();
+    this.onFrame = null;
+    this.mode = "idle";
+    this.modeStart = this.now();
+    this.look = null;
+    this.phase = 0;
+    this.voice = 0;
+    this.still = false;
+    this.moving = false;
+    this.extra = null;
+    this.root.position.set(0, 0, 0);
+    this.root.rotation.set(0, 0, 0);
+    this.first = true;
+    this.lastDraw = 0;
+    this.lastLook = "";
+    this.dirtyUntil = 0;
+    this.frameTimes.length = 0;
+    this.drawCosts.length = 0;
+  }
+
   /** draws once now (for a still frame) */
   draw() {
     this.tick(0);
@@ -357,8 +382,11 @@ export class TashfeerStage {
 
   dispose() {
     this.stop();
+    // its drawing buffer is let go at once (a 1×1 canvas); the context itself goes with the canvas, in the background.
+    // Not forceContextLoss(): it waits for the graphics process — a few seconds without a GPU, in the middle of a
+    // change of screen
+    this.renderer.setSize(1, 1, false);
     this.renderer.dispose();
-    this.renderer.forceContextLoss();
   }
 }
 
@@ -387,4 +415,30 @@ function shadowTexture() {
   g.fillRect(0, 0, 256, 256);
   shadowTex = new CanvasTexture(c);
   return shadowTex;
+}
+
+/**
+ * Stages are kept and used again, never destroyed: creating a WebGL context, compiling his shaders and — worse —
+ * destroying a context cost the page's time (seconds without a GPU, blocking a change of screen). Two are enough: the
+ * page's Tashfeer and the crossing's twin. A stage given back stops, leaves the page and keeps a 1×1 drawing buffer.
+ */
+const pool: TashfeerStage[] = [];
+const POOL = 2;
+
+export function takeStage(): TashfeerStage {
+  const s = pool.pop();
+  if (s) {
+    s.reset();
+    return s;
+  }
+  return new TashfeerStage(document.createElement("canvas"));
+}
+
+export function giveBack(s: TashfeerStage) {
+  s.reset();
+  s.canvas.remove();
+  s.canvas.removeAttribute("style");
+  s.frame(1, 1);
+  if (pool.length < POOL && !pool.includes(s)) pool.push(s);
+  else if (!pool.includes(s)) s.dispose();
 }

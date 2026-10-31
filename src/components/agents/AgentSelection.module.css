@@ -119,6 +119,21 @@
   filter: drop-shadow(0 0 16px var(--brand-glow-soft));
 }
 
+/* desktops, one screen high: Tashfeer keeps a real size on short screens (a 720 px laptop) — the summary gives way
+   and scrolls within itself */
+@media (min-width: 900px) and (min-height: 640px) {
+  .side {
+    grid-template-rows: minmax(0, auto) minmax(min(46svh, 420px), 1fr);
+  }
+  .summary {
+    min-block-size: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    grid-auto-rows: max-content; /* its parts keep their height: the card scrolls, nothing in it is squeezed */
+    align-content: start;
+  }
+}
+
 .main {
   direction: rtl;
   display: grid;

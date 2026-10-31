@@ -7,7 +7,7 @@ import { Icon, type IconName } from "@/components/icons/Icon";
 import { CHAT } from "@/domain/home-content";
 import { asset } from "@/lib/assets";
 import { cx } from "@/lib/cx";
-import { transitionTo } from "@/lib/page-transition";
+import { prepareCrossing, releaseCrossing, transitionTo } from "@/lib/page-transition";
 import { sendTashfeer } from "@/lib/tashfeer-controller";
 import { CONTENT_BOX, boxVars, chatRowVars } from "@/lib/portal-geometry";
 import {
@@ -102,8 +102,27 @@ export function ChatShell({
     if (quiet.current) window.clearTimeout(quiet.current);
     quiet.current = window.setTimeout(() => sendTashfeer({ type: "type-stop" }), QUIET_MS);
   };
-  useEffect(() => () => {
-    if (quiet.current) window.clearTimeout(quiet.current);
+  // with text in the field, the crossing's stage is prepared during a pause (so «ادخل» starts the shot at once)
+  const ahead = useRef<number | null>(null);
+  const prepareAhead = () => {
+    if (ahead.current) window.clearTimeout(ahead.current);
+    ahead.current = window.setTimeout(() => {
+      const idle = window.requestIdleCallback ?? ((f: () => void) => window.setTimeout(f, 0));
+      idle(() => prepareCrossing());
+    }, 1200);
+  };
+  useEffect(
+    () => () => {
+      if (quiet.current) window.clearTimeout(quiet.current);
+      if (ahead.current) window.clearTimeout(ahead.current);
+      releaseCrossing();
+    },
+    [],
+  );
+  // an idea already there (kept from before) prepares it too
+  useEffect(() => {
+    if (idea.trim()) prepareAhead();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on arrival
   }, []);
 
   const setIdea = (value: string) => {
@@ -114,6 +133,7 @@ export function ChatShell({
     if (value.trim()) {
       sendTashfeer({ type: "type-start" });
       typingQuiet();
+      prepareAhead();
     } else {
       typing.current = false;
       if (quiet.current) window.clearTimeout(quiet.current);

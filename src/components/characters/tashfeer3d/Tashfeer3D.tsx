@@ -14,7 +14,7 @@ import { diagnosticsOn, record } from "@/lib/diagnostics";
 import { arrivalPending, consumeArrival, prefersReducedMotion } from "@/lib/page-transition";
 import { focusOf, sendTashfeer, subscribeTashfeer, tashfeerState, voiceLevelNow } from "@/lib/tashfeer-controller";
 import type { Mode } from "./poses";
-import { TashfeerStage } from "./stage";
+import { TashfeerStage, giveBack, takeStage } from "./stage";
 import { STILL } from "./still";
 import styles from "./Tashfeer3D.module.css";
 
@@ -66,20 +66,25 @@ export function Tashfeer3D({ className, style, attend }: { className?: string; s
       window.__tashfeerIntro !== "play";
     const begin = () => {
       if (cancelled || cleanup) return;
-      // a fresh canvas for each set-up: a canvas whose WebGL context was released (the previous set-up's clean-up,
-      // React's development double run) cannot give a new one
-      const cv = document.createElement("canvas");
-      cv.className = styles.canvas ?? "";
-      el.appendChild(cv);
+      // a stage from the pool (contexts are used again, never destroyed: see takeStage)
+      let stage: TashfeerStage;
       try {
-        const undo = setUp(el, cv);
+        stage = takeStage();
+      } catch {
+        // WebGL refused here (a driver failure, no WebGL): the still stays
+        setStatus("fallback");
+        return;
+      }
+      stage.canvas.className = styles.canvas ?? "";
+      el.appendChild(stage.canvas);
+      try {
+        const undo = setUp(el, stage);
         cleanup = () => {
           undo();
-          cv.remove();
+          giveBack(stage);
         };
       } catch {
-        // WebGL refused here (too many contexts, a driver failure): the still stays
-        cv.remove();
+        giveBack(stage);
         setStatus("fallback");
       }
     };
@@ -97,8 +102,7 @@ export function Tashfeer3D({ className, style, attend }: { className?: string; s
       cleanup?.();
     };
 
-    function setUp(el: HTMLDivElement, cv: HTMLCanvasElement) {
-    const stage = new TashfeerStage(cv);
+    function setUp(el: HTMLDivElement, stage: TashfeerStage) {
     // the internal test page may reach the stage, to check joints one by one (never on the visitor's screens)
     if (location.pathname.startsWith("/robot-animation-test")) (window as unknown as { __tashfeerStage?: TashfeerStage }).__tashfeerStage = stage;
     const still = prefersReducedMotion();
@@ -108,8 +112,9 @@ export function Tashfeer3D({ className, style, attend }: { className?: string; s
     let visible = true;
 
     const fit = () => {
-      const r = el.getBoundingClientRect();
-      stage.frame(r.width, r.height);
+      // the box's own size, not its size on screen: a screen that arrives scaled (its entrance) must not leave him
+      // drawn small and stretched (a scale does not resize the box, so nothing would correct it)
+      stage.frame(el.offsetWidth, el.offsetHeight);
     };
     fit();
     const ro = new ResizeObserver(fit);
@@ -234,7 +239,6 @@ export function Tashfeer3D({ className, style, attend }: { className?: string; s
       io.disconnect();
       unsub();
       document.removeEventListener("visibilitychange", onVis);
-      stage.dispose();
     };
     }
     // `attend` is read once: a screen does not change what he reviews

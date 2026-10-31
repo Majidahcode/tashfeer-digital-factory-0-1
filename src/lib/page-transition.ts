@@ -4,8 +4,8 @@
  *   crossing   home → agents, after «ادخل»: Tashfeer walks to the portal, passes behind its ring into the opening, the
  *              camera follows him through, and he arrives on the agents screen — no portal there — in his place.
  *              Built from the parts that stand alone: TashfeerCharacter (data-tashfeer), PortalFrame (its ring art,
- *              data-portal-ring) and ChatShell. Tashfeer is his approved still image: there is no walk cycle or turn
- *              in the assets, so he glides (see the hand-off note in the delivery).
+ *              data-portal-ring) and ChatShell. Tashfeer is his 3D model, walking (stage.ts, poses.ts); his stage
+ *              for the crossing is prepared ahead (prepareCrossing) once the idea has text, so the shot starts at once.
  *   forward    agents → team → prototypes → factory: a thin sheet of frosted glass settles over the screen, the next
  *              one appears under it, the glass clears (≈ 620 ms in all).
  *   back       any screen to an earlier one: the same glass, shorter (≈ 360 ms), never the crossing in reverse.
@@ -164,6 +164,43 @@ async function dimTo(href: string, navigate: Navigate) {
 
 // ── home → agents: Tashfeer through the portal ─────────────────────────────────────────────────────────────────
 
+type Stage = import("@/components/characters/tashfeer3d/stage").TashfeerStage;
+let prepared: { stage: Stage; canvas: HTMLCanvasElement } | null = null;
+let preparing: Promise<void> | null = null;
+
+/**
+ * Builds the crossing's stage ahead of «ادخل» (its own WebGL context, framed for the whole screen, drawn once so the
+ * shaders are compiled): without it the shot would wait for that work when pressed. Called by the chat once the idea
+ * has text and the visitor pauses; does nothing without the portal and the 3D Tashfeer, or with reduced motion.
+ */
+export function prepareCrossing() {
+  if (prepared || preparing || busy || prefersReducedMotion()) return;
+  if (!document.querySelector("[data-portal]") || !document.querySelector("[data-tashfeer][data-tashfeer-3d=ready]")) return;
+  preparing = (async () => {
+    const { takeStage, giveBack } = await import("@/components/characters/tashfeer3d/stage");
+    const stage = takeStage();
+    try {
+      stage.frame(innerWidth, innerHeight);
+      await stage.ready;
+      stage.draw();
+      prepared = { stage, canvas: stage.canvas };
+    } catch {
+      giveBack(stage);
+    }
+  })()
+    .catch(() => {})
+    .finally(() => (preparing = null));
+}
+
+/** Lets the prepared stage go (the chat leaves without a crossing). */
+export function releaseCrossing() {
+  if (busy || !prepared) return;
+  const { stage } = prepared;
+  prepared = null;
+  void import("@/components/characters/tashfeer3d/stage").then(({ giveBack }) => giveBack(stage));
+}
+
+
 function crossingParts() {
   const robot = document.querySelector<HTMLElement>("[data-tashfeer][data-tashfeer-3d=ready]");
   const portal = document.querySelector<HTMLElement>("[data-portal]");
@@ -216,7 +253,10 @@ async function cross(href: string, navigate: Navigate) {
   scene.className = "page-veil__scene";
   const body = document.createElement("div");
   body.className = "page-veil__clip";
-  const canvas = document.createElement("canvas");
+  if (preparing) await Promise.race([preparing, wait(1200)]);
+  const ahead = prepared;
+  prepared = null;
+  let canvas = ahead?.canvas ?? document.createElement("canvas");
   canvas.className = "page-veil__canvas";
   body.appendChild(canvas);
   const B = ringBox.getBoundingClientRect();
@@ -258,7 +298,7 @@ async function cross(href: string, navigate: Navigate) {
     removeEventListener("scroll", pin);
   };
 
-  let stage: import("@/components/characters/tashfeer3d/stage").TashfeerStage | null = null;
+  let stage: Stage | null = ahead?.stage ?? null;
   const restore = () => {
     robot.style.visibility = "";
     for (const el of [main, header]) if (el) Object.assign(el.style, { transform: "", transformOrigin: "", opacity: "" });
@@ -268,8 +308,13 @@ async function cross(href: string, navigate: Navigate) {
 
   try {
     // his stage over the whole screen, framed so he stands exactly in his box (the model is already loaded: shared)
-    const { TashfeerStage } = await import("@/components/characters/tashfeer3d/stage");
-    stage = new TashfeerStage(canvas);
+    if (!stage) {
+      const { takeStage } = await import("@/components/characters/tashfeer3d/stage");
+      stage = takeStage();
+      body.replaceChild(stage.canvas, canvas);
+      canvas = stage.canvas;
+      canvas.className = "page-veil__canvas";
+    }
     const W = innerWidth;
     const H = innerHeight;
     stage.frame(W, H, { x: R.left, y: R.top, width: R.width, height: R.height });
@@ -397,8 +442,11 @@ async function cross(href: string, navigate: Navigate) {
     throw e;
   } finally {
     release();
-    stage?.dispose();
     fx.remove();
+    if (stage) {
+      const s = stage;
+      void import("@/components/characters/tashfeer3d/stage").then(({ giveBack }) => giveBack(s));
+    }
   }
 }
 
