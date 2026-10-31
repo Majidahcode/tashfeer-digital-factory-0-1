@@ -90,6 +90,10 @@ function pathStats(path: number[][]) {
 test.describe("factory", () => {
   // WebGL here is drawn in software (no GPU in CI): frames are slow, the camera's moves take their full time
   test.describe.configure({ timeout: 120_000 });
+  // on the widest screens a software-drawn frame takes a second or more: three times the time there
+  test.beforeEach(({ page }) => {
+    if ((page.viewportSize()?.width ?? 0) > 1440) test.slow();
+  });
 
   test("approving a model opens the factory: a 3D scene, the product, the stations, the history, and the simulation labelled", async ({
     page,
