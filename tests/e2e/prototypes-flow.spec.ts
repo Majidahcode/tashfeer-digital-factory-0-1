@@ -200,6 +200,8 @@ test("approving with unexecuted requests says so first; the approval is saved an
 test("changing the idea after the design is approved marks the approval for review; the team and data come back", async ({
   page,
 }) => {
+  // a long walk through five screens: generous on machines without a GPU, where every screen draws Tashfeer in software
+  test.setTimeout(120_000);
   await toPrototypes(page);
   await page.locator("[data-choose=A]").click();
   await page.locator("[data-approve-design]").click();
@@ -214,7 +216,7 @@ test("changing the idea after the design is approved marks the approval for revi
   await settled(page);
   await page.locator("[data-back-to-idea]").click();
   const field = page.locator("[data-chat-shell]").getByLabel("وصف المشروع");
-  await expect(field).toHaveValue(IDEA);
+  await expect(field).toHaveValue(IDEA, { timeout: 15_000 });
   await field.fill(`${IDEA} مع تطبيق جوال`);
   await page.goto("/prototypes");
   await page.locator("[data-prototype=A]").waitFor();
