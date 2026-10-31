@@ -123,6 +123,8 @@ export class TashfeerStage {
     this.renderer.toneMappingExposure = 1.05;
     const gl = this.renderer.getContext();
     this.lite = softwareRenderer(gl) && !forceFullQuality();
+    // the page's transitions read this: without a GPU, a full-screen blur would stall the screen (they skip it)
+    if (softwareRenderer(gl)) document.documentElement.setAttribute("data-software-render", "");
     this.rendererName = rendererName(gl);
     this.renderer.setPixelRatio(this.lite ? 1 : Math.min(window.devicePixelRatio || 1, 1.75));
     if (!this.lite) {
@@ -271,11 +273,11 @@ export class TashfeerStage {
       // lite: about 6 frames a second at most (each one is expensive without a GPU), and none while nothing changes
       // (a moving crossing or arrival always draws)
       if (this.lite) {
-        if (now - this.lastDraw < 160) return;
+        if (now - this.lastDraw < 220) return;
         const look = this.look ? `${this.look.yaw.toFixed(2)},${this.look.pitch.toFixed(2)}` : "";
         if (look !== this.lastLook) {
           this.lastLook = look;
-          this.dirtyUntil = now + 2500;
+          this.dirtyUntil = now + 1400;
         }
         if (!this.first && now > this.dirtyUntil && !this.moving) return;
       }

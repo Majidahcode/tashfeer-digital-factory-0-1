@@ -146,6 +146,16 @@ html::-webkit-scrollbar-corner {
   backdrop-filter: blur(5px);
 }
 
+/* no GPU (a software renderer, found by Tashfeer's stage): a full-screen blur would stall every frame there — the
+   same sheet, a little denser, without the blur */
+html[data-software-render] .page-veil--glass,
+html[data-software-render] .page-veil--glass-back,
+html[data-software-render] .page-veil__glass {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background-color: color-mix(in srgb, var(--brand-bg) 70%, transparent);
+}
+
 /* home → agents: the page shows through; Tashfeer's copy, the ring's copy above him, then the light */
 .page-veil--portal {
   opacity: 1;
