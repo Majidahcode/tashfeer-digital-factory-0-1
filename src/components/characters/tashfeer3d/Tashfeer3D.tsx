@@ -157,7 +157,7 @@ export function Tashfeer3D({ className, style, attend }: { className?: string; s
           const side = aim.x > me.width / 2 ? 1 : -1;
           const goal = Math.abs(aim.x - me.width / 2) < me.width * 0.6 ? side * 0.22 : side * 0.5; // ≈ 29° at most: three-quarters
           s.root.rotation.y += (goal - s.root.rotation.y) * (1 - Math.exp(-dt * 2.2));
-          s.moving = Math.abs(goal - s.root.rotation.y) > 0.004; // (a software renderer keeps drawing while he turns)
+          s.moving = Math.abs(goal - s.root.rotation.y) > 0.02; // (a software renderer draws more while he turns)
           s.lookAtScreen(aim.x, aim.y);
           // the head's turn is what remains after the body's
           if (s.look) s.look = { yaw: Math.max(-0.7, Math.min(0.7, s.look.yaw - s.root.rotation.y)), pitch: s.look.pitch };

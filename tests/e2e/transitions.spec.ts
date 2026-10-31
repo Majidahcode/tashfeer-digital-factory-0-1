@@ -107,7 +107,7 @@ test.describe("between screens", () => {
     expect(pageErrors).toEqual([]);
   });
 
-  test("forward: a soft light, short, then nothing over the page; back: a short dim, never the crossing", async ({
+  test("forward: a sheet of glass, short, then nothing over the page; back: the same, shorter, never the crossing", async ({
     page,
   }) => {
     await page.addInitScript((idea) => {
@@ -137,8 +137,10 @@ test.describe("between screens", () => {
     await settled(page);
     await noLayerLeft(page);
     expect(kinds.slice(0, 2)).toEqual(["forward", "back"]);
-    // the light's own time is ≈ 560 ms; the rest is the next screen loading (generous for a slow test machine)
-    expect(forwardMs).toBeLessThan(4000);
+    // the glass's own time is ≈ 620 ms; the rest is the next screen loading and drawing Tashfeer — on this test machine
+    // with no GPU (a software renderer) that takes seconds. A ceiling only: the real duration on a device is measured by
+    // the hidden diagnostics (?diag=1)
+    expect(forwardMs).toBeLessThan(12_000);
     // the team kept through the round trip
     await expect(page.locator("[data-confirm-team]")).toBeVisible();
   });

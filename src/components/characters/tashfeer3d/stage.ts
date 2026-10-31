@@ -273,7 +273,10 @@ export class TashfeerStage {
       // lite: about 6 frames a second at most (each one is expensive without a GPU), and none while nothing changes
       // (a moving crossing or arrival always draws)
       if (this.lite) {
-        if (now - this.lastDraw < 220) return;
+        // without a GPU each drawn frame costs a quarter of a second of the page's time (the work happens when the
+        // frame is handed over, so it cannot be timed here): a few frames a second while he moves across the screen,
+        // about one a second otherwise — the page must stay responsive
+        if (now - this.lastDraw < (this.moving ? 260 : 900)) return;
         const look = this.look ? `${this.look.yaw.toFixed(2)},${this.look.pitch.toFixed(2)}` : "";
         if (look !== this.lastLook) {
           this.lastLook = look;
