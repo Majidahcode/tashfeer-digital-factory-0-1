@@ -219,6 +219,8 @@
   color: var(--brand-text-silver);
   background: var(--brand-glass-strong);
   box-shadow: 0 0 0 1px var(--brand-glass-edge);
+  /* a status line only: on a phone it overlaps the button, and a tap on «إيقاف» must still reach it */
+  pointer-events: none;
 }
 
 .micText {
