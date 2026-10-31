@@ -28,7 +28,7 @@
 .tashfeer {
   align-self: end;
   justify-self: center;
-  block-size: min(100%, 720px);
+  block-size: min(82%, 590px); /* ≈18 % smaller than his first 3D size */
   inline-size: auto;
   max-inline-size: 100%;
   object-fit: contain;
@@ -367,7 +367,7 @@
 
   .tashfeer {
     order: 3;
-    block-size: 320px;
+    block-size: 262px;
   }
 
   /* on one column the details come right after the strip, the actions after them */

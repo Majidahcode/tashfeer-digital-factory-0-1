@@ -6,9 +6,9 @@
  *              Built from the parts that stand alone: TashfeerCharacter (data-tashfeer), PortalFrame (its ring art,
  *              data-portal-ring) and ChatShell. Tashfeer is his approved still image: there is no walk cycle or turn
  *              in the assets, so he glides (see the hand-off note in the delivery).
- *   forward    agents → team → prototypes → factory: a soft touch of brand light that rises before the next screen and
- *              melts as it appears (≈ 550 ms in all).
- *   back       any screen to an earlier one: a short dim (≈ 300 ms), never the crossing in reverse.
+ *   forward    agents → team → prototypes → factory: a thin sheet of frosted glass settles over the screen, the next
+ *              one appears under it, the glass clears (≈ 620 ms in all).
+ *   back       any screen to an earlier one: the same glass, shorter (≈ 360 ms), never the crossing in reverse.
  *
  * With reduced motion: plain navigation. A transition never runs twice at once (repeated presses are ignored while
  * one plays), its layer always leaves (also when the next screen does not come: it gives up after 3 s and the
@@ -16,6 +16,7 @@
  * is written to <html data-scene-transition> so styles and tests can follow it.
  */
 import { CONTENT_BOX, GLASS_BOX } from "./portal-geometry";
+import { record } from "./diagnostics";
 import { sendTashfeer } from "./tashfeer-controller";
 
 export type TransitionStep = "idle" | "leaving" | "approachingPortal" | "behindFrame" | "cameraFollow" | "arriving";
@@ -123,36 +124,41 @@ function layer(kind: string) {
 const play = (el: Element, frames: Keyframe[], options: KeyframeAnimationOptions) =>
   el.animate(frames, { fill: "forwards", ...options }).finished;
 
-// ── forward: a soft touch of light ──────────────────────────────────────────────────────────────────────────────
+// ── forward: frosted glass ─────────────────────────────────────────────────────────────────────────────────────
 
+/** A sheet of frosted glass settles over the screen, the next screen appears under it, the glass clears (≈620 ms). */
 async function lightTo(href: string, navigate: Navigate) {
-  const veil = layer("light");
+  const started = performance.now();
+  const veil = layer("glass");
   try {
     setTransitionStep("leaving");
-    await play(veil, [{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: ease.out });
+    await play(veil, [{ opacity: 0 }, { opacity: 1 }], { duration: 240, easing: ease.out });
     navigate(href);
     await arrived(href);
     await frames();
     setTransitionStep("arriving");
-    await play(veil, [{ opacity: 1 }, { opacity: 0 }], { duration: 340, easing: ease.inOut });
+    await play(veil, [{ opacity: 1 }, { opacity: 0 }], { duration: 380, easing: ease.inOut });
   } finally {
     veil.remove();
+    record({ transition: { kind: "forward", ms: Math.round(performance.now() - started) } });
   }
 }
 
-// ── back: a short dim ───────────────────────────────────────────────────────────────────────────────────────────
+// ── back: the same glass, shorter ───────────────────────────────────────────────────────────────────────────────
 
 async function dimTo(href: string, navigate: Navigate) {
-  const veil = layer("dim");
+  const started = performance.now();
+  const veil = layer("glass-back");
   try {
     setTransitionStep("leaving");
-    await play(veil, [{ opacity: 0 }, { opacity: 1 }], { duration: 120, easing: ease.out });
+    await play(veil, [{ opacity: 0 }, { opacity: 1 }], { duration: 140, easing: ease.out });
     navigate(href);
     await arrived(href);
     await frames();
-    await play(veil, [{ opacity: 1 }, { opacity: 0 }], { duration: 180, easing: ease.out });
+    await play(veil, [{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: ease.out });
   } finally {
     veil.remove();
+    record({ transition: { kind: "back", ms: Math.round(performance.now() - started) } });
   }
 }
 
@@ -174,9 +180,12 @@ function crossingParts() {
 
 /**
  * Tashfeer — his 3D model, on a canvas over the whole screen that first shows him exactly where he stood — turns to
- * the portal, walks to its opening (his steps match the distance: the walk cycle advances with the ground covered, so
- * his feet do not slide), turns his back to us and walks into it, behind the ring's band (a copy of the ring art is
- * drawn above him, and outside the opening he is cut away). The camera follows him in; the light fills the view.
+ * the portal and walks to its opening (his steps follow the ground covered: no sliding feet), turns his back to us
+ * while still moving and walks in, behind the ring's band (a copy of the ring art is drawn above him; outside the
+ * opening he is cut away). One continuous shot: the camera starts following him before he reaches the frame, keeps
+ * moving forward with him, and passes through the opening — the frame grows past the screen's edges. Inside, a thin
+ * sheet of frosted glass covers the change of page; the agents screen appears from within it, still moving forward,
+ * then the camera slows and settles while he walks out of the depth to his place there.
  */
 async function cross(href: string, navigate: Navigate) {
   const parts = crossingParts()!;
@@ -185,6 +194,12 @@ async function cross(href: string, navigate: Navigate) {
   const header = document.querySelector<HTMLElement>("[data-site-header]");
   const R = robot.getBoundingClientRect();
   const P = portal.getBoundingClientRect();
+  const t0 = performance.now();
+  const steps: [string, number][] = [];
+  const step = (name: TransitionStep) => {
+    setTransitionStep(name);
+    steps.push([name, Math.round(performance.now() - t0)]);
+  };
   sendTashfeer({ type: "leave" });
   // the opening (the chat's glass, inside the ring)
   const hole = {
@@ -195,7 +210,7 @@ async function cross(href: string, navigate: Navigate) {
   };
   const floor = P.top + (CONTENT_BOX.top + CONTENT_BOX.height) * P.height; // where his feet go: the opening's lower part
 
-  // the layer: Tashfeer's canvas, under a copy of the ring art, under the light
+  // the layer: Tashfeer's canvas, under a copy of the ring art; over them, the glass inside the opening
   const fx = layer("portal");
   const scene = document.createElement("div");
   scene.className = "page-veil__scene";
@@ -222,11 +237,9 @@ async function cross(href: string, navigate: Navigate) {
   });
   ringWrap.appendChild(ringCopy);
   scene.append(body, ringWrap);
-  const light = document.createElement("div");
-  light.className = "page-veil__light";
-  light.style.setProperty("--hx", `${hole.x}px`);
-  light.style.setProperty("--hy", `${hole.y}px`);
-  fx.append(scene, light);
+  const glass = document.createElement("div");
+  glass.className = "page-veil__glass";
+  fx.append(scene, glass);
 
   // the copies are placed where the originals are now: the page must not scroll under them while it plays (input is
   // held, and any scroll that still happens — a focus, a script — is put back)
@@ -248,8 +261,8 @@ async function cross(href: string, navigate: Navigate) {
   let stage: import("@/components/characters/tashfeer3d/stage").TashfeerStage | null = null;
   const restore = () => {
     robot.style.visibility = "";
-    if (main) main.style.transformOrigin = "";
-    for (const el of [main, header, chat]) el?.getAnimations().forEach((a) => a.cancel());
+    for (const el of [main, header]) if (el) Object.assign(el.style, { transform: "", transformOrigin: "", opacity: "" });
+    chat.getAnimations().forEach((a) => a.cancel());
     sendTashfeer({ type: "reset" });
   };
 
@@ -268,16 +281,34 @@ async function cross(href: string, navigate: Navigate) {
     const m = stage.metresPerPx();
     const dx = (hole.x - (R.left + R.width / 2)) * m; // metres to walk across
     const side = Math.sign(dx) || 1;
-    const SPEED = 1.5; // metres a second
     const STRIDE = 1.4; // metres per step cycle (two steps)
-    const turnA = 0.45;
-    const walkA = Math.max(0.35, Math.abs(dx) / SPEED);
-    const turnB = 0.4;
-    const walkB = 1.35;
-    const DEPTH = 3.6;
-    const total = turnA + walkA + turnB + walkB;
-    // the vertical offset that brings his feet to the opening's floor (a camera move: on a phone the portal is above)
+    const DEPTH = 3.4;
+    // the shot (seconds): turning toward the portal, the walk across (it eases in and out: no sudden start or stop),
+    // the turn into the portal begins while he still walks, the walk in, the camera through the opening
+    const turnA = 0.55;
+    const walkA = Math.max(0.7, Math.abs(dx) / 1.3);
+    const turnB0 = turnA + walkA - 0.3;
+    const turnB = 0.6;
+    const walkB0 = turnA + walkA + 0.1;
+    const walkB = 1.7;
+    const through0 = walkB0 + walkB * 0.55;
+    const through = 1.05;
+    const end = through0 + through;
+    // the camera's push (a scale around the opening), the same for the page and for his layer
+    const camera = (t: number) =>
+      t < walkB0
+        ? 1 + 0.07 * smooth(t / walkB0)
+        : t < through0
+          ? 1.07 + 0.55 * smooth((t - walkB0) / (through0 - walkB0))
+          : 1.62 * Math.pow(5.2, Math.pow(Math.min(1, (t - through0) / through), 1.6)); // accelerating through
+    // the vertical offset that brings his feet to the opening's floor (a camera tilt: on a phone the portal is above)
     const lift = floor - hole.ry * 0.1 - R.bottom;
+    if (main) {
+      const M = main.getBoundingClientRect();
+      main.style.transformOrigin = `${hole.x - M.left}px ${hole.y - M.top}px`;
+    }
+    scene.style.transformOrigin = `${hole.x}px ${hole.y}px`;
+
     let t = 0;
     let done: () => void = () => {};
     const finished = new Promise<void>((r) => (done = r));
@@ -285,85 +316,65 @@ async function cross(href: string, navigate: Navigate) {
     st.lookAtScreen(null);
     st.moving = true;
     let stepped = 0;
+    let clipped = false;
+    let x = 0;
+    let z = 0;
     st.onFrame = (dt, s) => {
-      t += dt;
+      t = Math.min(end, t + dt);
       const root = s.root;
-      const advance = (metres: number) => {
-        stepped += metres;
-        s.phase = (stepped / STRIDE) % 1;
-      };
-      if (t < turnA) {
-        const k = smooth(t / turnA);
-        root.rotation.y = side * (Math.PI / 2) * k;
-        s.setMode("turning");
-        advance(dt * 0.6); // steps in place while turning
-      } else if (t < turnA + walkA) {
-        const k = (t - turnA) / walkA;
-        const before = root.position.x;
-        root.position.x = dx * k;
-        root.rotation.y = side * (Math.PI / 2);
-        s.setMode("walking");
-        advance(Math.abs(root.position.x - before));
-      } else if (t < turnA + walkA + turnB) {
-        const k = smooth((t - turnA - walkA) / turnB);
-        root.position.x = dx;
-        root.rotation.y = side * (Math.PI / 2) + side * (Math.PI / 2) * k; // to face away (into the portal)
-        s.setMode("turning");
-        advance(dt * 0.6);
-      } else {
-        const k = Math.min(1, (t - turnA - walkA - turnB) / walkB);
-        const before = root.position.z;
-        root.position.z = -DEPTH * k;
-        root.rotation.y = side * Math.PI;
-        s.setMode("walking");
-        advance(Math.abs(root.position.z - before));
-        if (k >= 1) done();
+      // where he is: across (eased), then in (a gentle start, then a steady pace)
+      const nx = dx * smooth(Math.min(1, Math.max(0, (t - turnA * 0.6) / walkA)));
+      const kz = Math.min(1, Math.max(0, (t - walkB0) / walkB));
+      const nz = -DEPTH * (kz < 0.25 ? 2 * kz * kz : kz - 0.125) / 0.875;
+      stepped += Math.abs(nx - x) + Math.abs(nz - z);
+      x = nx;
+      z = nz;
+      root.position.x = x;
+      root.position.z = z;
+      s.phase = (stepped / STRIDE) % 1;
+      // which way he faces: toward the portal, then away from us (into it)
+      const faceA = side * (Math.PI / 2) * smooth(t / turnA);
+      const faceB = side * (Math.PI / 2) * smooth((t - turnB0) / turnB);
+      root.rotation.y = faceA + faceB;
+      s.setMode(t < turnA * 0.6 ? "turning" : "walking");
+      // the camera: forward with him, then through the opening
+      const c = camera(t);
+      const tilt = lift * smooth(Math.min(1, t / walkB0));
+      canvas.style.transform = `translateY(${tilt}px)`;
+      const zoom = `scale(${c})`;
+      scene.style.transform = zoom;
+      if (main) main.style.transform = zoom;
+      if (header) header.style.opacity = String(1 - smooth((t - walkB0) / 0.6));
+      // he passes behind the frame: outside the opening he is cut away
+      if (!clipped && t >= turnB0) {
+        clipped = true;
+        const far = Math.hypot(W, H);
+        play(
+          body,
+          [
+            { clipPath: `ellipse(${far}px ${far}px at ${hole.x}px ${hole.y}px)` },
+            { clipPath: `ellipse(${hole.rx}px ${hole.ry}px at ${hole.x}px ${hole.y}px)` },
+          ],
+          { duration: 700, easing: ease.out },
+        );
       }
-      // the camera's vertical follow, during the walk across
-      const lk = smooth(Math.min(1, t / (turnA + walkA)));
-      canvas.style.transform = `translateY(${lift * lk}px)`;
+      // inside the opening, the frosted glass comes as the camera passes through (it hides the change of page)
+      glass.style.opacity = String(smooth((t - through0 - through * 0.35) / (through * 0.65)));
+      if (t >= walkB0 && steps.at(-1)?.[0] === "approachingPortal") step("behindFrame");
+      if (t >= through0 && steps.at(-1)?.[0] === "behindFrame") step("cameraFollow");
+      if (t >= end) done();
     };
+    step("approachingPortal");
     st.start();
     play(chat, [{ opacity: 1 }, { opacity: 0 }], { duration: 500, easing: ease.out });
+    await Promise.race([finished, wait(end * 1000 + 3000)]);
 
-    // 1 — to the portal
-    setTransitionStep("approachingPortal");
-    await wait((turnA + walkA) * 1000);
-    // 2 — through: he turns his back and walks in; outside the opening he is hidden behind the frame
-    setTransitionStep("behindFrame");
-    const far = Math.hypot(W, H);
-    play(
-      body,
-      [
-        { clipPath: `ellipse(${far}px ${far}px at ${hole.x}px ${hole.y}px)` },
-        { clipPath: `ellipse(${hole.rx}px ${hole.ry}px at ${hole.x}px ${hole.y}px)` },
-      ],
-      { duration: turnB * 1000 + 200, easing: ease.out },
-    );
-    // the camera starts following him in before he is gone
-    await wait(Math.max(0, (turnB + walkB) * 1000 - 650));
-
-    // 3 — the camera follows him through: the scene comes closer around the opening, its light fills the view
-    setTransitionStep("cameraFollow");
-    if (main) {
-      const M = main.getBoundingClientRect();
-      main.style.transformOrigin = `${hole.x - M.left}px ${hole.y - M.top}px`;
-    }
-    scene.style.transformOrigin = `${hole.x}px ${hole.y}px`;
-    const zoom: Keyframe[] = [{ transform: "none" }, { transform: "scale(2.6)" }];
-    await Promise.all([
-      main ? play(main, zoom, { duration: 650, easing: ease.in }) : null,
-      play(scene, zoom, { duration: 650, easing: ease.in }),
-      header ? play(header, [{ opacity: 1 }, { opacity: 0 }], { duration: 400 }) : null,
-      play(light, [{ opacity: 0 }, { opacity: 1 }], { duration: 650, easing: ease.in }),
-      Promise.race([finished, wait(total * 1000 + 400)]),
-    ]);
-
-    // 4 — the agents screen: he walks out of the depth into his place there (Tashfeer3D), the light melts
+    // the agents screen, from within the glass: still moving forward, then settling, while he walks out of the depth
     stage.stop();
     arrival = "portal";
     navigate(href);
     release();
+    const toNext = performance.now() - t0;
     if (!(await arrived(href))) {
       arrival = null;
       restore();
@@ -371,9 +382,16 @@ async function cross(href: string, navigate: Navigate) {
       return;
     }
     await frames();
-    setTransitionStep("arriving");
+    step("arriving");
     scene.remove();
-    await play(fx, [{ opacity: 1 }, { opacity: 0 }], { duration: 480, easing: ease.inOut });
+    const next = document.querySelector<HTMLElement>("main");
+    await Promise.all([
+      next ? play(next, [{ transform: "scale(1.08)" }, { transform: "none" }], { duration: 760, easing: ease.out, fill: "none" }) : null,
+      play(fx, [{ opacity: 1 }, { opacity: 0 }], { duration: 620, easing: ease.inOut }),
+    ]);
+    record({
+      crossing: { toNext: Math.round(toNext), settled: Math.round(performance.now() - t0), steps, at: new Date().toISOString() },
+    });
   } catch (e) {
     restore();
     throw e;

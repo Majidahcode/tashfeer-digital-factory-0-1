@@ -2,32 +2,62 @@
  * The site's opening (SiteIntro.tsx). One timeline, all CSS, ≈2.6 s:
  *   0.10–1.55 s  the hands come together (calm ease-out), from the lower left and the upper right
  *   1.50 s       the fingertips touch: a small spark
- *   1.50–2.40 s  a soft lime-and-green light opens from the touch
- *   2.05–2.65 s  the opening fades and the home page (loaded underneath) shows through; then it lets clicks through
+ *   1.50–2.30 s  a small, calm light at the touch only
+ *   2.05–2.75 s  like frosted glass clearing: the hands and the light fade, the dark field thins to a light blur through
+ *                which the home page (loaded underneath) appears, and the blur clears; then it lets clicks through
  * The two pictures are placed so their fingertips meet at the touch point (--cx, --cy): the fingertip of each was
  * measured on the picture (human: 94.1 % across, 12.4 % down; mechanical: 17.2 % across, 74.1 % down).
  */
 .intro {
   --cx: 50vw;
   --cy: 48svh;
-  --hw: clamp(300px, 62vw, 1100px); /* the human hand's width */
+  --hw: clamp(240px, 48vw, 860px); /* the human hand's width (≈22 % smaller than the first version: air around them) */
   --rw: calc(var(--hw) * 0.96); /* the mechanical hand's width */
   position: fixed;
   inset: 0;
   z-index: var(--z-overlay);
   overflow: hidden;
-  background: var(--brand-bg);
-  animation: introOut 600ms ease-in-out 2050ms forwards;
+  background-color: var(--brand-bg);
+  animation: introOut 700ms ease-in-out 2050ms forwards;
 }
 
-/* after «تخطَّ»: a short fade, at once */
+/* the hands and the light: they fade first, the glass clears after them */
+.art {
+  position: absolute;
+  inset: 0;
+  animation: artOut 380ms ease-out 2050ms forwards;
+}
+
+/* after «تخطَّ»: the same clearing glass, quicker, at once */
 .leaving {
-  animation: introOut 280ms ease-out forwards;
+  animation: introOut 420ms ease-out forwards;
+}
+
+.leaving .art {
+  animation: artOut 200ms ease-out forwards;
+}
+
+@keyframes artOut {
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes introOut {
-  to {
-    opacity: 0;
+  0% {
+    background-color: var(--brand-bg);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+  45% {
+    background-color: color-mix(in srgb, var(--brand-bg) 45%, transparent);
+    -webkit-backdrop-filter: blur(9px);
+    backdrop-filter: blur(9px);
+  }
+  100% {
+    background-color: transparent;
+    -webkit-backdrop-filter: blur(0);
+    backdrop-filter: blur(0);
     visibility: hidden;
   }
 }
@@ -117,8 +147,8 @@
 }
 
 .spark {
-  inline-size: 46px;
-  block-size: 46px;
+  inline-size: 34px;
+  block-size: 34px;
   background: radial-gradient(circle, var(--brand-highlight) 0 18%, var(--brand-glow) 45%, transparent 70%);
   animation: spark 900ms ease-out 1500ms both;
 }
@@ -138,15 +168,16 @@
   }
 }
 
+/* small and quiet: around the touch only */
 .halo {
-  inline-size: min(110vw, 1500px);
-  block-size: min(110vw, 1500px);
+  inline-size: min(34vw, 420px);
+  block-size: min(34vw, 420px);
   background: radial-gradient(
     circle,
-    color-mix(in srgb, var(--brand-lime) 34%, transparent) 0,
-    color-mix(in srgb, var(--brand-emerald-bright) 18%, transparent) 22%,
-    color-mix(in srgb, var(--brand-emerald) 8%, transparent) 42%,
-    transparent 62%
+    color-mix(in srgb, var(--brand-lime) 26%, transparent) 0,
+    color-mix(in srgb, var(--brand-emerald-bright) 12%, transparent) 26%,
+    color-mix(in srgb, var(--brand-emerald) 5%, transparent) 46%,
+    transparent 66%
   );
   animation: halo 1000ms ease-out 1520ms both;
 }
@@ -157,23 +188,23 @@
     transform: scale(0.15);
   }
   to {
-    opacity: 1;
+    opacity: 0.8;
     transform: scale(1);
   }
 }
 
 /* two thin lines of light opening around the touch, flattened like the field lines in the reference */
 .arc {
-  inline-size: min(36vw, 420px);
-  block-size: min(20vw, 230px);
-  border: 1.5px solid color-mix(in srgb, var(--brand-lime) 55%, transparent);
+  inline-size: min(22vw, 260px);
+  block-size: min(12vw, 140px);
+  border: 1px solid color-mix(in srgb, var(--brand-lime) 40%, transparent);
   box-shadow: 0 0 18px var(--brand-glow-soft);
   animation: arc 1100ms ease-out 1560ms both;
 }
 
 .arc2 {
-  inline-size: min(22vw, 260px);
-  block-size: min(40vw, 460px);
+  inline-size: min(13vw, 160px);
+  block-size: min(24vw, 280px);
   animation-delay: 1640ms;
 }
 
@@ -183,7 +214,7 @@
     transform: scale(0.1);
   }
   40% {
-    opacity: 0.8;
+    opacity: 0.55;
   }
   to {
     opacity: 0;
@@ -216,7 +247,7 @@
 @media (max-width: 719px) {
   .intro {
     --cy: 44svh;
-    --hw: clamp(260px, 82vw, 560px);
+    --hw: clamp(220px, 64vw, 440px);
   }
 }
 
@@ -225,4 +256,9 @@
   .intro {
     display: none;
   }
+}
+
+/* the skip button leaves with the art */
+.intro .skip {
+  animation: artOut 300ms ease-out 2050ms forwards;
 }

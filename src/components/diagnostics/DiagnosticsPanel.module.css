@@ -1,0 +1,17 @@
+/* the hidden diagnostics (DiagnosticsPanel.tsx): small, in a corner, never in the way of a click */
+.panel {
+  position: fixed;
+  inset-block-start: 70px;
+  inset-inline-start: 8px;
+  z-index: calc(var(--z-overlay) + 1);
+  display: grid;
+  gap: 2px;
+  max-inline-size: min(420px, calc(100vw - 16px));
+  padding: 6px 10px;
+  border-radius: 8px;
+  font: 11px/1.45 ui-monospace, monospace;
+  color: var(--brand-text-silver);
+  background: color-mix(in srgb, var(--brand-bg) 88%, transparent);
+  box-shadow: 0 0 0 1px var(--brand-glass-edge);
+  pointer-events: none;
+}

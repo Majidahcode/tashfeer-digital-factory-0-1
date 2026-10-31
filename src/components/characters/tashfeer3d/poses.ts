@@ -91,16 +91,19 @@ export function pose(p: PoseInput): Pose {
       break;
     }
     case "thinking": {
-      // a gentle tilt, a look a little up and aside, the right hand raised toward the chin
-      const k = ease(s / 0.8);
-      r.head = add(r.head, [deg(-6) * k, deg(-10) * k, deg(-9) * k]);
-      r.neck = add(r.neck, [0, 0, deg(-3) * k]);
-      r.upper_arm_R = add(r.upper_arm_R, [deg(-52) * k, 0, deg(8) * k]);
-      r.forearm_R = add(r.forearm_R, [deg(-124) * k, deg(34) * k, 0]);
-      r.hand_R = add(r.hand_R, [deg(-15) * k, 0, 0]);
-      // the other arm folds a little across the body
-      r.upper_arm_L = add(r.upper_arm_L, [deg(-10) * k, 0, deg(6) * k]);
-      r.forearm_L = add(r.forearm_L, [deg(-50) * k, deg(-25) * k, 0]);
+      // a clear moment of reflection: the head tilts and lowers a little, looking down and aside; the weight settles
+      // on one leg; the right forearm comes in across the waist, the left hand rests on it — no raised hand
+      const k = ease(s / 1.0);
+      const drift = p.still ? 0 : Math.sin(s * 0.6) * deg(1.5); // a slow, small drift of the gaze while he thinks
+      r.head = add(r.head, [deg(9) * k, (deg(-14) + drift) * k, deg(-11) * k]);
+      r.neck = add(r.neck, [deg(3) * k, deg(-4) * k, deg(-3) * k]);
+      r.chest = add(r.chest, [deg(3) * k, deg(-3) * k, 0]);
+      out.hips = [(out.hips?.[0] ?? 0) + 0.012 * k, out.hips?.[1] ?? 0, 0];
+      r.spine = add(r.spine, [0, 0, deg(-1.5) * k]);
+      r.upper_arm_R = add(r.upper_arm_R, [deg(-14) * k, 0, deg(6) * k]);
+      r.forearm_R = add(r.forearm_R, [deg(-62) * k, deg(38) * k, 0]);
+      r.upper_arm_L = add(r.upper_arm_L, [deg(-16) * k, 0, deg(8) * k]);
+      r.forearm_L = add(r.forearm_L, [deg(-70) * k, deg(-34) * k, 0]);
       break;
     }
     case "replying": {

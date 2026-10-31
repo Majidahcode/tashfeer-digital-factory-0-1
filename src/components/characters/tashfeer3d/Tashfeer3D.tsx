@@ -10,6 +10,7 @@
  * (public/characters/tashfeer-3d.webp, rendered from it — never the old picture).
  */
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { diagnosticsOn, record } from "@/lib/diagnostics";
 import { arrivalPending, consumeArrival, prefersReducedMotion } from "@/lib/page-transition";
 import { focusOf, sendTashfeer, subscribeTashfeer, tashfeerState, voiceLevelNow } from "@/lib/tashfeer-controller";
 import type { Mode } from "./poses";
@@ -29,7 +30,14 @@ function webglAvailable() {
   }
 }
 
-export function Tashfeer3D({ className, style }: { className?: string; style?: CSSProperties }) {
+/**
+ * `attend`: something on the screen he reviews with the visitor when nothing else asks for his attention — he stands
+ * three-quarters toward it (his body really turns, in 3D) and his head follows it calmly (the agents' strip: the card
+ * at its centre). Small moves of the target (a drag) are ignored; his turn eases.
+ */
+export type Attend = { selector: string; fallback?: string };
+
+export function Tashfeer3D({ className, style, attend }: { className?: string; style?: CSSProperties; attend?: Attend }) {
   const box = useRef<HTMLDivElement>(null);
   // on his way through the portal: no still at his place meanwhile (he walks there from the depth)
   const [status, setStatus] = useState<"loading" | "arriving" | "ready" | "fallback">(() =>
@@ -53,7 +61,9 @@ export function Tashfeer3D({ className, style }: { className?: string; style?: C
     let cleanup: (() => void) | null = null;
     let cancelled = false;
     const calm = () =>
-      !document.documentElement.hasAttribute("data-scene-transition") && window.__tashfeerIntro !== "play";
+      // (arriving through the portal is the exception: he must be ready to walk out of the depth as the glass clears)
+      (!document.documentElement.hasAttribute("data-scene-transition") || arrivalPending()) &&
+      window.__tashfeerIntro !== "play";
     const begin = () => {
       if (cancelled || cleanup) return;
       // a fresh canvas for each set-up: a canvas whose WebGL context was released (the previous set-up's clean-up,
@@ -116,6 +126,7 @@ export function Tashfeer3D({ className, style }: { className?: string; style?: C
     const moodToMode = (m: string): Mode =>
       m === "listening" ? "listening" : m === "attending" ? "attending" : m === "thinking" ? "thinking" : m === "replying" ? "replying" : "idle";
 
+    let aim: { x: number; y: number } | null = null;
     stage.onFrame = (dt, s) => {
       s.moving = arriving && arriveT < ARRIVE;
       if (arriving && arriveT < ARRIVE) {
@@ -133,6 +144,32 @@ export function Tashfeer3D({ className, style }: { className?: string; style?: C
       s.setMode(moodToMode(st.mood));
       s.voice = voiceLevelNow();
       const focus = focusOf(st.mood);
+      if (!focus && attend) {
+        // reviewing with the visitor: a three-quarter stance toward the target, the head on it
+        const t = (document.querySelector<HTMLElement>(attend.selector) ??
+          (attend.fallback ? document.querySelector<HTMLElement>(attend.fallback) : null))?.getBoundingClientRect();
+        const me = el.getBoundingClientRect();
+        if (t && t.width) {
+          const x = t.left + t.width / 2 - me.left;
+          const y = t.top + t.height * 0.4 - me.top;
+          // only a real move of the target re-aims him (no turn with every pixel of a drag)
+          if (!aim || Math.hypot(x - aim.x, y - aim.y) > 36) aim = { x, y };
+          const side = aim.x > me.width / 2 ? 1 : -1;
+          const goal = Math.abs(aim.x - me.width / 2) < me.width * 0.6 ? side * 0.22 : side * 0.5; // ≈ 29° at most: three-quarters
+          s.root.rotation.y += (goal - s.root.rotation.y) * (1 - Math.exp(-dt * 2.2));
+          s.moving = Math.abs(goal - s.root.rotation.y) > 0.004; // (a software renderer keeps drawing while he turns)
+          s.lookAtScreen(aim.x, aim.y);
+          // the head's turn is what remains after the body's
+          if (s.look) s.look = { yaw: Math.max(-0.7, Math.min(0.7, s.look.yaw - s.root.rotation.y)), pitch: s.look.pitch };
+          return;
+        }
+      }
+      // facing the visitor again (a state that turns him to the visitor or the chat), smoothly
+      if (s.root.rotation.y !== 0) {
+        s.root.rotation.y += (0 - s.root.rotation.y) * (1 - Math.exp(-dt * 2.2));
+        if (Math.abs(s.root.rotation.y) < 0.002) s.root.rotation.y = 0;
+        s.moving = s.root.rotation.y !== 0;
+      }
       const target = focus ? document.querySelector<HTMLElement>(FOCUS_SELECTOR[focus]) : null;
       if (target) {
         const t = target.getBoundingClientRect();
@@ -167,6 +204,22 @@ export function Tashfeer3D({ className, style }: { className?: string; style?: C
       else if (visible) stage.start();
     };
     document.addEventListener("visibilitychange", onVis);
+    // the hidden diagnostics (?diag=1): this device's real drawing of him, every second
+    const diag = diagnosticsOn()
+      ? window.setInterval(() => {
+          const f = stage.frameTimes.slice(-60);
+          const sorted = [...f].sort((a, b) => a - b);
+          const avg = f.length ? f.reduce((a, b) => a + b, 0) / f.length : undefined;
+          record({
+            renderer: stage.rendererName,
+            lite: stage.lite,
+            fps: avg ? 1000 / avg : 0,
+            frameAvg: avg,
+            frameP95: sorted.length ? sorted[Math.floor(sorted.length * 0.95)] : undefined,
+            drawCost: stage.drawCosts.length ? stage.drawCosts.reduce((a, b) => a + b, 0) / stage.drawCosts.length : undefined,
+          });
+        }, 1000)
+      : 0;
     const unsub = subscribeTashfeer(() => {
       const m = tashfeerState().mood;
       setMood(m);
@@ -176,6 +229,7 @@ export function Tashfeer3D({ className, style }: { className?: string; style?: C
 
     return () => {
       alive = false;
+      window.clearInterval(diag);
       ro.disconnect();
       io.disconnect();
       unsub();
@@ -183,6 +237,8 @@ export function Tashfeer3D({ className, style }: { className?: string; style?: C
       stage.dispose();
     };
     }
+    // `attend` is read once: a screen does not change what he reviews
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

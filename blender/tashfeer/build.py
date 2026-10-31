@@ -49,6 +49,12 @@ print("triangles after decimate:", len(body.data.polygons))
 # the scan's normal map was baked for its million triangles: on the lighter mesh it draws facets. Smooth normals
 # instead (the plates' edges are in the colour map), and the normal map is left out
 bpy.ops.object.shade_smooth()
+# weighted normals: the large flat plates face where they really face (plain smoothing let small faces tilt them,
+# which read as mottled patches under a light)
+wn = body.modifiers.new("wn", "WEIGHTED_NORMAL")
+wn.weight = 100
+wn.keep_sharp = True
+bpy.ops.object.modifier_apply(modifier="wn")
 
 # ── 2. skeleton (Blender coordinates: x = the character's left, −y = front, z = up; metres) ────────────────────
 J = {

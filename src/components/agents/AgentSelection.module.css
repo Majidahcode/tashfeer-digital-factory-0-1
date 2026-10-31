@@ -109,8 +109,8 @@
 .tashfeer {
   justify-self: center;
   align-self: end;
-  block-size: 100%;
-  max-block-size: 560px;
+  block-size: 82%; /* ≈18 % smaller than his first 3D size: room for the summary and the strip */
+  max-block-size: 460px;
   min-block-size: 0;
   inline-size: auto;
   max-inline-size: 100%;
@@ -339,7 +339,7 @@
   }
 
   .tashfeer {
-    block-size: 300px;
+    block-size: 250px;
     min-block-size: 0;
   }
 
@@ -377,7 +377,7 @@
   }
 
   .tashfeer {
-    block-size: 280px;
+    block-size: 232px;
   }
 }
 

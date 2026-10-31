@@ -27,7 +27,7 @@
   /* ── Semantic states (outside the palette, approved with DEC-02) ── */
   --state-danger: #e8836f;
   --state-warning: #e9be55;
-  --tashfeer-glow: #ff8a1a; /* the orange of Tashfeer's own lights (visor, armour lines, his name) */
+  --tashfeer-glow: #ff6a00; /* the orange of Tashfeer's own lights (visor, armour lines, his name) */
   --state-success: var(--brand-lime);
 
   /* ── Derived, alpha variants (always from the palette above) ─────── */

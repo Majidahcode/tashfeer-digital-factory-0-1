@@ -92,6 +92,7 @@ export function TeamApproval() {
       <TashfeerCharacter
         className={styles.tashfeer}
         sizes="(max-width: 899px) 40vw, 18vw"
+        attend={{ selector: '[data-agent-card][data-offset="0.00"]', fallback: "[data-agent-card]" }}
       />
 
       <div className={styles.main}>

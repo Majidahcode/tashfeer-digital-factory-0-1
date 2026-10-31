@@ -63,16 +63,18 @@ export function SiteIntro() {
           if (e.target === e.currentTarget) end();
         }}
       >
-        <div className={styles.field} aria-hidden="true" />
-        {/* eslint-disable-next-line @next/next/no-img-element -- fixed art in an overlay: no responsive sizes to pick */}
-        <img className={styles.human} src="/intro/hand-human.webp" alt="" width={1400} height={700} decoding="async" fetchPriority="high" />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className={styles.robot} src="/intro/hand-robot.webp" alt="" width={1400} height={788} decoding="async" fetchPriority="high" />
-        <div className={styles.glow} aria-hidden="true">
-          <span className={styles.halo} />
-          <span className={styles.arc} />
-          <span className={`${styles.arc} ${styles.arc2}`} />
-          <span className={styles.spark} />
+        <div className={styles.art}>
+          <div className={styles.field} aria-hidden="true" />
+          {/* eslint-disable-next-line @next/next/no-img-element -- fixed art in an overlay: no responsive sizes to pick */}
+          <img className={styles.human} src="/intro/hand-human.webp" alt="" width={1400} height={700} decoding="async" fetchPriority="high" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className={styles.robot} src="/intro/hand-robot.webp" alt="" width={1400} height={788} decoding="async" fetchPriority="high" />
+          <div className={styles.glow} aria-hidden="true">
+            <span className={styles.halo} />
+            <span className={styles.arc} />
+            <span className={`${styles.arc} ${styles.arc2}`} />
+            <span className={styles.spark} />
+          </div>
         </div>
         <button type="button" className={styles.skip} onClick={() => setLeaving(true)} data-intro-skip="">
           تخطَّ

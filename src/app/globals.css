@@ -130,17 +130,20 @@ html::-webkit-scrollbar-corner {
   opacity: 0;
 }
 
-/* forward: a soft touch of the brand's light over the dark field, the next screen appears as it melts */
-.page-veil--light {
+/* between screens: a thin sheet of frosted glass — a light blur, the page dimmed behind it, the faintest tint of the
+   brand; the next screen appears under the same sheet, which then clears. No flash, no block of light. */
+.page-veil--glass,
+.page-veil--glass-back {
   background:
-    radial-gradient(ellipse 55% 45% at 50% 50%, color-mix(in srgb, var(--brand-lime) 22%, transparent), transparent 70%),
-    radial-gradient(ellipse 90% 80% at 50% 50%, color-mix(in srgb, var(--brand-emerald) 30%, transparent), transparent 75%),
-    color-mix(in srgb, var(--brand-bg) 88%, transparent);
+    radial-gradient(ellipse 80% 70% at 50% 45%, color-mix(in srgb, var(--brand-emerald) 7%, transparent), transparent 75%),
+    color-mix(in srgb, var(--brand-bg) 46%, transparent);
+  -webkit-backdrop-filter: blur(7px) saturate(0.9);
+  backdrop-filter: blur(7px) saturate(0.9);
 }
 
-/* back: a short dim, nothing more */
-.page-veil--dim {
-  background: color-mix(in srgb, var(--brand-bg) 85%, transparent);
+.page-veil--glass-back {
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
 }
 
 /* home → agents: the page shows through; Tashfeer's copy, the ring's copy above him, then the light */
@@ -168,17 +171,15 @@ html::-webkit-scrollbar-corner {
   overflow: hidden;
 }
 
-.page-veil__light {
+/* the crossing's glass inside the opening: frosted, barely tinted; it covers the change of page */
+.page-veil__glass {
   position: absolute;
   inset: 0;
   opacity: 0;
   background:
-    radial-gradient(
-      circle at var(--hx, 50%) var(--hy, 50%),
-      color-mix(in srgb, var(--brand-highlight) 55%, transparent) 0,
-      color-mix(in srgb, var(--brand-lime) 34%, transparent) 18%,
-      color-mix(in srgb, var(--brand-emerald) 30%, transparent) 42%,
-      transparent 70%
-    ),
-    var(--brand-bg);
+    radial-gradient(ellipse 70% 60% at 50% 50%, color-mix(in srgb, var(--brand-emerald) 9%, transparent), transparent 80%),
+    color-mix(in srgb, var(--brand-bg) 72%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
+

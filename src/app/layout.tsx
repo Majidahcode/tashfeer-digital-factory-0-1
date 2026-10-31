@@ -4,6 +4,7 @@ import "@fontsource/cairo/400.css";
 import "@fontsource/cairo/600.css";
 import "@fontsource/cairo/800.css";
 import { ScrollActivity } from "@/components/background/ScrollActivity";
+import { DiagnosticsPanel } from "@/components/diagnostics/DiagnosticsPanel";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -20,6 +21,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </a>
         {children}
         <ScrollActivity />
+        {/* hidden unless ?diag=1: measures on this device */}
+        <DiagnosticsPanel />
       </body>
     </html>
   );

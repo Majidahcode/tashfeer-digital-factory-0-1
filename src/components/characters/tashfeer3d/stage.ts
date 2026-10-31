@@ -32,6 +32,7 @@ import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.j
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { type Mode, pose, stiffness } from "./poses";
+import { forceFullQuality } from "@/lib/diagnostics";
 import { type Pose, Rig } from "./rig";
 
 export const MODEL_URL = "/models/tashfeer/tashfeer.glb";
@@ -59,10 +60,13 @@ export type Box = { x: number; y: number; width: number; height: number };
  * A software renderer (no GPU: SwiftShader, llvmpipe — test machines, some locked-down PCs) draws him a few times a
  * second at best: there he is drawn lighter (no reflection studio, fewer frames) so the page stays responsive.
  */
-export function softwareRenderer(gl: WebGLRenderingContext | WebGL2RenderingContext): boolean {
+export function rendererName(gl: WebGLRenderingContext | WebGL2RenderingContext): string {
   const ext = gl.getExtension("WEBGL_debug_renderer_info");
-  const name = String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
-  return /swiftshader|llvmpipe|software|basic render/i.test(name);
+  return String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
+}
+
+export function softwareRenderer(gl: WebGLRenderingContext | WebGL2RenderingContext): boolean {
+  return /swiftshader|llvmpipe|software|basic render/i.test(rendererName(gl));
 }
 
 /** the palette, read from the page's tokens (never colour literals here) */
@@ -90,6 +94,11 @@ export class TashfeerStage {
   private first = true;
   /** a software renderer: lighter drawing (see softwareRenderer) */
   readonly lite: boolean;
+  readonly rendererName: string;
+  /** frame times (ms) of the last drawn frames, for the diagnostics */
+  readonly frameTimes: number[] = [];
+  /** how long drawing one frame took (ms), the last ones */
+  readonly drawCosts: number[] = [];
   private lastDraw = 0;
   /** what he is doing and where he looks; set from outside */
   mode: Mode = "idle";
@@ -112,23 +121,29 @@ export class TashfeerStage {
     this.renderer.outputColorSpace = SRGBColorSpace;
     this.renderer.toneMapping = ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
-    this.lite = softwareRenderer(this.renderer.getContext());
+    const gl = this.renderer.getContext();
+    this.lite = softwareRenderer(gl) && !forceFullQuality();
+    this.rendererName = rendererName(gl);
     this.renderer.setPixelRatio(this.lite ? 1 : Math.min(window.devicePixelRatio || 1, 1.75));
     if (!this.lite) {
       const pmrem = new PMREMGenerator(this.renderer);
-      // a soft studio for the armour's reflections, dimmed: it lights the black plates without greying them
-      this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-      this.scene.environmentIntensity = 0.55;
+      // a soft studio for the armour's reflections, kept low: the plates stay black (it was what made them silvery)
+      this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.08).texture;
+      this.scene.environmentIntensity = 0.18;
       pmrem.dispose();
     }
-    const lime = token("--brand-lime", [0.73, 1, 0.14]);
     const warm = token("--brand-text-silver", [0.79, 0.81, 0.79]);
-    this.scene.add(new AmbientLight(warm, this.lite ? 0.8 : 0.35));
-    const key = new DirectionalLight(warm, 2.2);
-    key.position.set(1.5, 3, 4);
-    const rim = new DirectionalLight(lime, 1.1); // the brand's light from behind: an edge on the armour
+    this.scene.add(new AmbientLight(warm, this.lite ? 0.55 : 0.3));
+    // a soft key from the front, a faint fill: the black reads as black, the plates as shapes
+    const key = new DirectionalLight(warm, 1.8);
+    key.position.set(1.2, 2.6, 4);
+    const fill = new DirectionalLight(warm, 0.35);
+    fill.position.set(-2.5, 1.2, 2.5);
+    this.scene.add(fill);
+    // a neutral edge from behind (no green on the armour: a coloured light read as patches on the plates)
+    const rim = new DirectionalLight(warm, 0.5);
     rim.position.set(-2.5, 2.2, -3);
-    const rim2 = new DirectionalLight(lime, 0.55);
+    const rim2 = new DirectionalLight(warm, 0.25);
     rim2.position.set(2.8, 1.5, -2);
     this.scene.add(key, rim, rim2);
     // a small soft contact shadow under the feet — no floor, no dark slab
@@ -146,10 +161,20 @@ export class TashfeerStage {
         if (!mesh.isMesh) return;
         mesh.frustumCulled = false; // skinned: the bounds of the rest pose would cull a raised arm
         const mat = mesh.material as MeshStandardMaterial;
+        if (mat.map) {
+          // the armour, as in the owner's Meshy image: matte black with soft highlights. The scan's roughness map
+          // (≈0.34, glossy) mirrored the room as silver streaks and its noise; a calmer even roughness instead
+          mat.roughnessMap = null;
+          mat.metalnessMap = null;
+          mat.metalness = 0;
+          mat.roughness = 0.58;
+          mat.map.anisotropy = Math.min(8, this.renderer.capabilities.getMaxAnisotropy());
+          mat.needsUpdate = true;
+        }
         if (mat.emissiveMap) {
           // his lines glow in his own orange (the map only says where they are)
           mat.emissive = token("--tashfeer-glow", [1, 0.54, 0.1]);
-          mat.emissiveIntensity = 1.4;
+          mat.emissiveIntensity = 0.8;
           this.emissive.push(mat);
         }
       });
@@ -255,8 +280,11 @@ export class TashfeerStage {
         if (!this.first && now > this.dirtyUntil && !this.moving) return;
       }
       const dt = Math.min(0.1, (now - (this.lastDraw || now)) / 1000);
+      if (this.lastDraw) push(this.frameTimes, now - this.lastDraw);
       this.lastDraw = now;
+      const t = performance.now();
       this.render(dt);
+      push(this.drawCosts, performance.now() - t);
     };
     this.raf = requestAnimationFrame(loop);
   }
@@ -296,7 +324,7 @@ export class TashfeerStage {
       this.rig.apply(target, dt, stiffness(this.mode), this.first || (this.still && this.mode !== "walking"));
       this.first = false;
       // the visor and lines glow a little more with the voice
-      for (const m of this.emissive) m.emissiveIntensity = 1.4 + this.voice * 0.9;
+      for (const m of this.emissive) m.emissiveIntensity = 0.8 + this.voice * 0.6;
     }
     this.renderer.render(this.scene, this.camera);
   }
@@ -328,6 +356,11 @@ export class TashfeerStage {
     this.renderer.forceContextLoss();
   }
 }
+
+const push = (list: number[], v: number) => {
+  list.push(v);
+  if (list.length > 120) list.shift();
+};
 
 /** a soft round shadow (alpha only), drawn once */
 let shadowTex: CanvasTexture | null = null;
