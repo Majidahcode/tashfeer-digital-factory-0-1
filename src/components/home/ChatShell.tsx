@@ -115,6 +115,8 @@ export function ChatShell({
       if (!persist) setLocal("");
       return;
     }
+    // the idea and its attachments are already kept (project store); the next screen is fetched ahead of the crossing
+    router.prefetch("/agents");
     transitionTo("/agents", (href) => router.push(href));
   };
 

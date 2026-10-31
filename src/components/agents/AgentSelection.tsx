@@ -2,11 +2,11 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { TashfeerCharacter } from "@/components/characters/TashfeerCharacter";
 import { Icon } from "@/components/icons/Icon";
 import { AGENTS, agentImage, analyze, chosenLabel } from "@/domain/agents";
-import { transitionTo } from "@/lib/page-transition";
+import { consumeArrival, transitionTo } from "@/lib/page-transition";
 import {
   approvalOf,
   hasFile,
@@ -36,6 +36,20 @@ export function AgentSelection() {
   const links = linksIn(project.idea);
   // after a reload the files themselves are gone (only their names are kept): they must be attached again
   const stale = project.attachments.filter((a) => !hasFile(a.id)).length;
+
+  // just through the portal from the home page: Tashfeer arrives from the depth and settles in his place
+  useEffect(() => {
+    if (consumeArrival() !== "portal") return;
+    const robot = document.querySelector<HTMLElement>("[data-agents-screen] [data-tashfeer]");
+    robot?.animate(
+      [
+        { opacity: 0, transform: "translateY(-8%) scale(0.5)" },
+        { opacity: 1, offset: 0.45 },
+        { opacity: 1, transform: "none" },
+      ],
+      { duration: 680, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" },
+    );
+  }, []);
 
   const setTeam = (ids: Iterable<string>) =>
     updateProject({ team: [...ids], confirmed: false });

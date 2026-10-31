@@ -120,3 +120,63 @@ html::-webkit-scrollbar-corner {
     scroll-behavior: auto !important;
   }
 }
+
+/* ── Transitions between screens (src/lib/page-transition.ts): layers created for the moment, then removed ── */
+.page-veil {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  pointer-events: auto; /* while it plays: a second press cannot start another transition */
+  opacity: 0;
+}
+
+/* forward: a soft touch of the brand's light over the dark field, the next screen appears as it melts */
+.page-veil--light {
+  background:
+    radial-gradient(ellipse 55% 45% at 50% 50%, color-mix(in srgb, var(--brand-lime) 22%, transparent), transparent 70%),
+    radial-gradient(ellipse 90% 80% at 50% 50%, color-mix(in srgb, var(--brand-emerald) 30%, transparent), transparent 75%),
+    color-mix(in srgb, var(--brand-bg) 88%, transparent);
+}
+
+/* back: a short dim, nothing more */
+.page-veil--dim {
+  background: color-mix(in srgb, var(--brand-bg) 85%, transparent);
+}
+
+/* home → agents: the page shows through; Tashfeer's copy, the ring's copy above him, then the light */
+.page-veil--portal {
+  opacity: 1;
+}
+
+.page-veil__scene,
+.page-veil__clip {
+  position: absolute;
+  inset: 0;
+}
+
+.page-veil__robot {
+  position: absolute;
+  display: block;
+  max-inline-size: none;
+  filter: drop-shadow(0 0 16px var(--brand-glow-soft));
+}
+
+.page-veil__ring {
+  position: absolute;
+  overflow: hidden;
+}
+
+.page-veil__light {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background:
+    radial-gradient(
+      circle at var(--hx, 50%) var(--hy, 50%),
+      color-mix(in srgb, var(--brand-highlight) 55%, transparent) 0,
+      color-mix(in srgb, var(--brand-lime) 34%, transparent) 18%,
+      color-mix(in srgb, var(--brand-emerald) 30%, transparent) 42%,
+      transparent 70%
+    ),
+    var(--brand-bg);
+}
