@@ -24,7 +24,7 @@ import numpy as np
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:]
 MESHY = args[0]
-RATIO = float(args[args.index("--ratio") + 1]) if "--ratio" in args else 0.08
+RATIO = float(args[args.index("--ratio") + 1]) if "--ratio" in args else 0.055
 OUT_GLB = os.path.join(ROOT, "public/models/tashfeer/tashfeer.glb")
 OUT_BLEND = os.path.join(ROOT, "blender/tashfeer/tashfeer.blend")
 NAME_PNG = os.path.join(ROOT, "blender/tashfeer/name.png")

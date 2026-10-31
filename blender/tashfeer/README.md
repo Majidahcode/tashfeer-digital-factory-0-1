@@ -14,7 +14,7 @@ normal 4096²), A-pose, facing −Y, 1.90 m tall; no skeleton, no animation, no 
 
 What `build.py` makes (`public/models/tashfeer/tashfeer.glb`, `tashfeer.blend`):
 
-- decimated to ≈79 k triangles (ratio 0.08) — the face (visor stripes), the lines and the fingers' detail are in the
+- decimated to ≈55 k triangles (ratio 0.055) — the face (visor stripes), the lines and the fingers' detail are in the
   colour map; the scan's normal map (baked for the million triangles) is dropped because it drew facets on the lighter
   mesh: smooth normals instead;
 - a skeleton on the measured body: hips, spine, chest, neck, head; clavicle, upper arm, forearm, hand; thigh, shin,

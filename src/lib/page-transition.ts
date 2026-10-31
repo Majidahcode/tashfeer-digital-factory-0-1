@@ -47,6 +47,11 @@ export function consumeArrival(): "portal" | null {
   return a;
 }
 
+/** Whether Tashfeer is on his way through the portal (without spending it). */
+export function arrivalPending(): boolean {
+  return arrival !== null;
+}
+
 /** Which transition goes from `from` to `to` (paths). */
 export function kindOf(from: string, to: string): TransitionKind {
   if (from === "/" && to === "/agents") return "crossing";
@@ -278,6 +283,7 @@ async function cross(href: string, navigate: Navigate) {
     const finished = new Promise<void>((r) => (done = r));
     const st = stage;
     st.lookAtScreen(null);
+    st.moving = true;
     let stepped = 0;
     st.onFrame = (dt, s) => {
       t += dt;

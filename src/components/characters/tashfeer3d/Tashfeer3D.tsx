@@ -10,7 +10,7 @@
  * (public/characters/tashfeer-3d.webp, rendered from it — never the old picture).
  */
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { consumeArrival, prefersReducedMotion } from "@/lib/page-transition";
+import { arrivalPending, consumeArrival, prefersReducedMotion } from "@/lib/page-transition";
 import { focusOf, sendTashfeer, subscribeTashfeer, tashfeerState, voiceLevelNow } from "@/lib/tashfeer-controller";
 import type { Mode } from "./poses";
 import { TashfeerStage } from "./stage";
@@ -32,7 +32,10 @@ function webglAvailable() {
 export function Tashfeer3D({ className, style }: { className?: string; style?: CSSProperties }) {
   const box = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
-  const [status, setStatus] = useState<"loading" | "ready" | "fallback">("loading");
+  // on his way through the portal: no still at his place meanwhile (he walks there from the depth)
+  const [status, setStatus] = useState<"loading" | "arriving" | "ready" | "fallback">(() =>
+    typeof window !== "undefined" && arrivalPending() ? "arriving" : "loading",
+  );
   const [mood, setMood] = useState(tashfeerState().mood);
 
   useEffect(() => {
@@ -47,10 +50,36 @@ export function Tashfeer3D({ className, style }: { className?: string; style?: C
     }
     // a new screen: the controller starts at rest (the crossing that brought him here is over)
     if (tashfeerState().mood === "leaving") sendTashfeer({ type: "reset" });
+    // he is set up once the screen is calm — after the opening and after a transition between screens — so his
+    // setting up never holds up either (the still stands in meanwhile)
+    let cleanup: (() => void) | null = null;
+    let cancelled = false;
+    const calm = () =>
+      !document.documentElement.hasAttribute("data-scene-transition") && window.__tashfeerIntro !== "play";
+    const begin = () => {
+      if (cancelled || cleanup) return;
+      cleanup = setUp(el, cv);
+    };
+    const watch = new MutationObserver(() => calm() && begin());
+    const onIntro = () => calm() && begin();
+    if (calm()) begin();
+    else {
+      watch.observe(document.documentElement, { attributes: true, attributeFilter: ["data-scene-transition"] });
+      window.addEventListener("tashfeer-intro", onIntro);
+    }
+    return () => {
+      cancelled = true;
+      watch.disconnect();
+      window.removeEventListener("tashfeer-intro", onIntro);
+      cleanup?.();
+    };
+
+    function setUp(el: HTMLDivElement, cv: HTMLCanvasElement) {
     const stage = new TashfeerStage(cv);
     // the internal test page may reach the stage, to check joints one by one (never on the visitor's screens)
     if (location.pathname.startsWith("/robot-animation-test")) (window as unknown as { __tashfeerStage?: TashfeerStage }).__tashfeerStage = stage;
     const still = prefersReducedMotion();
+    // a software renderer: no idle sway (each frame is costly there; he moves only when something happens)
     stage.still = still;
     let alive = true;
     let visible = true;
@@ -75,6 +104,7 @@ export function Tashfeer3D({ className, style }: { className?: string; style?: C
       m === "listening" ? "listening" : m === "attending" ? "attending" : m === "thinking" ? "thinking" : m === "replying" ? "replying" : "idle";
 
     stage.onFrame = (dt, s) => {
+      s.moving = arriving && arriveT < ARRIVE;
       if (arriving && arriveT < ARRIVE) {
         const before = s.root.position.z;
         arriveT = Math.min(ARRIVE, arriveT + dt);
@@ -139,6 +169,7 @@ export function Tashfeer3D({ className, style }: { className?: string; style?: C
       document.removeEventListener("visibilitychange", onVis);
       stage.dispose();
     };
+    }
   }, []);
 
   return (
@@ -160,7 +191,7 @@ export function Tashfeer3D({ className, style }: { className?: string; style?: C
         width={STILL.width}
         height={STILL.height}
         alt=""
-        data-visible={status === "ready" ? undefined : ""}
+        data-visible={status === "ready" || status === "arriving" ? undefined : ""}
         decoding="async"
       />
       <canvas ref={canvas} className={styles.canvas} data-visible={status === "ready" ? "" : undefined} />

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ChatShell, type ChatMessage } from "@/components/home/ChatShell";
 import { HomeScene } from "@/components/home/HomeScene";
-import { type Mood, sendTashfeer, useTashfeer } from "@/lib/tashfeer-controller";
+import { type Mood, sendTashfeer, tashfeerState, useTashfeer } from "@/lib/tashfeer-controller";
 import { type SimOutcome, simulateReply } from "@/lib/tashfeer-sim";
 import { type MicSession, startMic } from "@/lib/tashfeer-voice";
 import styles from "./RobotAnimationTest.module.css";
@@ -37,7 +37,7 @@ export function RobotAnimationTest() {
   }, []);
 
   const send = (idea: string) => {
-    if (st.mood === "thinking") return; // one question at a time
+    if (tashfeerState().mood === "thinking") return; // one question at a time (the live state, not this render's)
     const text = idea || "(مرفقات بلا وصف)";
     setMessages((ms) => [...ms, { id: id(), from: "visitor", text }]);
     cancel.current = simulateReply(text, outcome, (reply) =>

@@ -55,6 +55,16 @@ export function loadTashfeer(): Promise<GLTF> {
 
 export type Box = { x: number; y: number; width: number; height: number };
 
+/**
+ * A software renderer (no GPU: SwiftShader, llvmpipe — test machines, some locked-down PCs) draws him a few times a
+ * second at best: there he is drawn lighter (no reflection studio, fewer frames) so the page stays responsive.
+ */
+export function softwareRenderer(gl: WebGLRenderingContext | WebGL2RenderingContext): boolean {
+  const ext = gl.getExtension("WEBGL_debug_renderer_info");
+  const name = String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
+  return /swiftshader|llvmpipe|software|basic render/i.test(name);
+}
+
 /** the palette, read from the page's tokens (never colour literals here) */
 function token(name: string, fallback: readonly [number, number, number]) {
   const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -78,12 +88,17 @@ export class TashfeerStage {
   private t0 = performance.now();
   private modeStart = 0;
   private first = true;
+  /** a software renderer: lighter drawing (see softwareRenderer) */
+  readonly lite: boolean;
+  private lastDraw = 0;
   /** what he is doing and where he looks; set from outside */
   mode: Mode = "idle";
   look: { yaw: number; pitch: number } | null = null;
   phase = 0;
   voice = 0;
   still = false;
+  /** something moves him across the screen (the crossing, the arrival): lite drawing never pauses then */
+  moving = false;
   /** reviews only (the test page): rotations added on top of the pose, to check each joint */
   extra: Pose["rot"] | null = null;
   /** called every frame before the pose (the crossing moves him from here) */
@@ -97,15 +112,18 @@ export class TashfeerStage {
     this.renderer.outputColorSpace = SRGBColorSpace;
     this.renderer.toneMapping = ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
-    const pmrem = new PMREMGenerator(this.renderer);
-    // a soft studio for the armour's reflections, dimmed: it lights the black plates without greying them
-    this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    this.scene.environmentIntensity = 0.55;
-    pmrem.dispose();
+    this.lite = softwareRenderer(this.renderer.getContext());
+    this.renderer.setPixelRatio(this.lite ? 1 : Math.min(window.devicePixelRatio || 1, 1.75));
+    if (!this.lite) {
+      const pmrem = new PMREMGenerator(this.renderer);
+      // a soft studio for the armour's reflections, dimmed: it lights the black plates without greying them
+      this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+      this.scene.environmentIntensity = 0.55;
+      pmrem.dispose();
+    }
     const lime = token("--brand-lime", [0.73, 1, 0.14]);
     const warm = token("--brand-text-silver", [0.79, 0.81, 0.79]);
-    this.scene.add(new AmbientLight(warm, 0.35));
+    this.scene.add(new AmbientLight(warm, this.lite ? 0.8 : 0.35));
     const key = new DirectionalLight(warm, 2.2);
     key.position.set(1.5, 3, 4);
     const rim = new DirectionalLight(lime, 1.1); // the brand's light from behind: an edge on the armour
@@ -145,7 +163,12 @@ export class TashfeerStage {
     if (mode === this.mode) return;
     this.mode = mode;
     this.modeStart = this.now();
+    this.dirtyUntil = performance.now() + 2500;
   }
+
+  /** lite: drawing continues only this long after something changed (a new state, a new look) */
+  private dirtyUntil = 0;
+  private lastLook = "";
 
   private now() {
     return (performance.now() - this.t0) / 1000;
@@ -216,6 +239,21 @@ export class TashfeerStage {
     this.last = performance.now();
     const loop = (now: number) => {
       this.raf = requestAnimationFrame(loop);
+      // lite: about 6 frames a second at most (each one is expensive without a GPU), and none while nothing changes
+      // (a moving crossing or arrival always draws: onFrame)
+      if (this.lite) {
+        if (now - this.lastDraw < 160) return;
+        const look = this.look ? `${this.look.yaw.toFixed(2)},${this.look.pitch.toFixed(2)}` : "";
+        if (look !== this.lastLook) {
+          this.lastLook = look;
+          this.dirtyUntil = now + 2500;
+        }
+        if (!this.first && now > this.dirtyUntil && !this.moving) {
+          this.last = now;
+          return;
+        }
+      }
+      this.lastDraw = now;
       const raw = Math.max(0, (now - this.last) / 1000);
       this.last = now;
       this.tick(Math.min(0.1, raw), raw);
