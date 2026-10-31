@@ -7,7 +7,7 @@
  * He follows the page's one controller (src/lib/tashfeer-controller.ts) and looks where its state says — at the seated
  * visitor, at the chat — found on the page where they are now (so on every screen size he looks the right way).
  * Until the model is ready, and wherever WebGL is missing or the model fails, a still of the same model stands in
- * (public/assets/characters/tashfeer-3d.webp, rendered from it — never the old picture).
+ * (public/characters/tashfeer-3d.webp, rendered from it — never the old picture).
  */
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { consumeArrival, prefersReducedMotion } from "@/lib/page-transition";

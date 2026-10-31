@@ -75,7 +75,7 @@ test.describe("Tashfeer in 3D", () => {
     await page.goto("/");
     await expect(robot(page)).toHaveAttribute("data-tashfeer-3d", "fallback");
     const still = robot(page).locator("img");
-    await expect(still).toHaveAttribute("src", "/assets/characters/tashfeer-3d.webp");
+    await expect(still).toHaveAttribute("src", "/characters/tashfeer-3d.webp");
     await expect(still).toHaveAttribute("data-visible", "");
     expect(await still.evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth > 0)).toBe(true);
   });
