@@ -121,6 +121,8 @@
   --z-background: 0;
   --z-content: 1;
   --z-header: 10;
+  /* the site's opening and the light between screens: above everything while they play */
+  --z-overlay: 100;
 }
 
 /* ── Illustrative prototypes (/prototypes): two visual directions for one example site, from the palette only ──

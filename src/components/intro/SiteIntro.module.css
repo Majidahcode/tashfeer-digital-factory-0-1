@@ -1,0 +1,228 @@
+/*
+ * The site's opening (SiteIntro.tsx). One timeline, all CSS, ≈2.6 s:
+ *   0.10–1.55 s  the hands come together (calm ease-out), from the lower left and the upper right
+ *   1.50 s       the fingertips touch: a small spark
+ *   1.50–2.40 s  a soft lime-and-green light opens from the touch
+ *   2.05–2.65 s  the opening fades and the home page (loaded underneath) shows through; then it lets clicks through
+ * The two pictures are placed so their fingertips meet at the touch point (--cx, --cy): the fingertip of each was
+ * measured on the picture (human: 94.1 % across, 12.4 % down; mechanical: 17.2 % across, 74.1 % down).
+ */
+.intro {
+  --cx: 50vw;
+  --cy: 48svh;
+  --hw: clamp(300px, 62vw, 1100px); /* the human hand's width */
+  --rw: calc(var(--hw) * 0.96); /* the mechanical hand's width */
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  overflow: hidden;
+  background: var(--brand-bg);
+  animation: introOut 600ms ease-in-out 2050ms forwards;
+}
+
+/* after «تخطَّ»: a short fade, at once */
+.leaving {
+  animation: introOut 280ms ease-out forwards;
+}
+
+@keyframes introOut {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+.field {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 48%, color-mix(in srgb, var(--brand-emerald) 16%, transparent), transparent 70%),
+    radial-gradient(ellipse 120% 90% at 50% 50%, transparent 40%, color-mix(in srgb, var(--brand-bg) 90%, transparent));
+}
+
+.human,
+.robot {
+  position: absolute;
+  display: block;
+  block-size: auto;
+  max-inline-size: none;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* each picture fades out away from its fingertip, so no edge of the picture (the arm's cut end) is ever seen */
+.human {
+  -webkit-mask-image: radial-gradient(ellipse 100% 105% at 94% 12%, var(--brand-bg) 50%, transparent 96%);
+  mask-image: radial-gradient(ellipse 100% 105% at 94% 12%, var(--brand-bg) 50%, transparent 96%);
+  inline-size: var(--hw);
+  left: calc(var(--cx) - var(--hw) * 0.9414);
+  top: calc(var(--cy) - var(--hw) * 0.5 * 0.1243);
+  animation: humanIn 1450ms cubic-bezier(0.22, 0.8, 0.25, 1) 100ms both;
+}
+
+.robot {
+  -webkit-mask-image: radial-gradient(ellipse 95% 110% at 17% 74%, var(--brand-bg) 50%, transparent 96%);
+  mask-image: radial-gradient(ellipse 95% 110% at 17% 74%, var(--brand-bg) 50%, transparent 96%);
+  inline-size: var(--rw);
+  left: calc(var(--cx) - var(--rw) * 0.1721);
+  top: calc(var(--cy) - var(--rw) * 0.5629 * 0.7411);
+  animation: robotIn 1450ms cubic-bezier(0.22, 0.8, 0.25, 1) 100ms both;
+}
+
+@keyframes humanIn {
+  from {
+    opacity: 0;
+    transform: translate(-16vw, 5svh);
+  }
+  35% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes robotIn {
+  from {
+    opacity: 0;
+    transform: translate(16vw, -5svh);
+  }
+  35% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* the light from the touch: everything centred on the touch point */
+.glow {
+  position: absolute;
+  left: var(--cx);
+  top: var(--cy);
+  inline-size: 0;
+  block-size: 0;
+  pointer-events: none;
+}
+
+.glow > span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+  translate: -50% -50%;
+  opacity: 0;
+}
+
+.spark {
+  inline-size: 46px;
+  block-size: 46px;
+  background: radial-gradient(circle, var(--brand-highlight) 0 18%, var(--brand-glow) 45%, transparent 70%);
+  animation: spark 900ms ease-out 1500ms both;
+}
+
+@keyframes spark {
+  from {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  to {
+    opacity: 0.85;
+    transform: scale(0.9);
+  }
+}
+
+.halo {
+  inline-size: min(110vw, 1500px);
+  block-size: min(110vw, 1500px);
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--brand-lime) 34%, transparent) 0,
+    color-mix(in srgb, var(--brand-emerald-bright) 18%, transparent) 22%,
+    color-mix(in srgb, var(--brand-emerald) 8%, transparent) 42%,
+    transparent 62%
+  );
+  animation: halo 1000ms ease-out 1520ms both;
+}
+
+@keyframes halo {
+  from {
+    opacity: 0;
+    transform: scale(0.15);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* two thin lines of light opening around the touch, flattened like the field lines in the reference */
+.arc {
+  inline-size: min(36vw, 420px);
+  block-size: min(20vw, 230px);
+  border: 1.5px solid color-mix(in srgb, var(--brand-lime) 55%, transparent);
+  box-shadow: 0 0 18px var(--brand-glow-soft);
+  animation: arc 1100ms ease-out 1560ms both;
+}
+
+.arc2 {
+  inline-size: min(22vw, 260px);
+  block-size: min(40vw, 460px);
+  animation-delay: 1640ms;
+}
+
+@keyframes arc {
+  from {
+    opacity: 0;
+    transform: scale(0.1);
+  }
+  40% {
+    opacity: 0.8;
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+}
+
+.skip {
+  position: absolute;
+  inset-block-end: max(20px, env(safe-area-inset-bottom));
+  inset-inline-start: 50%;
+  translate: 50% 0; /* centred (RTL: the start side is the right) */
+  padding: 8px 20px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--brand-text-silver);
+  background: var(--brand-glass-strong);
+  box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
+  cursor: pointer;
+}
+
+.skip:focus-visible {
+  outline: 2px solid var(--brand-highlight);
+  outline-offset: 2px;
+}
+
+/* a phone: the touch a little higher, the hands larger against the narrow screen */
+@media (max-width: 719px) {
+  .intro {
+    --cy: 44svh;
+    --hw: clamp(260px, 82vw, 560px);
+  }
+}
+
+/* never with reduced motion (the inline script hides it too; this is the fallback without scripts) */
+@media (prefers-reduced-motion: reduce) {
+  .intro {
+    display: none;
+  }
+}

@@ -28,8 +28,15 @@ export const isWide = (info: TestInfo) => width(info) >= 1920;
  */
 const MUTATION_CSS = process.env.E2E_MUTATION_CSS;
 
+/** The opening (SiteIntro) counts as seen in this tab: the home page shows at once. */
+export async function skipIntro(page: Page) {
+  await page.addInitScript(() => sessionStorage.setItem("tashfeer.intro.seen", "1"));
+}
+
 /** Load the homepage and wait until client effects have run (the background stamps data-ambient-motion). */
 export async function openHome(page: Page) {
+  // the site's opening plays once per tab: these tests look at the home page itself (the opening has its own tests)
+  await skipIntro(page);
   await page.goto("/");
   if (MUTATION_CSS) await page.addStyleTag({ content: MUTATION_CSS });
   await page.locator("[data-ambient-background][data-ambient-motion]").waitFor({ state: "attached" });
