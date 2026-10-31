@@ -203,9 +203,12 @@ export class TashfeerStage {
 
   /** the canvas size (CSS px) and the box his whole body fills in it */
   frame(width: number, height: number, box?: Box) {
-    this.size = { w: Math.max(1, width), h: Math.max(1, height) };
-    this.box = box ?? { x: 0, y: 0, width: this.size.w, height: this.size.h };
-    this.renderer.setSize(this.size.w, this.size.h, false);
+    const w = Math.max(1, Math.round(width));
+    const h = Math.max(1, Math.round(height));
+    // resizing the drawing buffer is costly (seconds without a GPU): only when the size really changes
+    if (w !== this.size.w || h !== this.size.h || this.canvas.width <= 1) this.renderer.setSize(w, h, false);
+    this.size = { w, h };
+    this.box = box ?? { x: 0, y: 0, width: w, height: h };
     this.updateCamera();
   }
 
@@ -273,6 +276,9 @@ export class TashfeerStage {
       // while the page changes (under its glass) a Tashfeer standing on the page is not drawn: the change gets the
       // device's whole time (the crossing's stage and his walk in from the portal move, and always draw)
       if (!this.moving && !this.first && document.documentElement.hasAttribute("data-scene-transition")) return;
+      // never more than one frame waiting in the graphics process: a slow device (no GPU) would otherwise pile frames
+      // up there, and the page would wait for the pile at its next change of screen
+      if (!this.gpuDone()) return;
       // lite: about 6 frames a second at most (each one is expensive without a GPU), and none while nothing changes
       // (a moving crossing or arrival always draws)
       if (this.lite) {
@@ -292,9 +298,29 @@ export class TashfeerStage {
       this.lastDraw = now;
       const t = performance.now();
       this.render(dt);
+      this.fence();
       push(this.drawCosts, performance.now() - t);
     };
     this.raf = requestAnimationFrame(loop);
+  }
+
+  private sync: WebGLSync | null = null;
+  /** marks the end of the frame just sent (WebGL 2) */
+  private fence() {
+    const gl = this.renderer.getContext();
+    if (!("fenceSync" in gl)) return;
+    if (this.sync) gl.deleteSync(this.sync);
+    this.sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+    gl.flush();
+  }
+  /** whether the graphics process has finished the last frame (asked without waiting) */
+  private gpuDone() {
+    if (!this.sync) return true;
+    const gl = this.renderer.getContext() as WebGL2RenderingContext;
+    if (gl.getSyncParameter(this.sync, gl.SYNC_STATUS) !== gl.SIGNALED) return false;
+    gl.deleteSync(this.sync);
+    this.sync = null;
+    return true;
   }
 
   stop() {
@@ -420,7 +446,8 @@ function shadowTexture() {
 /**
  * Stages are kept and used again, never destroyed: creating a WebGL context, compiling his shaders and — worse —
  * destroying a context cost the page's time (seconds without a GPU, blocking a change of screen). Two are enough: the
- * page's Tashfeer and the crossing's twin. A stage given back stops, leaves the page and keeps a 1×1 drawing buffer.
+ * page's Tashfeer and the crossing's twin. A stage given back stops and leaves the page; its drawing buffer is kept
+ * (resizing it is costly too: the next use of the same size costs nothing).
  */
 const pool: TashfeerStage[] = [];
 const POOL = 2;
@@ -438,7 +465,6 @@ export function giveBack(s: TashfeerStage) {
   s.reset();
   s.canvas.remove();
   s.canvas.removeAttribute("style");
-  s.frame(1, 1);
   if (pool.length < POOL && !pool.includes(s)) pool.push(s);
   else if (!pool.includes(s)) s.dispose();
 }
