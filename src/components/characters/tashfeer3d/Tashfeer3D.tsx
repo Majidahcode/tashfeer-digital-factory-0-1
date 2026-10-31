@@ -11,7 +11,7 @@
  */
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { diagnosticsOn, record } from "@/lib/diagnostics";
-import { arrivalPending, consumeArrival, prefersReducedMotion } from "@/lib/page-transition";
+import { arrivalClearing, arrivalPending, consumeArrival, prefersReducedMotion } from "@/lib/page-transition";
 import { focusOf, sendTashfeer, subscribeTashfeer, tashfeerState, voiceLevelNow } from "@/lib/tashfeer-controller";
 import type { Mode } from "./poses";
 import { TashfeerStage, giveBack, takeStage } from "./stage";
@@ -104,7 +104,9 @@ export function Tashfeer3D({ className, style, attend }: { className?: string; s
 
     function setUp(el: HTMLDivElement, stage: TashfeerStage) {
     // the internal test page may reach the stage, to check joints one by one (never on the visitor's screens)
-    if (location.pathname.startsWith("/robot-animation-test")) (window as unknown as { __tashfeerStage?: TashfeerStage }).__tashfeerStage = stage;
+    // (and the hidden diagnostics, ?diag=1: to measure where he looks on a real screen)
+    if (location.pathname.startsWith("/robot-animation-test") || diagnosticsOn())
+      (window as unknown as { __tashfeerStage?: TashfeerStage }).__tashfeerStage = stage;
     const still = prefersReducedMotion();
     // a software renderer: no idle sway (each frame is costly there; he moves only when something happens)
     stage.still = still;
@@ -120,12 +122,15 @@ export function Tashfeer3D({ className, style, attend }: { className?: string; s
     const ro = new ResizeObserver(fit);
     ro.observe(el);
 
-    // just through the portal: he walks out of the depth to his place (not with reduced motion)
+    // just through the portal: he comes on from the depth, the way he crossed, in short steps that slow as he nears
+    // his place, and settles; then he turns to what he reviews (not with reduced motion). He starts as the glass over
+    // the screen begins to clear — not under it, where his walk would be lost
     const arriving = consumeArrival() === "portal" && !still;
     let arriveT = 0;
-    const ARRIVE = 1.3;
-    const FROM_Z = -2.6;
-    const STRIDE = 1.4; // metres per step cycle
+    let waited = 0;
+    let stepPhase = 0;
+    const ARRIVE = 2.4;
+    const FROM_Z = -2.0;
     if (arriving) stage.root.position.z = FROM_Z;
 
     const moodToMode = (m: string): Mode =>
@@ -135,14 +140,26 @@ export function Tashfeer3D({ className, style, attend }: { className?: string; s
     stage.onFrame = (dt, s) => {
       s.moving = arriving && arriveT < ARRIVE;
       if (arriving && arriveT < ARRIVE) {
-        const before = s.root.position.z;
-        arriveT = Math.min(ARRIVE, arriveT + dt);
-        const k = arriveT / ARRIVE;
-        const e = 1 - (1 - k) * (1 - k); // eases into his place
-        s.root.position.z = FROM_Z * (1 - e);
-        s.phase = (s.phase + Math.abs(s.root.position.z - before) / STRIDE) % 1;
-        s.setMode(k < 0.92 ? "walking" : "idle");
         s.look = null;
+        if (!arrivalClearing() && waited < 4) {
+          waited += dt;
+          s.setMode("idle");
+          return;
+        }
+        const before = s.root.position.z;
+        // a stalled frame (the new screen still settling on a slow device) must not swallow the walk: he takes his
+        // steps whatever the frame rate
+        const step = Math.min(dt, 0.15);
+        arriveT = Math.min(ARRIVE, arriveT + step);
+        const k = arriveT / ARRIVE;
+        const e = 1 - (1 - k) * (1 - k); // at a walking pace from the crossing, slowing into his place
+        s.root.position.z = FROM_Z * (1 - e);
+        const moved = Math.abs(s.root.position.z - before);
+        // shorter steps as he slows: the step cycle follows the ground covered, the planted foot stays put
+        s.stride = Math.min(1.1, Math.max(0.45, 0.45 + 0.5 * (step > 0 ? moved / step : 0)));
+        stepPhase += moved / s.stride;
+        s.phase = stepPhase % 1;
+        s.setMode(k < 0.9 ? "walking" : "idle");
         return;
       }
       const st = tashfeerState();
@@ -179,9 +196,12 @@ export function Tashfeer3D({ className, style, attend }: { className?: string; s
       if (target) {
         const t = target.getBoundingClientRect();
         const me = el.getBoundingClientRect();
-        // the visitor's face is near the top of their picture; the chat, at its middle
-        const ty = focus === "customer" ? t.top + t.height * 0.25 : t.top + t.height * 0.5;
-        s.lookAtScreen(t.left + t.width / 2 - me.left, ty - me.top);
+        if (focus === "customer") {
+          // the visitor's face: where it is in their picture (data-face-x, a share of its width), mirrored with it
+          const fx = Number(target.dataset.faceX ?? 0.5);
+          const flipped = new DOMMatrixReadOnly(getComputedStyle(target).transform === "none" ? undefined : getComputedStyle(target).transform).a < 0;
+          s.lookAtFace(t.left + t.width * (flipped ? 1 - fx : fx) - me.left);
+        } else s.lookAtScreen(t.left + t.width / 2 - me.left, t.top + t.height * 0.5 - me.top);
       } else s.lookAtScreen(null);
     };
 

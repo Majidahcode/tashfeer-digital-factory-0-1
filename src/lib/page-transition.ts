@@ -48,6 +48,12 @@ export function consumeArrival(): "portal" | null {
   return a;
 }
 
+/** When the glass over the new screen began to clear after a crossing (0: not yet) — his walk in starts then. */
+let clearing = 0;
+export function arrivalClearing(): number {
+  return clearing;
+}
+
 /** Whether Tashfeer is on his way through the portal (without spending it). */
 export function arrivalPending(): boolean {
   return arrival !== null;
@@ -326,7 +332,6 @@ async function cross(href: string, navigate: Navigate) {
     const m = stage.metresPerPx();
     const dx = (hole.x - (R.left + R.width / 2)) * m; // metres to walk across
     const side = Math.sign(dx) || 1;
-    const STRIDE = 1.4; // metres per step cycle (two steps)
     const DEPTH = 3.4;
     // the shot (seconds): turning toward the portal, the walk across (it eases in and out: no sudden start or stop),
     // the turn into the portal begins while he still walks, the walk in, the camera through the opening
@@ -360,7 +365,8 @@ async function cross(href: string, navigate: Navigate) {
     const st = stage;
     st.lookAtScreen(null);
     st.moving = true;
-    let stepped = 0;
+    let phase = 0;
+    let turned = 0;
     let clipped = false;
     let x = 0;
     let z = 0;
@@ -371,16 +377,24 @@ async function cross(href: string, navigate: Navigate) {
       const nx = dx * smooth(Math.min(1, Math.max(0, (t - turnA * 0.6) / walkA)));
       const kz = Math.min(1, Math.max(0, (t - walkB0) / walkB));
       const nz = -DEPTH * (kz < 0.25 ? 2 * kz * kz : kz - 0.125) / 0.875;
-      stepped += Math.abs(nx - x) + Math.abs(nz - z);
+      // his steps follow the ground he covers: the length of a step follows his pace (short as he starts, longer
+      // under way), and turning on the spot takes small steps too — so a planted foot never slides
+      const moved = Math.hypot(nx - x, nz - z);
+      // which way he faces: toward the portal, then away from us (into it)
+      const faceA = side * (Math.PI / 2) * smooth(t / turnA);
+      const faceB = side * (Math.PI / 2) * smooth((t - turnB0) / turnB);
+      const face = faceA + faceB;
+      const turning = Math.abs(face - turned) * 0.32; // the feet's path when he turns on the spot (metres)
+      turned = face;
+      const pace = dt > 0 ? (moved + turning) / dt : 0;
+      s.stride = Math.min(1.25, Math.max(0.6, 0.55 + 0.45 * pace));
+      phase += (moved + turning) / s.stride;
       x = nx;
       z = nz;
       root.position.x = x;
       root.position.z = z;
-      s.phase = (stepped / STRIDE) % 1;
-      // which way he faces: toward the portal, then away from us (into it)
-      const faceA = side * (Math.PI / 2) * smooth(t / turnA);
-      const faceB = side * (Math.PI / 2) * smooth((t - turnB0) / turnB);
-      root.rotation.y = faceA + faceB;
+      s.phase = phase % 1;
+      root.rotation.y = face;
       s.setMode(t < turnA * 0.6 ? "turning" : "walking");
       // the camera: forward with him, then through the opening
       const c = camera(t);
@@ -416,6 +430,7 @@ async function cross(href: string, navigate: Navigate) {
 
     // the agents screen, from within the glass: still moving forward, then settling, while he walks out of the depth
     stage.stop();
+    clearing = 0;
     arrival = "portal";
     navigate(href);
     release();
@@ -428,6 +443,8 @@ async function cross(href: string, navigate: Navigate) {
     }
     await frames();
     step("arriving");
+    // his twin on the new screen starts walking in now, as the glass clears (not hidden under it)
+    clearing = performance.now();
     scene.remove();
     const next = document.querySelector<HTMLElement>("main");
     await Promise.all([

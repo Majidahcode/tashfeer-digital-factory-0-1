@@ -80,6 +80,8 @@ export function HomeScene({
             className={styles.customerImg}
             sizes="(max-width: 899px) 55vw, 30vw"
             data-seated-customer=""
+            // where the visitor's face is across the picture (share of its width): Tashfeer looks there
+            data-face-x="0.4"
           />
           <MicButton
             className={styles.mic}

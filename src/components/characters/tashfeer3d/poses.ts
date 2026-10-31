@@ -27,7 +27,89 @@ export type PoseInput = {
   voice: number;
   /** no idle movement (reduced motion) */
   still: boolean;
+  /** a number (0…1) drawn when the current mode began: varies what he does within it (never the same sequence) */
+  seed: number;
+  /** walking: the length of the step cycle now (metres per two steps) — short steps as he slows */
+  stride: number;
 };
+
+/** his leg, from the hip joint to the ankle (metres, measured on the model) */
+const LEG = 0.72;
+/**
+ * The leg's working length for the step (a little longer than LEG: the foot rolls under him) and how the hips must
+ * follow the planted leg's angle — both measured on the model by walking him and watching the planted ankle
+ * (scratch check walkcheck.mjs): with them it stays within ~1 cm of its place and height through the step.
+ */
+const STEP_LEG = 0.76;
+const HIP_FOLLOW = 0.094;
+const HIP_BASE = 0.0075;
+/** the share of a step cycle a foot stays on the ground */
+const STANCE = 0.6;
+/** a repeatable random number (0…1) for a seed and an index */
+const rnd = (seed: number, i: number) => {
+  const x = Math.sin((seed * 131.7 + i * 17.13) * 12.9898) * 43758.5453;
+  return x - Math.floor(x);
+};
+
+/**
+ * While he listens: when he nods and when he folds his arms, drawn from the seed — a short recording gets only the
+ * turn to the visitor and perhaps one nod; a longer one, folded arms for a while (as if weighing what is said), and
+ * nods at uneven moments. Nothing repeats on a fixed beat.
+ */
+function listening(s: number, seed: number) {
+  let nod = env(s, 0.8 + rnd(seed, 0) * 0.6, 1.0, 0.3, 0.5);
+  if (rnd(seed, 1) > 0.3) nod += env(s, 6 + rnd(seed, 2) * 5, 0.9, 0.3, 0.5) * 0.7;
+  nod += env(s, 15 + rnd(seed, 3) * 7, 1.0, 0.3, 0.5) * 0.8;
+  const a0 = 4.5 + rnd(seed, 4) * 3.5;
+  const l0 = 5.5 + rnd(seed, 5) * 4;
+  let fold = env(s, a0, l0, 1.3, 1.3);
+  if (rnd(seed, 6) > 0.35) {
+    const a1 = a0 + l0 + 6 + rnd(seed, 7) * 6;
+    fold = Math.max(fold, env(s, a1, 5 + rnd(seed, 8) * 3, 1.3, 1.3));
+  }
+  return { nod, fold, side: rnd(seed, 9) > 0.5 ? 1 : -1 };
+}
+
+/**
+ * Folded arms, `c` from 0 (at ease) to 1 (folded): the upper arms come forward first, then the forearms cross (and
+ * open first on the way back) — so the hands never pass through the chest. Checked on the model from the front, the
+ * side and three-quarters: no hand or forearm inside the chest, the shoulder plates apart (scratch check: clip.mjs).
+ */
+function folded(r: Pose["rot"], c: number) {
+  if (c <= 0) return;
+  const u = ease(Math.min(1, c * 1.35));
+  const f = ease((c - 0.25) / 0.75);
+  r.upper_arm_L = add(r.upper_arm_L, [deg(-54) * u, 0, deg(6) * u]);
+  r.forearm_L = add(r.forearm_L, [deg(-18) * f, deg(-100) * f, 0]);
+  r.hand_L = add(r.hand_L, [deg(-10) * f, deg(-30) * f, 0]);
+  r.upper_arm_R = add(r.upper_arm_R, [deg(-48) * u, 0, deg(-6) * u]);
+  r.forearm_R = add(r.forearm_R, [deg(-6) * f, deg(104) * f, 0]);
+  r.hand_R = add(r.hand_R, [deg(-16) * f, deg(30) * f, 0]);
+  // settled back a touch, as one who weighs what he hears
+  r.chest = add(r.chest, [deg(-1.5) * c, 0, 0]);
+}
+
+/**
+ * One leg through the step cycle (u: 0 the heel lands … STANCE the toes leave … 1). On the ground, the thigh's angle
+ * moves the foot back at exactly the pace he moves forward (sin θ linear in time): the planted foot does not slide.
+ * In the air, the knee bends to lift the foot and straightens before it lands. `reach` is sin of the largest angle.
+ * Angles: θ forward +, the knee's bend +, the foot's pitch in the world (toes up −).
+ */
+function leg(u: number, reach: number) {
+  if (u < STANCE) {
+    const s = u / STANCE;
+    const th = Math.asin(reach * (1 - 2 * s));
+    const knee = deg(5) + Math.sin(Math.PI * s) * deg(7);
+    // heel strike (toes up), flat on the ground, then the heel rises before the toes leave
+    const foot = deg(-9) * (1 - ease(s / 0.18)) + deg(22) * ease((s - 0.72) / 0.28);
+    return { th, knee, foot, ground: true };
+  }
+  const s = (u - STANCE) / (1 - STANCE);
+  const th = Math.asin(reach * (2 * ease(s) - 1));
+  const knee = deg(5) + Math.sin(Math.PI * Math.min(1, s * 1.25)) * deg(36);
+  const foot = deg(22) + (deg(-9) - deg(22)) * ease(s * 1.1);
+  return { th, knee, foot, ground: false };
+}
 
 const deg = (d: number) => (d * Math.PI) / 180;
 const add = (a: Rot | undefined, b: Rot): Rot => (a ? [a[0] + b[0], a[1] + b[1], a[2] + b[2]] : b);
@@ -79,10 +161,13 @@ export function pose(p: PoseInput): Pose {
   const s = p.since;
   switch (p.mode) {
     case "listening": {
-      // turned to the visitor; a small nod a little after they start, then another later — not on a loop
-      const nod = env(s, 1.2, 1.1, 0.3, 0.5) + env(s, 6.5, 1.0, 0.3, 0.5) * 0.7;
-      r.head = add(r.head, [deg(7) * nod, 0, deg(4)]);
-      r.chest = add(r.chest, [deg(2), 0, 0]);
+      // turned to the visitor's face (his gaze comes from the page: look), at ease; now and then a small nod, and in a
+      // longer recording his arms fold for a while and open again — drawn from the seed, never on a fixed beat
+      const plan = listening(p.still ? 0 : s, p.seed);
+      r.head = add(r.head, [deg(5) * plan.nod, 0, deg(2.5)]);
+      // the weight on one leg (which one varies)
+      out.hips = [(out.hips?.[0] ?? 0) + 0.008 * plan.side * ease(s / 1.5), out.hips?.[1] ?? 0, 0];
+      folded(r, p.still ? 0 : plan.fold);
       break;
     }
     case "attending": {
@@ -118,25 +203,43 @@ export function pose(p: PoseInput): Pose {
     }
     case "turning":
     case "walking": {
+      // a real step: weight from one leg to the other, the planted foot still on the ground, the other lifted and set
+      // down heel first; the knees bend as they should, the hips rise over the planted leg, the arms swing calmly
+      // against the legs. The length of the step follows his pace (the caller turns distance into phase)
       const w = p.mode === "walking" ? 1 : 0.55;
-      const a = p.phase * Math.PI * 2;
-      const swing = deg(24) * w;
-      // legs: one forward while the other is back; the knee bends while the leg swings through
-      r.thigh_L = add(r.thigh_L, [-Math.sin(a) * swing, 0, 0]);
-      r.thigh_R = add(r.thigh_R, [Math.sin(a) * swing, 0, 0]);
-      const kneeL = Math.max(0, Math.sin(a + Math.PI * 0.5)) * deg(40) * w + deg(5);
-      const kneeR = Math.max(0, Math.sin(a + Math.PI * 1.5)) * deg(40) * w + deg(5);
-      r.shin_L = add(r.shin_L, [kneeL, 0, 0]);
-      r.shin_R = add(r.shin_R, [kneeR, 0, 0]);
-      r.foot_L = add(r.foot_L, [Math.sin(a) * deg(10) * w - kneeL * 0.3, 0, 0]);
-      r.foot_R = add(r.foot_R, [-Math.sin(a) * deg(10) * w - kneeR * 0.3, 0, 0]);
-      // arms swing against the legs; the body rises a little on each step
-      r.upper_arm_L = add(r.upper_arm_L, [Math.sin(a) * deg(16) * w, 0, deg(4)]);
-      r.upper_arm_R = add(r.upper_arm_R, [-Math.sin(a) * deg(16) * w, 0, deg(-4)]);
-      r.forearm_L = add(r.forearm_L, [deg(-12) * w, 0, 0]);
-      r.forearm_R = add(r.forearm_R, [deg(-12) * w, 0, 0]);
-      r.spine = add(r.spine, [deg(3) * w, Math.sin(a) * deg(4) * w, 0]);
-      out.hips = [Math.sin(a) * 0.012 * w, Math.abs(Math.cos(a)) * 0.022 * w - 0.02 * w, 0];
+      // on the ground a foot travels back STANCE × stride while he moves on: 2·LEG·reach of it
+      const reach = Math.min(0.55, (STANCE * p.stride) / (2 * STEP_LEG)) * w;
+      const a = p.phase;
+      const L = leg(a % 1, reach);
+      const R = leg((a + 0.5) % 1, reach);
+      // thigh: − swings the leg forward; shin: + bends the knee; the foot keeps its own pitch in the world
+      r.thigh_L = add(r.thigh_L, [-L.th, 0, 0]);
+      r.thigh_R = add(r.thigh_R, [-R.th, 0, 0]);
+      r.shin_L = add(r.shin_L, [L.knee, 0, 0]);
+      r.shin_R = add(r.shin_R, [R.knee, 0, 0]);
+      r.foot_L = add(r.foot_L, [L.foot + L.th - L.knee, 0, 0]);
+      r.foot_R = add(r.foot_R, [R.foot + R.th - R.knee, 0, 0]);
+      // the toes stay on the ground while the heel rises
+      r.toes_L = add(r.toes_L, [-Math.max(0, L.foot) * 0.8, 0, 0]);
+      r.toes_R = add(r.toes_R, [-Math.max(0, R.foot) * 0.8, 0, 0]);
+      // the hips: as high as the planted leg allows (highest over it, lowest between steps), toward the planted side
+      const planted = [L.ground ? L : null, R.ground ? R : null].filter((x): x is typeof L => !!x);
+      const height = planted.length
+        ? Math.max(...planted.map((x) => LEG * Math.cos(x.th) - LEG * (1 - Math.cos(x.knee)) * 0.35 + HIP_FOLLOW * Math.sin(x.th)))
+        : LEG;
+      const c = Math.cos(2 * Math.PI * (a - 0.3));
+      out.hips = [0.02 * c * w, (height - LEG * Math.cos(deg(5)) - HIP_BASE) * w, 0];
+      // the pelvis turns with the forward leg, the chest against it; a slight lean into the walk
+      const turn = Math.cos(2 * Math.PI * a);
+      r.hips = add(r.hips, [0, deg(-5) * turn * w, deg(-2) * c * w]);
+      r.spine = add(r.spine, [deg(3) * w, deg(4) * turn * w, deg(1.5) * c * w]);
+      r.chest = add(r.chest, [0, deg(3) * turn * w, 0]);
+      r.head = add(r.head, [0, deg(-2) * turn * w, 0]);
+      // arms against the legs, calm; the elbow bends a little more as the arm comes forward
+      r.upper_arm_L = add(r.upper_arm_L, [deg(13) * turn * w, 0, deg(3)]);
+      r.upper_arm_R = add(r.upper_arm_R, [deg(-13) * turn * w, 0, deg(-3)]);
+      r.forearm_L = add(r.forearm_L, [(deg(-2) - deg(9) * Math.max(0, -turn)) * w, 0, 0]);
+      r.forearm_R = add(r.forearm_R, [(deg(-2) - deg(9) * Math.max(0, turn)) * w, 0, 0]);
       break;
     }
   }

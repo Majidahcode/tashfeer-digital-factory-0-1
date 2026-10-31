@@ -104,6 +104,10 @@ export class TashfeerStage {
   mode: Mode = "idle";
   look: { yaw: number; pitch: number } | null = null;
   phase = 0;
+  /** walking: metres per step cycle now (two steps) — set with the phase by whoever moves him */
+  stride = 1.2;
+  /** drawn at each new mode: what he does within it varies (see poses.ts) */
+  private seed = Math.random();
   voice = 0;
   still = false;
   /** something moves him across the screen (the crossing, the arrival): lite drawing never pauses then */
@@ -190,6 +194,7 @@ export class TashfeerStage {
     if (mode === this.mode) return;
     this.mode = mode;
     this.modeStart = this.now();
+    this.seed = Math.random();
     this.dirtyUntil = performance.now() + 2500;
   }
 
@@ -245,6 +250,24 @@ export class TashfeerStage {
     return { x: ((v.x + 1) / 2) * this.size.w, y: ((1 - v.y) / 2) * this.size.h };
   }
 
+  /**
+   * Look at the seated visitor's face: `x` is where the face is on this canvas (CSS px). The visitor sits in front of
+   * him and to the side, so his face is found by its direction across the screen and by a seated person's height —
+   * not by how far down the page the picture is (that is the picture's place, nearer to us, not a face on the
+   * floor). The head and neck turn to it; they bend down only as much as a seated face asks (never more than ~16°).
+   */
+  lookAtFace(x: number) {
+    const m = this.metresPerPx();
+    const b = this.box;
+    const dx = (x - (b.x + b.width / 2)) * m - this.root.position.x;
+    const dz = 1.4; // the visitor sits about this far in front of him
+    const EYES = HEIGHT * 0.9;
+    const SEATED_FACE = 1.2;
+    const yaw = MathUtils.clamp(Math.atan2(dx, dz), -1.0, 1.0);
+    const pitch = MathUtils.clamp(Math.atan2(EYES - SEATED_FACE, Math.hypot(dx, dz)), 0, 0.28);
+    this.look = { yaw, pitch };
+  }
+
   /** look toward a point of the screen (CSS px on this canvas): a point in front of him at that place */
   lookAtScreen(x: number | null, y?: number) {
     if (x === null || y === undefined) {
@@ -291,7 +314,9 @@ export class TashfeerStage {
           this.lastLook = look;
           this.dirtyUntil = now + 1400;
         }
-        if (!this.first && now > this.dirtyUntil && !this.moving) return;
+        // listening, thinking and replying play over time (a nod, folded arms, a gesture): drawn about once a second
+        const timed = this.mode === "listening" || this.mode === "thinking" || this.mode === "replying";
+        if (!this.first && now > this.dirtyUntil && !this.moving && !timed) return;
       }
       const dt = Math.min(0.1, (now - (this.lastDraw || now)) / 1000);
       if (this.lastDraw) push(this.frameTimes, now - this.lastDraw);
@@ -348,6 +373,8 @@ export class TashfeerStage {
         phase: this.phase,
         voice: this.voice,
         still: this.still,
+        seed: this.seed,
+        stride: this.stride,
       });
       if (this.extra)
         for (const [k, v] of Object.entries(this.extra)) {
@@ -355,7 +382,9 @@ export class TashfeerStage {
           const r = target.rot[b] ?? [0, 0, 0];
           target.rot[b] = [r[0] + v![0], r[1] + v![1], r[2] + v![2]];
         }
-      this.rig.apply(target, dt, stiffness(this.mode), this.first || (this.still && this.mode !== "walking"));
+      // walking: once under way the pose is the step itself (no lag behind it, or the planted foot would slide)
+      const stepping = this.mode === "walking" && this.now() - this.modeStart > 0.25;
+      this.rig.apply(target, dt, stiffness(this.mode), this.first || stepping || (this.still && this.mode !== "walking"));
       this.first = false;
       // the visor and lines glow a little more with the voice
       for (const m of this.emissive) m.emissiveIntensity = 0.8 + this.voice * 0.6;
@@ -383,6 +412,7 @@ export class TashfeerStage {
     this.modeStart = this.now();
     this.look = null;
     this.phase = 0;
+    this.stride = 1.2;
     this.voice = 0;
     this.still = false;
     this.moving = false;

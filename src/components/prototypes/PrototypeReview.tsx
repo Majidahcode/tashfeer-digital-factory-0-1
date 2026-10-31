@@ -185,6 +185,8 @@ export function PrototypeReview() {
       <TashfeerCharacter
         className={styles.tashfeer}
         sizes="(max-width: 1099px) 40vw, 14vw"
+        // he reviews the models with the visitor: three-quarters toward them, his head on the chosen one (or the two)
+        attend={{ selector: "[data-prototype][data-selected]", fallback: "[data-prototype-cards]" }}
       />
 
       <div className={styles.main}>
@@ -197,7 +199,7 @@ export function PrototypeReview() {
           </p>
         </header>
 
-        <div className={styles.cards}>
+        <div className={styles.cards} data-prototype-cards="">
           {PROTOTYPES.map((p, i) => (
             <Fragment key={p.id}>
               {i > 0 && (

@@ -46,8 +46,9 @@ test("every secondary colour is a mix of the six Neon values (no other hues)", (
     const got = rgb(HEX[name]!);
     got.forEach((v, i) => expect(Math.abs(v - want[i]!), `--${name} channel ${i}`).toBeLessThanOrEqual(1));
   }
-  // and nothing else in the palette section: every hex token is Neon, a recipe above, or a semantic state
-  const allowed = new Set([...Object.keys(NEON), ...Object.keys(recipes), "state-danger", "state-warning"]);
+  // and nothing else in the palette section: every hex token is Neon, a recipe above, a semantic state, or the orange
+  // of Tashfeer's own lights (his character's colour, from the owner's Meshy model — never used for the interface)
+  const allowed = new Set([...Object.keys(NEON), ...Object.keys(recipes), "state-danger", "state-warning", "tashfeer-glow"]);
   expect(Object.keys(HEX).filter((k) => !allowed.has(k))).toEqual([]);
 });
 
