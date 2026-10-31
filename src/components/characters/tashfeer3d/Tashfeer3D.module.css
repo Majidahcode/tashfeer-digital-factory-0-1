@@ -21,8 +21,9 @@
   object-position: 50% 100%;
 }
 
+/* the canvas is added by the component (a new one for each set-up); it shows once he is ready */
 .still[data-visible],
-.canvas[data-visible] {
+.box[data-tashfeer-3d="ready"] > .canvas {
   opacity: 1;
 }
 

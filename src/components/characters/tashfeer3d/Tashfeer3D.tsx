@@ -31,7 +31,6 @@ function webglAvailable() {
 
 export function Tashfeer3D({ className, style }: { className?: string; style?: CSSProperties }) {
   const box = useRef<HTMLDivElement>(null);
-  const canvas = useRef<HTMLCanvasElement>(null);
   // on his way through the portal: no still at his place meanwhile (he walks there from the depth)
   const [status, setStatus] = useState<"loading" | "arriving" | "ready" | "fallback">(() =>
     typeof window !== "undefined" && arrivalPending() ? "arriving" : "loading",
@@ -40,8 +39,7 @@ export function Tashfeer3D({ className, style }: { className?: string; style?: C
 
   useEffect(() => {
     const el = box.current;
-    const cv = canvas.current;
-    if (!el || !cv) return;
+    if (!el) return;
     if (!webglAvailable()) {
       // no WebGL here: the still stays (decided once, after mounting — the server cannot know)
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -58,7 +56,22 @@ export function Tashfeer3D({ className, style }: { className?: string; style?: C
       !document.documentElement.hasAttribute("data-scene-transition") && window.__tashfeerIntro !== "play";
     const begin = () => {
       if (cancelled || cleanup) return;
-      cleanup = setUp(el, cv);
+      // a fresh canvas for each set-up: a canvas whose WebGL context was released (the previous set-up's clean-up,
+      // React's development double run) cannot give a new one
+      const cv = document.createElement("canvas");
+      cv.className = styles.canvas ?? "";
+      el.appendChild(cv);
+      try {
+        const undo = setUp(el, cv);
+        cleanup = () => {
+          undo();
+          cv.remove();
+        };
+      } catch {
+        // WebGL refused here (too many contexts, a driver failure): the still stays
+        cv.remove();
+        setStatus("fallback");
+      }
     };
     const watch = new MutationObserver(() => calm() && begin());
     const onIntro = () => calm() && begin();
@@ -194,7 +207,6 @@ export function Tashfeer3D({ className, style }: { className?: string; style?: C
         data-visible={status === "ready" || status === "arriving" ? undefined : ""}
         decoding="async"
       />
-      <canvas ref={canvas} className={styles.canvas} data-visible={status === "ready" ? "" : undefined} />
     </div>
   );
 }
