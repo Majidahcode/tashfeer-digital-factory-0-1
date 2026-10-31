@@ -239,8 +239,12 @@ export class TashfeerStage {
     this.last = performance.now();
     const loop = (now: number) => {
       this.raf = requestAnimationFrame(loop);
+      // what he does and where he looks is updated every frame (cheap); drawing may be skipped below
+      const raw = Math.max(0, (now - this.last) / 1000);
+      this.last = now;
+      this.onFrame?.(raw, this);
       // lite: about 6 frames a second at most (each one is expensive without a GPU), and none while nothing changes
-      // (a moving crossing or arrival always draws: onFrame)
+      // (a moving crossing or arrival always draws)
       if (this.lite) {
         if (now - this.lastDraw < 160) return;
         const look = this.look ? `${this.look.yaw.toFixed(2)},${this.look.pitch.toFixed(2)}` : "";
@@ -248,15 +252,11 @@ export class TashfeerStage {
           this.lastLook = look;
           this.dirtyUntil = now + 2500;
         }
-        if (!this.first && now > this.dirtyUntil && !this.moving) {
-          this.last = now;
-          return;
-        }
+        if (!this.first && now > this.dirtyUntil && !this.moving) return;
       }
+      const dt = Math.min(0.1, (now - (this.lastDraw || now)) / 1000);
       this.lastDraw = now;
-      const raw = Math.max(0, (now - this.last) / 1000);
-      this.last = now;
-      this.tick(Math.min(0.1, raw), raw);
+      this.render(dt);
     };
     this.raf = requestAnimationFrame(loop);
   }
@@ -272,6 +272,11 @@ export class TashfeerStage {
    */
   tick(dt: number, real = dt) {
     this.onFrame?.(real, this);
+    this.render(dt);
+  }
+
+  /** pose and draw (no movement) */
+  private render(dt: number) {
     if (this.rig) {
       const target = pose({
         mode: this.mode,
