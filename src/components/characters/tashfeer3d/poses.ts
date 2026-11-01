@@ -12,6 +12,8 @@
 import type { Pose, Rot } from "./rig";
 
 export type Mode = "idle" | "listening" | "attending" | "thinking" | "replying" | "walking" | "turning";
+/** short gestures over any pose: attention (an agent chosen), confirmation (a model chosen), approval (approved) */
+export type Gesture = "attend" | "confirm" | "approve";
 
 export type PoseInput = {
   mode: Mode;
@@ -31,6 +33,10 @@ export type PoseInput = {
   seed: number;
   /** walking: the length of the step cycle now (metres per two steps) — short steps as he slows */
   stride: number;
+  /** reviewing something on the screen with the visitor: the neck and upper body share his turn toward it */
+  review?: boolean;
+  /** a short gesture playing, and for how long */
+  gesture?: { kind: Gesture; since: number } | null;
 };
 
 /** his leg, from the hip joint to the ankle (metres, measured on the model) */
@@ -57,9 +63,33 @@ const rnd = (seed: number, i: number) => {
  * nods at uneven moments. Nothing repeats on a fixed beat.
  */
 function listening(s: number, seed: number) {
-  let nod = env(s, 0.8 + rnd(seed, 0) * 0.6, 1.0, 0.3, 0.5);
-  if (rnd(seed, 1) > 0.3) nod += env(s, 6 + rnd(seed, 2) * 5, 0.9, 0.3, 0.5) * 0.7;
-  nod += env(s, 15 + rnd(seed, 3) * 7, 1.0, 0.3, 0.5) * 0.8;
+  // the nods: a small nod down and back to the visitor's face, sometimes two light ones, sometimes a slight tilt held
+  // a moment, as one weighing what he hears — with still pauses of uneven length between them, and uneven strength.
+  // Never side to side (that reads as «no»), never the whole body.
+  let pitch = 0;
+  let roll = 0;
+  let t = 1.0 + rnd(seed, 20) * 0.8;
+  for (let i = 0; i < 24 && t < s + 0.1; i++) {
+    const kind = rnd(seed, 30 + i);
+    const amp = 0.8 + rnd(seed, 60 + i) * 0.45;
+    const bump = (x: number) => (x <= 0 || x >= 1 ? 0 : (1 - Math.cos(2 * Math.PI * x)) / 2);
+    if (kind < 0.55) {
+      const d = 0.75 + rnd(seed, 90 + i) * 0.35;
+      pitch += bump((s - t) / d) * deg(9) * amp;
+      t += d;
+    } else if (kind < 0.8) {
+      const d = 0.5 + rnd(seed, 95 + i) * 0.15;
+      pitch += (bump((s - t) / d) + bump((s - t - d) / d) * 0.8) * deg(6.5) * amp;
+      t += 2 * d;
+    } else {
+      const d = 1.6 + rnd(seed, 120 + i) * 1.1;
+      const e = env(s, t, d, 0.4, 0.5);
+      roll += e * deg(6) * amp * (rnd(seed, 150 + i) > 0.5 ? 1 : -1);
+      pitch += e * deg(2.5);
+      t += d;
+    }
+    t += 2.2 + rnd(seed, 180 + i) * 3.6;
+  }
   const a0 = 4.5 + rnd(seed, 4) * 3.5;
   const l0 = 5.5 + rnd(seed, 5) * 4;
   let fold = env(s, a0, l0, 1.3, 1.3);
@@ -67,7 +97,29 @@ function listening(s: number, seed: number) {
     const a1 = a0 + l0 + 6 + rnd(seed, 7) * 6;
     fold = Math.max(fold, env(s, a1, 5 + rnd(seed, 8) * 3, 1.3, 1.3));
   }
-  return { nod, fold, side: rnd(seed, 9) > 0.5 ? 1 : -1 };
+  return { pitch, roll, busy: Math.abs(pitch) / deg(9) + Math.abs(roll) / deg(6), fold, side: rnd(seed, 9) > 0.5 ? 1 : -1 };
+}
+
+/**
+ * A short gesture over the pose, `x` seconds in (attention, confirmation, approval): clear enough to be seen at his
+ * size on the page, never a shake. Returns the head's and chest's extra pitch and roll, and how busy the head is.
+ */
+function gestureOf(kind: Gesture, x: number) {
+  const bump = (u: number) => (u <= 0 || u >= 1 ? 0 : (1 - Math.cos(2 * Math.PI * u)) / 2);
+  if (kind === "attend") {
+    // a quick, noticeable lean of attention: the head dips and the chest follows a little, then settles on it
+    const b = bump(x / 0.9);
+    return { head: deg(8) * b, chest: deg(3) * b, roll: deg(2) * b, busy: b };
+  }
+  if (kind === "confirm") {
+    // a clear nod of «yes, this one»
+    const b = bump(x / 0.85);
+    return { head: deg(11) * b, chest: deg(2.5) * b, roll: deg(3) * b, busy: b };
+  }
+  // approval: two nods, the second smaller, and the chest rising a touch at the end — a little more than choosing
+  const b = bump(x / 0.7) + bump((x - 0.7) / 0.6) * 0.75;
+  const rise = env(x, 1.0, 1.0, 0.3, 0.5);
+  return { head: deg(10) * b, chest: deg(2) * b - deg(2.5) * rise, roll: 0, busy: b + rise };
 }
 
 /**
@@ -159,7 +211,7 @@ export function pose(p: PoseInput): Pose {
 
   // where he looks: shared by head, neck and a little of the chest (more of it when someone speaks to him)
   const look = p.look ?? { yaw: 0, pitch: 0 };
-  const body = p.mode === "listening" || p.mode === "replying" ? 0.22 : 0.12;
+  const body = p.mode === "listening" || p.mode === "replying" ? 0.22 : p.review ? 0.24 : 0.12;
   // (down: mostly the head and neck, the chest leans a little — the three add up to the whole look)
   r.head = add(r.head, [look.pitch * 0.5, look.yaw * (0.62 - body / 2), 0]);
   r.neck = add(r.neck, [look.pitch * 0.35, look.yaw * 0.28, 0]);
@@ -173,7 +225,8 @@ export function pose(p: PoseInput): Pose {
       // turned to the visitor's face (his gaze comes from the page: look), at ease; now and then a small nod, and in a
       // longer recording his arms fold for a while and open again — drawn from the seed, never on a fixed beat
       const plan = listening(p.still ? 0 : s, p.seed);
-      r.head = add(r.head, [deg(5) * plan.nod, 0, deg(2.5)]);
+      r.head = add(r.head, [plan.pitch, 0, deg(1.5) + plan.roll]);
+      out.busy = Math.max(out.busy ?? 0, plan.busy);
       // the weight on one leg (which one varies)
       out.hips = [(out.hips?.[0] ?? 0) + 0.008 * plan.side * ease(s / 1.5), out.hips?.[1] ?? 0, 0];
       folded(r, p.still ? 0 : plan.fold);
@@ -251,6 +304,14 @@ export function pose(p: PoseInput): Pose {
       r.forearm_R = add(r.forearm_R, [(deg(-2) - deg(9) * Math.max(0, turn)) * w, 0, 0]);
       break;
     }
+  }
+  // a short gesture, over whatever he is doing
+  if (p.gesture && !p.still) {
+    const g = gestureOf(p.gesture.kind, p.gesture.since);
+    r.head = add(r.head, [g.head, 0, g.roll]);
+    r.neck = add(r.neck, [g.head * 0.3, 0, 0]);
+    r.chest = add(r.chest, [g.chest, 0, 0]);
+    out.busy = Math.max(out.busy ?? 0, g.busy);
   }
   return out;
 }

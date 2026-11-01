@@ -174,6 +174,13 @@ html[data-software-render] .page-veil__glass {
   inline-size: 100%;
   block-size: 100%;
   display: block;
+  /* the same soft glow as Tashfeer on the home page (HomeScene .robot): the hand-over shows no change of light */
+  filter: drop-shadow(0 0 16px var(--brand-glow-soft));
+}
+
+/* without a GPU a full-screen glow would stall the crossing: there the twin goes without it */
+html[data-software-render] .page-veil__canvas {
+  filter: none;
 }
 
 .page-veil__ring {

@@ -12,9 +12,9 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { diagnosticsOn, record } from "@/lib/diagnostics";
 import { arrivalClearing, arrivalPending, consumeArrival, prefersReducedMotion } from "@/lib/page-transition";
-import { focusOf, sendTashfeer, subscribeTashfeer, tashfeerState, voiceLevelNow } from "@/lib/tashfeer-controller";
-import type { Mode } from "./poses";
-import { TashfeerStage, giveBack, takeStage } from "./stage";
+import { REACT_EVENT, focusOf, sendTashfeer, subscribeTashfeer, tashfeerState, voiceLevelNow } from "@/lib/tashfeer-controller";
+import type { Gesture, Mode } from "./poses";
+import { TashfeerStage, giveBack, setPageStage, takeStage } from "./stage";
 import { STILL } from "./still";
 import styles from "./Tashfeer3D.module.css";
 
@@ -137,6 +137,15 @@ export function Tashfeer3D({ className, style, attend }: { className?: string; s
       m === "listening" ? "listening" : m === "attending" ? "attending" : m === "thinking" ? "thinking" : m === "replying" ? "replying" : "idle";
 
     let aim: { x: number; y: number } | null = null;
+    let cand: { x: number; y: number; at: number } | null = null;
+    // a gesture asked for by the page (an agent chosen, a model chosen or approved): played once he faces it
+    let pending: Gesture | null = null;
+    const onReact = (e: Event) => {
+      const kind = (e as CustomEvent<Gesture>).detail;
+      if (attend) pending = kind;
+      else stage.react(kind);
+    };
+    window.addEventListener(REACT_EVENT, onReact);
     stage.onFrame = (dt, s) => {
       s.moving = arriving && arriveT < ARRIVE;
       if (arriving && arriveT < ARRIVE) {
@@ -174,18 +183,36 @@ export function Tashfeer3D({ className, style, attend }: { className?: string; s
         if (t && t.width) {
           const x = t.left + t.width / 2 - me.left;
           const y = t.top + t.height * 0.4 - me.top;
-          // only a real move of the target re-aims him (no turn with every pixel of a drag)
-          if (!aim || Math.hypot(x - aim.x, y - aim.y) > 36) aim = { x, y };
+          // he answers the card the strip settles on, not every pixel of a drag: a new place must hold still for a
+          // moment (≈0.3 s) before he turns to it — a fast drag across many cards gives one turn, to the last one
+          const now = performance.now();
+          if (!cand || Math.hypot(x - cand.x, y - cand.y) > 10) cand = { x, y, at: now };
+          if (!aim || (now - cand.at > 300 && Math.hypot(cand.x - aim.x, cand.y - aim.y) > 20)) {
+            const first = !aim;
+            aim = { x: cand.x, y: cand.y };
+            // an attention gesture asked for meanwhile (an agent chosen) plays once he has turned to it
+            if (!first && pending) {
+              s.react(pending);
+              pending = null;
+            }
+          }
+          if (pending && now - cand.at > 300 && aim && Math.hypot(cand.x - aim.x, cand.y - aim.y) <= 20) {
+            s.react(pending);
+            pending = null;
+          }
           const side = aim.x > me.width / 2 ? 1 : -1;
-          const goal = Math.abs(aim.x - me.width / 2) < me.width * 0.6 ? side * 0.22 : side * 0.5; // ≈ 29° at most: three-quarters
-          s.root.rotation.y += (goal - s.root.rotation.y) * (1 - Math.exp(-dt * 2.2));
+          const goal = Math.abs(aim.x - me.width / 2) < me.width * 0.6 ? side * 0.26 : side * 0.55; // ≈ 31° at most: three-quarters
+          s.root.rotation.y += (goal - s.root.rotation.y) * (1 - Math.exp(-dt * 2.4));
           s.moving = Math.abs(goal - s.root.rotation.y) > 0.02; // (a software renderer draws more while he turns)
-          s.lookAtScreen(aim.x, aim.y);
+          // the point is taken a little deeper in front of him, so his head turns clearly from one card to the next
+          s.lookAtScreen(aim.x, aim.y, 2.2);
+          s.review = true;
           // the head's turn is what remains after the body's
-          if (s.look) s.look = { yaw: Math.max(-0.7, Math.min(0.7, s.look.yaw - s.root.rotation.y)), pitch: s.look.pitch };
+          if (s.look) s.look = { yaw: Math.max(-0.75, Math.min(0.75, s.look.yaw - s.root.rotation.y)), pitch: s.look.pitch };
           return;
         }
       }
+      s.review = false;
       // facing the visitor again (a state that turns him to the visitor or the chat), smoothly
       if (s.root.rotation.y !== 0) {
         s.root.rotation.y += (0 - s.root.rotation.y) * (1 - Math.exp(-dt * 2.2));
@@ -254,8 +281,11 @@ export function Tashfeer3D({ className, style, attend }: { className?: string; s
       if (m === "leaving") stage.stop();
     });
 
+    setPageStage(stage);
     return () => {
       alive = false;
+      setPageStage(null, stage);
+      window.removeEventListener(REACT_EVENT, onReact);
       window.clearInterval(diag);
       ro.disconnect();
       io.disconnect();

@@ -325,6 +325,12 @@ async function cross(href: string, navigate: Navigate) {
     const H = innerHeight;
     stage.frame(W, H, { x: R.left, y: R.top, width: R.width, height: R.height });
     await Promise.race([stage.ready, wait(2500).then(() => Promise.reject(new Error("model")))]);
+    // the twin takes on the page's Tashfeer exactly as he stands now — head, arms, feet, what he was doing — so the
+    // hand-over shows nothing (it used to start from a fresh, front-facing pose: the jump at «ادخل»)
+    const { pageStage } = await import("@/components/characters/tashfeer3d/stage");
+    const src = pageStage();
+    const wasListening = src?.mode === "listening";
+    if (src?.loaded) stage.copyPoseFrom(src);
     stage.draw();
     await frames(1);
     robot.style.visibility = "hidden"; // the page's Tashfeer gives way to his twin, in the same place and pose
@@ -363,15 +369,25 @@ async function cross(href: string, navigate: Navigate) {
     let done: () => void = () => {};
     const finished = new Promise<void>((r) => (done = r));
     const st = stage;
-    st.lookAtScreen(null);
     st.moving = true;
+    // first a moment of getting ready, from the pose he had: his gaze goes to the portal, folded arms open, then the
+    // body turns and the first step comes (a little longer when he was listening: his arms may be folded)
+    const PRE = wasListening ? 0.85 : 0.5;
+    let clock = 0;
     let phase = 0;
     let turned = 0;
     let clipped = false;
     let x = 0;
     let z = 0;
     st.onFrame = (dt, s) => {
-      t = Math.min(end, t + dt);
+      clock += dt;
+      if (clock < PRE) {
+        s.setMode("idle");
+        s.lookAtScreen(hole.x, hole.y);
+        return;
+      }
+      if (t === 0) s.lookAtScreen(null); // facing the portal as he turns: his head goes with his body
+      t = Math.min(end, clock - PRE);
       const root = s.root;
       // where he is: across (eased), then in (a gentle start, then a steady pace)
       const nx = dx * smooth(Math.min(1, Math.max(0, (t - turnA * 0.6) / walkA)));
@@ -426,7 +442,7 @@ async function cross(href: string, navigate: Navigate) {
     step("approachingPortal");
     st.start();
     play(chat, [{ opacity: 1 }, { opacity: 0 }], { duration: 500, easing: ease.out });
-    await Promise.race([finished, wait(end * 1000 + 3000)]);
+    await Promise.race([finished, wait((end + PRE) * 1000 + 3000)]);
 
     // the agents screen, from within the glass: still moving forward, then settling, while he walks out of the depth
     stage.stop();

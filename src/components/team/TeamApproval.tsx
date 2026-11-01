@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { AgentCarousel } from "@/components/agents/AgentCarousel";
 import { TashfeerCharacter } from "@/components/characters/TashfeerCharacter";
 import { Icon } from "@/components/icons/Icon";
@@ -10,6 +10,7 @@ import { AGENTS, agentImage, chosenLabel } from "@/domain/agents";
 import { PLANS, features, roleInProject } from "@/domain/team-plan";
 import { cx } from "@/lib/cx";
 import { transitionTo } from "@/lib/page-transition";
+import { tashfeerReact } from "@/lib/tashfeer-controller";
 import {
   approvalOf,
   hasFile,
@@ -46,7 +47,14 @@ export function TeamApproval() {
   const approval = approvalOf(project);
   const files = project.attachments.filter((a) => hasFile(a.id)).length;
   const f = useMemo(() => features(project.idea, files), [project.idea, files]);
-  const onCenter = useCallback((id: string) => setActive(id), []);
+  // the agent the visitor brings to the centre (not the first one the screen opens on): Tashfeer turns to it and
+  // shows his attention once the strip settles (one gesture, however many cards a drag passes)
+  const opened = useRef(false);
+  const onCenter = useCallback((id: string) => {
+    setActive(id);
+    if (opened.current) tashfeerReact("attend");
+    opened.current = true;
+  }, []);
   const go = (href: string) => transitionTo(href, (h) => router.push(h));
 
   if (!hydrated) return <section className={styles.screen} aria-busy="true" />;

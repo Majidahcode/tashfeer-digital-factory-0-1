@@ -45,6 +45,19 @@ test.describe("the opening", () => {
     await expect(page.locator("[data-chat-shell]")).toBeVisible();
   });
 
+  test("for review, /?intro=1 plays it again in the same tab — the project typed so far stays", async ({ page }) => {
+    await page.goto("/");
+    await expect(intro(page)).toHaveCount(0, { timeout: 8000 });
+    await page.locator("[data-chat-shell]").getByLabel("وصف المشروع").fill("منصة تجربة");
+    await page.reload();
+    await expect(intro(page)).toBeHidden();
+    await page.goto("/?intro=1");
+    await expect(intro(page)).toBeVisible();
+    await expect(page.locator("[data-site-intro] img")).toHaveCount(2);
+    await expect(intro(page)).toHaveCount(0, { timeout: 8000 });
+    await expect(page.locator("[data-chat-shell]").getByLabel("وصف المشروع")).toHaveValue("منصة تجربة");
+  });
+
   test("«تخطَّ» ends it at once", async ({ page }) => {
     await page.goto("/");
     await page.locator("[data-intro-skip]").click();

@@ -7,6 +7,7 @@ import { TashfeerCharacter } from "@/components/characters/TashfeerCharacter";
 import { Icon } from "@/components/icons/Icon";
 import { AGENTS, agentImage, analyze, chosenLabel } from "@/domain/agents";
 import { transitionTo } from "@/lib/page-transition";
+import { tashfeerReact } from "@/lib/tashfeer-controller";
 import {
   approvalOf,
   hasFile,
@@ -44,6 +45,8 @@ export function AgentSelection() {
     if (next.has(id)) next.delete(id);
     else next.add(id);
     setTeam(AGENTS.map((a) => a.id).filter((x) => next.has(x)));
+    // Tashfeer notices: a short gesture of attention, once he faces the card the strip settles on
+    tashfeerReact("attend");
   };
 
   return (

@@ -37,7 +37,12 @@ export const BONES = [
 export type BoneName = (typeof BONES)[number];
 export type Rot = readonly [number, number, number];
 /** a pose: rotations per bone (radians, character axes) and the hips' offset (metres, character axes) */
-export type Pose = { rot: Partial<Record<BoneName, Rot>>; hips?: readonly [number, number, number] };
+export type Pose = {
+  rot: Partial<Record<BoneName, Rot>>;
+  hips?: readonly [number, number, number];
+  /** how much a gesture (a nod, a tilt) is moving the head now (0…1): his aim is not corrected meanwhile */
+  busy?: number;
+};
 
 const ORDER = "YXZ";
 
@@ -73,6 +78,18 @@ export class Rig {
     }
     this.hipsRest.copy(found.hips.position);
     this.hipsParentInv.copy(rootInv.clone().multiply(found.hips.parent!.getWorldQuaternion(new Quaternion()))).invert();
+  }
+
+  /** take on another rig's pose exactly as it stands now (the crossing's twin starts where the page's Tashfeer is) */
+  copyFrom(other: Rig) {
+    for (const name of BONES) this.current.get(name)!.copy(other.current.get(name)!);
+    this.hipsOffset.copy(other.hipsOffset);
+    this.apply({ rot: {} }, 0, 0); // places the bones (a zero step: nothing moves toward the empty target)
+  }
+
+  /** the inverse of a bone's rest orientation relative to the character: `world · this` is how far it has turned */
+  restInverse(name: BoneName): Quaternion {
+    return this.restModelInv.get(name)!.clone();
   }
 
   /**

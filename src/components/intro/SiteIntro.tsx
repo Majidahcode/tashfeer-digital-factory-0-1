@@ -8,7 +8,8 @@
  * It never stands in the way of the site:
  *   - the whole timeline is CSS: it ends and lets clicks through by itself, even if scripts or the pictures fail;
  *   - a «تخطَّ» button ends it at once;
- *   - an inline script, run before the first paint, hides it when it was seen in this tab or motion is reduced;
+ *   - an inline script, run before the first paint, hides it when it was seen in this tab or motion is reduced
+ *     (`/?intro=1` shows it again, for review);
  *   - nothing waits for it: the home page renders and loads under it (no progress figures, real or invented).
  */
 import { useCallback, useState, useSyncExternalStore } from "react";
@@ -24,8 +25,13 @@ declare global {
   }
 }
 
-/** Decided before the first paint: the opening plays once per tab, never with reduced motion. */
-const DECIDE = `(function(){try{var s=window.sessionStorage;if(s.getItem("${SEEN_KEY}")||window.matchMedia("(prefers-reduced-motion: reduce)").matches){var st=document.createElement("style");st.textContent="[data-site-intro]{display:none!important}";document.head.appendChild(st);window.__tashfeerIntro="skip"}else{s.setItem("${SEEN_KEY}","1");window.__tashfeerIntro="play"}}catch(e){window.__tashfeerIntro="play"}})();`;
+/**
+ * Decided before the first paint: the opening plays once per tab, never with reduced motion. For reviewing it again
+ * without a new tab, `/?intro=1` plays it whatever this tab has seen (never with reduced motion: a device set to
+ * reduce motion — on Windows, «Animation effects» off — does not see it at all); nothing else is touched (the project
+ * typed so far stays).
+ */
+const DECIDE = `(function(){try{var s=window.sessionStorage;var ask=/[?&]intro=1(&|$)/.test(location.search);if(window.matchMedia("(prefers-reduced-motion: reduce)").matches||(!ask&&s.getItem("${SEEN_KEY}"))){var st=document.createElement("style");st.textContent="[data-site-intro]{display:none!important}";document.head.appendChild(st);window.__tashfeerIntro="skip"}else{s.setItem("${SEEN_KEY}","1");window.__tashfeerIntro="play"}}catch(e){window.__tashfeerIntro="play"}})();`;
 
 const subscribe = (cb: () => void) => {
   window.addEventListener(EVENT, cb);

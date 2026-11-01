@@ -21,6 +21,7 @@ import {
   PerspectiveCamera,
   PlaneGeometry,
   PMREMGenerator,
+  Quaternion,
   MeshBasicMaterial,
   Scene,
   SRGBColorSpace,
@@ -31,7 +32,7 @@ import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js"
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
-import { type Mode, pose, stiffness } from "./poses";
+import { type Gesture, type Mode, pose, stiffness } from "./poses";
 import { forceFullQuality } from "@/lib/diagnostics";
 import { type Pose, Rig } from "./rig";
 
@@ -89,7 +90,7 @@ export class TashfeerStage {
   private size = { w: 1, h: 1 };
   private raf = 0;
   private last = 0;
-  private t0 = performance.now();
+  private readonly t0 = performance.now();
   private modeStart = 0;
   private first = true;
   /** a software renderer: lighter drawing (see softwareRenderer) */
@@ -112,6 +113,13 @@ export class TashfeerStage {
   still = false;
   /** something moves him across the screen (the crossing, the arrival): lite drawing never pauses then */
   moving = false;
+  /** reviewing something on the screen with the visitor (the agents, the models): the neck and chest share the turn */
+  review = false;
+  /** a short gesture playing (react): its kind and when it began */
+  private gesture: { kind: Gesture; start: number } | null = null;
+  /** the visitor's face in the world while he looks at it; his aim is corrected toward it (see correctAim) */
+  private faceTarget: Vector3 | null = null;
+  private aimFix = { yaw: 0, pitch: 0 };
   /** reviews only (the test page): rotations added on top of the pose, to check each joint */
   extra: Pose["rot"] | null = null;
   /** called every frame before the pose (the crossing moves him from here) */
@@ -270,10 +278,66 @@ export class TashfeerStage {
     const yaw = MathUtils.clamp(Math.atan2(dx, dz), -1.1, 1.1);
     const pitch = MathUtils.clamp(Math.atan2(eyes.y - face.y, Math.hypot(dx, dz)), -0.2, 0.5);
     this.look = { yaw, pitch };
+    this.faceTarget = face;
   }
 
-  /** look toward a point of the screen (CSS px on this canvas): a point in front of him at that place */
-  lookAtScreen(x: number | null, y?: number) {
+  /**
+   * After each pose, while he looks at the visitor's face: where his face really points (the head's own forward
+   * axis, through the whole chain of joints), against the line from his eyes to the visitor's face — and a small
+   * part of the difference is added to his aim, until his face points at it. Not while a nod or a tilt plays (it
+   * would be undone), nor in the first moment of a state (the pose is still on its way).
+   */
+  private correctAim(busy: number, dt: number) {
+    if (!this.rig || !this.faceTarget) {
+      this.aimFix.yaw *= 0.8;
+      this.aimFix.pitch *= 0.8;
+      return;
+    }
+    if (busy > 0.04 || this.now() - this.modeStart < 1.0) return;
+    this.root.updateMatrixWorld(true);
+    const head = this.rig.bones.head;
+    const rootQ = this.root.getWorldQuaternion(new Quaternion());
+    const turn = rootQ.clone().invert().multiply(head.getWorldQuaternion(new Quaternion())).multiply(this.rig.restInverse("head"));
+    const fwd = new Vector3(0, 0, 1).applyQuaternion(turn);
+    const eye = this.root.worldToLocal(head.getWorldPosition(new Vector3()).add(new Vector3(0, 0.06, 0)));
+    const to = this.root.worldToLocal(this.faceTarget.clone()).sub(eye);
+    const ang = (v: Vector3) => ({ yaw: Math.atan2(v.x, v.z), pitch: Math.atan2(-v.y, Math.hypot(v.x, v.z)) });
+    const a = ang(fwd);
+    const d = ang(to);
+    // slower than the pose itself follows (≈1.5 /s against 5 /s): the correction never chases the pose's own easing
+    const k = 1 - Math.exp(-Math.max(dt, 0) * 1.5);
+    this.aimFix.yaw = MathUtils.clamp(this.aimFix.yaw + k * (d.yaw - a.yaw), -0.35, 0.35);
+    this.aimFix.pitch = MathUtils.clamp(this.aimFix.pitch + k * (d.pitch - a.pitch), -0.3, 0.3);
+  }
+
+  /** a short gesture now (a nod of attention, of confirmation, of approval): it plays once over his pose */
+  react(kind: Gesture) {
+    this.gesture = { kind, start: this.now() };
+    this.dirtyUntil = performance.now() + 2500;
+  }
+
+  /**
+   * The crossing's twin takes on the page's Tashfeer exactly as he stands (every joint, his turn, where he looks,
+   * what he was doing and for how long): it starts from the very pose on the screen, never from a fresh one.
+   */
+  copyPoseFrom(src: TashfeerStage) {
+    if (!this.rig || !src.rig) return;
+    this.rig.copyFrom(src.rig);
+    this.root.rotation.copy(src.root.rotation);
+    this.look = src.look ? { ...src.look } : null;
+    this.aimFix = { ...src.aimFix };
+    this.mode = src.mode;
+    this.seed = src.seed;
+    this.modeStart = src.modeStart + (src.t0 - this.t0) / 1000;
+    this.first = false;
+  }
+
+  /**
+   * Look toward a point of the screen (CSS px on this canvas): a point in front of him at that place, `depth` metres
+   * toward the viewer (deeper: his head turns more evenly between nearby points, as across a strip of cards).
+   */
+  lookAtScreen(x: number | null, y?: number, depth = 1.0) {
+    this.faceTarget = null;
     if (x === null || y === undefined) {
       this.look = null;
       return;
@@ -285,7 +349,7 @@ export class TashfeerStage {
     const ty = HEIGHT - (y - b.y) * m;
     const head = new Vector3(0, HEIGHT * 0.9, 0);
     const dx = tx;
-    const dz = 1.0;
+    const dz = depth;
     const yaw = MathUtils.clamp(Math.atan2(dx, dz), -1.0, 1.0);
     const pitch = MathUtils.clamp(Math.atan2(head.y - ty, Math.hypot(dx, dz)), -0.35, 0.45);
     this.look = { yaw, pitch };
@@ -300,6 +364,9 @@ export class TashfeerStage {
       const raw = Math.max(0, (now - this.last) / 1000);
       this.last = now;
       this.onFrame?.(raw, this);
+      // a clock that jumps back (a page restored from the background, a test's held clock) never gives a negative
+      // step: the pose would be thrown past its target, and a software renderer would wait forever to draw
+      if (now < this.lastDraw) this.lastDraw = now;
       // while the page changes (under its glass) a Tashfeer standing on the page is not drawn: the change gets the
       // device's whole time (the crossing's stage and his walk in from the portal move, and always draw)
       if (!this.moving && !this.first && document.documentElement.hasAttribute("data-scene-transition")) return;
@@ -319,10 +386,10 @@ export class TashfeerStage {
           this.dirtyUntil = now + 1400;
         }
         // listening, thinking and replying play over time (a nod, folded arms, a gesture): drawn about once a second
-        const timed = this.mode === "listening" || this.mode === "thinking" || this.mode === "replying";
+        const timed = this.mode === "listening" || this.mode === "thinking" || this.mode === "replying" || !!this.gesture;
         if (!this.first && now > this.dirtyUntil && !this.moving && !timed) return;
       }
-      const dt = Math.min(0.1, (now - (this.lastDraw || now)) / 1000);
+      const dt = Math.min(0.1, Math.max(0, (now - (this.lastDraw || now)) / 1000));
       if (this.lastDraw) push(this.frameTimes, now - this.lastDraw);
       this.lastDraw = now;
       const t = performance.now();
@@ -369,11 +436,15 @@ export class TashfeerStage {
   /** pose and draw (no movement) */
   private render(dt: number) {
     if (this.rig) {
+      if (this.gesture && this.now() - this.gesture.start > 2.5) this.gesture = null;
+      const look = this.look && this.faceTarget ? { yaw: this.look.yaw + this.aimFix.yaw, pitch: this.look.pitch + this.aimFix.pitch } : this.look;
       const target = pose({
         mode: this.mode,
         t: this.now(),
         since: this.now() - this.modeStart,
-        look: this.look,
+        look,
+        review: this.review,
+        gesture: this.gesture ? { kind: this.gesture.kind, since: this.now() - this.gesture.start } : null,
         phase: this.phase,
         voice: this.voice,
         still: this.still,
@@ -390,6 +461,7 @@ export class TashfeerStage {
       const stepping = this.mode === "walking" && this.now() - this.modeStart > 0.25;
       this.rig.apply(target, dt, stiffness(this.mode), this.first || stepping || (this.still && this.mode !== "walking"));
       this.first = false;
+      this.correctAim(target.busy ?? 0, dt);
       // the visor and lines glow a little more with the voice
       for (const m of this.emissive) m.emissiveIntensity = 0.8 + this.voice * 0.6;
     }
@@ -421,6 +493,10 @@ export class TashfeerStage {
     this.still = false;
     this.moving = false;
     this.extra = null;
+    this.review = false;
+    this.gesture = null;
+    this.faceTarget = null;
+    this.aimFix = { yaw: 0, pitch: 0 };
     this.root.position.set(0, 0, 0);
     this.root.rotation.set(0, 0, 0);
     this.first = true;
@@ -483,6 +559,15 @@ function shadowTexture() {
  * page's Tashfeer and the crossing's twin. A stage given back stops and leaves the page; its drawing buffer is kept
  * (resizing it is costly too: the next use of the same size costs nothing).
  */
+/** the Tashfeer standing on the page now (the crossing's twin copies his pose from it) */
+let onPage: TashfeerStage | null = null;
+export function setPageStage(s: TashfeerStage | null, only?: TashfeerStage) {
+  if (s || !only || onPage === only) onPage = s;
+}
+export function pageStage(): TashfeerStage | null {
+  return onPage;
+}
+
 const pool: TashfeerStage[] = [];
 const POOL = 2;
 

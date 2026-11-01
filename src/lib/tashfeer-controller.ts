@@ -118,3 +118,13 @@ export function voiceLevelNow() {
 export function onVoiceStop(stop: (() => void) | null) {
   stopVoice = stop;
 }
+
+/**
+ * A short gesture of Tashfeer's on the page now (no state of its own): attention when an agent is chosen,
+ * confirmation when a model is chosen, approval when it is approved. The character plays it once, after turning to
+ * what was chosen; pages only announce what happened.
+ */
+export const REACT_EVENT = "tashfeer:react";
+export function tashfeerReact(kind: "attend" | "confirm" | "approve") {
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(REACT_EVENT, { detail: kind }));
+}

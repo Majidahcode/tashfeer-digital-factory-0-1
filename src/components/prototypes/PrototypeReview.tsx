@@ -6,7 +6,8 @@ import { TashfeerCharacter } from "@/components/characters/TashfeerCharacter";
 import { Icon } from "@/components/icons/Icon";
 import { PROTOTYPES, type Prototype, modelName } from "@/domain/prototypes";
 import { cx } from "@/lib/cx";
-import { transitionTo } from "@/lib/page-transition";
+import { prefersReducedMotion, transitionTo } from "@/lib/page-transition";
+import { tashfeerReact } from "@/lib/tashfeer-controller";
 import {
   type Attachment,
   type ModelId,
@@ -120,6 +121,8 @@ export function PrototypeReview() {
   const choose = (id: ModelId) => {
     setConfirming(false);
     updateProject({ chosenModel: id });
+    // Tashfeer turns to it, then a short nod of confirmation
+    if (id !== chosen) tashfeerReact("confirm");
   };
   const requestChange = (id: ModelId) => {
     setViewing(null);
@@ -153,8 +156,11 @@ export function PrototypeReview() {
         at: Date.now(),
       },
     });
-    // the approval is saved; production starts in the factory
-    go("/factory");
+    // the approval is saved; Tashfeer approves it with a nod a little warmer than choosing, then production starts in
+    // the factory (the visitor sees his gesture before the screen changes; at once with reduced motion)
+    tashfeerReact("approve");
+    if (prefersReducedMotion()) go("/factory");
+    else window.setTimeout(() => go("/factory"), 1100);
   };
 
   return (
