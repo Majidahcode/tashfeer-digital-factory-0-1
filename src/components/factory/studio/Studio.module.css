@@ -119,29 +119,25 @@
 }
 
 /* arriving: a short slide toward the reader, a soft fade, a small change of scale and depth (after the reference video) */
+/* (no fill before or after: if the screen is too busy to run the animation, the window is simply there) */
 .windowIn {
-  animation: winIn 560ms var(--ease-out) both;
+  animation: winIn 560ms var(--ease-out);
 }
 
 /* leaving: back into the depth, quietly */
 .windowOut {
   position: absolute;
   inset-block-start: 0;
-  inset-inline-end: 0;
+  inset-inline-start: 0;
   pointer-events: none;
-  animation: winOut 380ms var(--ease-out) both;
+  animation: winOut 380ms var(--ease-out) forwards;
 }
 
+/* opacity and transform only: a blur here stopped the gradient headline from painting on some renderers */
 @keyframes winIn {
   from {
     opacity: 0;
-    transform: translateX(-28px) translateZ(0) scale(0.96);
-    filter: blur(6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-    filter: none;
+    transform: translateX(-28px) scale(0.96);
   }
 }
 
@@ -149,23 +145,18 @@
   to {
     opacity: 0;
     transform: translateX(18px) scale(0.97);
-    filter: blur(4px);
   }
 }
 
 /* a new line comes in gently; then it holds still */
 .textIn {
-  animation: textIn 420ms var(--ease-out) both;
+  animation: textIn 420ms var(--ease-out);
 }
 
 @keyframes textIn {
   from {
     opacity: 0;
     transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
   }
 }
 
@@ -522,7 +513,7 @@
 }
 
 .resultIn {
-  animation: winIn 520ms var(--ease-out) both;
+  animation: winIn 520ms var(--ease-out);
 }
 
 .resultHead {
@@ -564,7 +555,7 @@
   border-radius: 10px;
   text-align: center;
   box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
-  animation: textIn 420ms var(--ease-out) both;
+  animation: textIn 420ms var(--ease-out);
 }
 
 .visOn {
@@ -686,7 +677,7 @@
   border-radius: 8px;
   opacity: 0.4;
   box-shadow: inset 0 0 0 1px var(--brand-glass-edge);
-  animation: textIn 420ms var(--ease-out) both;
+  animation: textIn 420ms var(--ease-out);
 }
 
 .fieldOn {
@@ -799,7 +790,7 @@
   padding: 6px 8px;
   border-radius: 8px;
   opacity: 0.4;
-  animation: textIn 420ms var(--ease-out) both;
+  animation: textIn 420ms var(--ease-out);
 }
 
 .listOn {
@@ -1355,7 +1346,7 @@
 }
 
 .tashfeer > span[data-guide] {
-  animation: textIn 420ms var(--ease-out) both;
+  animation: textIn 420ms var(--ease-out);
 }
 
 .tashfeerFace {
