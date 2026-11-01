@@ -324,8 +324,13 @@ export class TashfeerStage {
     if (!this.rig || !src.rig) return;
     this.rig.copyFrom(src.rig);
     this.root.rotation.copy(src.root.rotation);
-    this.look = src.look ? { ...src.look } : null;
-    this.aimFix = { ...src.aimFix };
+    // (where he looks, with the correction that made his face meet the visitor's: the twin has no target of its own)
+    this.look = src.look
+      ? src.faceTarget
+        ? { yaw: src.look.yaw + src.aimFix.yaw, pitch: src.look.pitch + src.aimFix.pitch }
+        : { ...src.look }
+      : null;
+    this.aimFix = { yaw: 0, pitch: 0 };
     this.mode = src.mode;
     this.seed = src.seed;
     this.modeStart = src.modeStart + (src.t0 - this.t0) / 1000;

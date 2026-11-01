@@ -372,8 +372,10 @@ async function cross(href: string, navigate: Navigate) {
     st.moving = true;
     // first a moment of getting ready, from the pose he had: his gaze goes to the portal, folded arms open, then the
     // body turns and the first step comes (a little longer when he was listening: his arms may be folded)
-    const PRE = wasListening ? 0.85 : 0.5;
+    const PRE = wasListening ? 0.95 : 0.7;
     let clock = 0;
+    // his gaze goes from where it was to the portal along an eased path (not at once: the head turns as a head does)
+    const lookFrom = st.look ? { ...st.look } : { yaw: 0, pitch: 0 };
     let phase = 0;
     let turned = 0;
     let clipped = false;
@@ -384,6 +386,9 @@ async function cross(href: string, navigate: Navigate) {
       if (clock < PRE) {
         s.setMode("idle");
         s.lookAtScreen(hole.x, hole.y);
+        const to = s.look ?? { yaw: 0, pitch: 0 };
+        const k = smooth(clock / (PRE * 0.85));
+        s.look = { yaw: lookFrom.yaw + (to.yaw - lookFrom.yaw) * k, pitch: lookFrom.pitch + (to.pitch - lookFrom.pitch) * k };
         return;
       }
       if (t === 0) s.lookAtScreen(null); // facing the portal as he turns: his head goes with his body
