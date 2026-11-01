@@ -147,7 +147,10 @@ export function ResultCards({
   freeRight: number;
 }) {
   const st = state.stations[station];
-  const pos = useProductOnScreen(follow);
+  // compact screens have no room for it (and it is not drawn there): nothing is polled either
+  const [roomy] = useState(() => typeof window !== "undefined" && !window.matchMedia("(max-width: 899px), (max-height: 620px)").matches);
+  const pos = useProductOnScreen(follow && roomy);
+  if (!roomy) return null;
   if (!st || st.status === "waiting" || st.step < 0) return null;
   const states = stepStates(st, story.steps);
   const i = st.status === "done" ? story.steps.length - 1 : st.step;

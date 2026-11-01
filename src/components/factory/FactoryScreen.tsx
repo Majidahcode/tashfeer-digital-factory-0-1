@@ -191,6 +191,33 @@ export function FactoryScreen() {
     };
   });
 
+  // A device too busy drawing the scene (no GPU) can hold a starting CSS animation at its first frame for seconds —
+  // the window or its headline then stays invisible. An entrance that has not begun after ≈0.5 s is finished at once:
+  // the content is always shown, animated where the device can.
+  useEffect(() => {
+    if (reducedMotion) return;
+    const seen = new WeakMap<Animation, number>();
+    const t = window.setInterval(() => {
+      const now = performance.now();
+      // only the window and the result card (the rest has no entrance), and only while one is starting
+      for (const a of document.getAnimations()) {
+        const el = (a.effect as KeyframeEffect | null)?.target as Element | null;
+        if (!el?.closest("[data-station-panel], [data-leaving-panel], [data-result-card]")) continue;
+        if (a.playState !== "running" || (Number(a.currentTime) || 0) > 0) continue;
+        const first = seen.get(a) ?? now;
+        seen.set(a, first);
+        if (now - first > 450 && Number.isFinite(Number(a.effect?.getTiming().iterations ?? 1))) {
+          try {
+            a.finish();
+          } catch {
+            a.cancel();
+          }
+        }
+      }
+    }, 250);
+    return () => window.clearInterval(t);
+  }, [reducedMotion]);
+
   // the window in view, and the one leaving while the next comes in (kept a moment: no flash, no jump)
   const viewId =
     selected ?? state.current ?? (state.finished ? stations[stations.length - 1]?.id : stations[0]?.id) ?? "";

@@ -153,6 +153,10 @@ function World(props: FactorySceneProps) {
   useEffect(() => {
     window.__tashfeerFactoryQuality = quality;
   }, [quality]);
+  // no GPU: the page's glass goes without its backdrop blur (a blur over a moving scene is recomputed every frame)
+  useEffect(() => {
+    if (softwareRenderer(gl)) document.documentElement.setAttribute("data-software-render", "");
+  }, [gl]);
   const scene = useThree((s) => s.scene);
   useEffect(() => {
     scene.background = null;
