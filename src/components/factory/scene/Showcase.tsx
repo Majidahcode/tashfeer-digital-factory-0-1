@@ -325,7 +325,7 @@ export function Architecture({ pal }: { pal: ScenePalette }) {
           <Gloss color={pal.bg} roughness={0.35} metalness={0.6} />
         </mesh>
       </group>
-      {/* the gallery's ribs and the dark wall behind them */}
+      {/* the gallery's ribs */}
       {Array.from({ length: 9 }, (_, i) => {
         const a = Math.PI * 0.95 + (i / 8) * Math.PI * 1.1;
         return (
@@ -335,10 +335,7 @@ export function Architecture({ pal }: { pal: ScenePalette }) {
           </mesh>
         );
       })}
-      <mesh position={[4, 6, -28]}>
-        <planeGeometry args={[70, 14]} />
-        <meshStandardMaterial color={pal.bg} roughness={0.9} />
-      </mesh>
+      {/* (no wall behind: the hall's depth is drawn behind the canvas, out of focus — FactoryScreen's Backdrop) */}
       {/* pillars on the left, a light strip on each */}
       {(
         [

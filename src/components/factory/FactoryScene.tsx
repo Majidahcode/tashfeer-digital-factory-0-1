@@ -60,6 +60,7 @@ import {
   drawProductScreen,
   iconTexture,
   productScreenTexture,
+  type ScreenCopy,
   stationLabel,
 } from "./scene/textures";
 
@@ -78,6 +79,8 @@ export type FactorySceneProps = {
   checking: boolean;
   delivered: boolean;
   model: ModelId;
+  /** what the product's screen shows of this project */
+  copy?: ScreenCopy;
   camera: CameraStore;
   reducedMotion: boolean;
   onSelect: (id: StationId) => void;
@@ -92,7 +95,8 @@ export default function FactoryScene(props: FactorySceneProps) {
     <Canvas
       dpr={[1, 1.5]}
       camera={{ fov: 40, near: 0.1, far: 140, position: introPose(ENTRY_U, "wide").pos.toArray() }}
-      gl={{ antialias: true, powerPreference: "high-performance", toneMappingExposure: 1.05 }}
+      // transparent: the hall's depth (Backdrop, behind the canvas) shows where the scene draws nothing
+      gl={{ antialias: true, alpha: true, powerPreference: "high-performance", toneMappingExposure: 1.05 }}
       data-factory-canvas=""
     >
       <World {...props} />
@@ -151,7 +155,7 @@ function World(props: FactorySceneProps) {
   }, [quality]);
   const scene = useThree((s) => s.scene);
   useEffect(() => {
-    scene.background = pal.bg.clone();
+    scene.background = null;
     scene.fog = null;
   }, [scene, pal]);
   return (
@@ -309,20 +313,21 @@ function Product({
   checking,
   delivered,
   model,
+  copy,
   pal,
   reducedMotion,
 }: FactorySceneProps & { pal: ScenePalette }) {
   const group = useRef<Group>(null);
   const scan = useRef<Mesh>(null);
-  const screen = useMemo(() => productScreenTexture(model, build, pal, 2, waiting), [model, pal]); // eslint-disable-line react-hooks/exhaustive-deps -- redrawn below as `build` and `waiting` change
+  const screen = useMemo(() => productScreenTexture(model, build, pal, 2, waiting, copy), [model, pal, copy]); // eslint-disable-line react-hooks/exhaustive-deps -- redrawn below as `build` and `waiting` change
   const drawn = useRef({ build, waiting });
   useEffect(() => {
     const d = drawn.current;
     if (Math.abs(d.build - build) < 0.01 && d.build !== 0 && d.waiting === waiting) return;
     drawn.current = { build, waiting };
-    drawProductScreen(screen.canvas, model, build, pal, waiting);
+    drawProductScreen(screen.canvas, model, build, pal, waiting, copy);
     screen.texture.needsUpdate = true;
-  }, [build, waiting, model, pal, screen]);
+  }, [build, waiting, model, pal, screen, copy]);
   const u = useRef(productU(stations.length, travel));
   const target = productU(stations.length, travel);
   useFrame(({ clock }, dt) => {

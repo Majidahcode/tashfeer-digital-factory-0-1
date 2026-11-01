@@ -8,6 +8,7 @@
  */
 import { AGENTS } from "@/domain/agents";
 import type { ModelId } from "@/lib/project-store";
+import { storyFor } from "./factory-story";
 
 export type StationId = "setup" | "interfaces" | "services" | "quality" | "delivery";
 
@@ -82,6 +83,8 @@ export type FactoryEvent =
   | { at: number; type: "travel"; station: StationId }
   | { at: number; type: "start"; station: StationId; task: string }
   | { at: number; type: "task"; station: StationId; task: string }
+  /** a step of the station's story (factory-story.ts) begins: its index, and the headline said to the visitor */
+  | { at: number; type: "step"; station: StationId; step: number; task: string }
   | { at: number; type: "output"; station: StationId; output: string }
   | {
       at: number;
@@ -98,9 +101,17 @@ export type FactoryEvent =
 const TRAVEL = 4;
 const WORK: Record<StationId, number> = { setup: 12, interfaces: 16, services: 14, quality: 20, delivery: 10 };
 
-/** The simulation's script for these stations (seconds from the start of production). */
-export function simulationScript(stations: readonly Station[], model: ModelId): FactoryEvent[] {
+/**
+ * The simulation's script for these stations (seconds from the start of production). Each station's story (its steps
+ * for this very project: factory-story.ts) begins step by step, as its own events — the screen shows a step only once
+ * its event has happened.
+ */
+export function simulationScript(stations: readonly Station[], model: ModelId, idea = ""): FactoryEvent[] {
   const events: FactoryEvent[] = [];
+  const stepAt = (st: StationId, t0: number, times: number[]) =>
+    storyFor(idea, model, st).steps.forEach((x, i) => {
+      if (times[i] !== undefined) events.push({ at: t0 + times[i]!, type: "step", station: st, step: i, task: x.headline });
+    });
   const hasServices = stations.some((s) => s.id === "services");
   let t = 0;
   for (const s of stations) {
@@ -108,6 +119,7 @@ export function simulationScript(stations: readonly Station[], model: ModelId): 
     t += TRAVEL;
     const at = (d: number) => t + d;
     const st = s.id;
+    stepAt(st, t, st === "setup" ? [0.2, 4, 8] : st === "interfaces" ? [0.2, 5, 10] : st === "services" ? [0.2, 5, 9.5] : st === "quality" ? [0.2, 4.5, 15.5] : [0.2]);
     switch (st) {
       case "setup":
         events.push(
@@ -138,9 +150,9 @@ export function simulationScript(stations: readonly Station[], model: ModelId): 
             type: "check",
             station: st,
             check: "load",
-            label: "تحميل الصفحات الرئيسية",
+            label: storyFor(idea, model, "quality").steps[0]!.label,
             result: "pass",
-            detail: "كل الصفحات تُحمَّل دون أخطاء.",
+            detail: "جرّبنا الخطوات كلها: تكتمل دون أخطاء، وكل الصفحات تُحمَّل.",
           },
           {
             at: at(6),
@@ -149,7 +161,7 @@ export function simulationScript(stations: readonly Station[], model: ModelId): 
             check: "mobile",
             label: "العرض على الجوال",
             result: "fail",
-            detail: "قائمة التنقل تتداخل مع العنوان على عرض 390px.",
+            detail: "على شاشة الجوال الصغيرة كانت القائمة تغطي العنوان.",
           },
           { at: at(9), type: "task", station: st, task: "معالجة مشكلة العرض على الجوال" },
           {
@@ -157,7 +169,7 @@ export function simulationScript(stations: readonly Station[], model: ModelId): 
             type: "fix",
             station: st,
             check: "mobile",
-            detail: "أُعيد ترتيب قائمة التنقل للشاشات الضيقة.",
+            detail: "رتّبنا القائمة في زر واحد على الشاشات الصغيرة.",
           },
           { at: at(12), type: "task", station: st, task: "إعادة اختبار العرض على الجوال" },
           {
@@ -167,7 +179,7 @@ export function simulationScript(stations: readonly Station[], model: ModelId): 
             check: "mobile",
             label: "العرض على الجوال",
             result: "pass",
-            detail: "لا تداخل بعد المعالجة على 390px.",
+            detail: "أعدنا الفحص على الجوال: لا شيء يغطي العنوان الآن.",
           },
           hasServices
             ? {
@@ -175,18 +187,18 @@ export function simulationScript(stations: readonly Station[], model: ModelId): 
                 type: "check",
                 station: st,
                 check: "services",
-                label: "الربط مع الخدمات",
+                label: "الأزرار والربط",
                 result: "pass",
-                detail: "الواجهات تقرأ من الخدمات وتكتب إليها.",
+                detail: "كل زر يوصل لمكانه، وما يُرسل يصل إلى قائمته.",
               }
             : {
                 at: at(17),
                 type: "check",
                 station: st,
                 check: "speed",
-                label: "سرعة التحميل",
+                label: "الأزرار والربط",
                 result: "pass",
-                detail: "الصفحة الرئيسية تُحمَّل في أقل من ثانيتين.",
+                detail: "كل زر يوصل لمكانه، والصفحات تُحمَّل بسرعة.",
               },
           { at: at(WORK.quality), type: "output", station: st, output: "تقرير الفحص" },
         );
@@ -201,7 +213,8 @@ export function simulationScript(stations: readonly Station[], model: ModelId): 
     t += WORK[st];
     events.push({ at: t, type: "done", station: st });
   }
-  return events;
+  // in time order (a stable sort: events at the same moment keep their order)
+  return events.sort((a, b) => a.at - b.at);
 }
 
 export function scriptLength(events: readonly FactoryEvent[]): number {
@@ -225,6 +238,8 @@ export type StationState = {
   checks: CheckState[];
   /** 0..1 through the station's work */
   progress: number;
+  /** the story's step that has begun last (−1: none yet) — every step before it is done */
+  step: number;
 };
 export type FactoryState = {
   stations: Record<string, StationState>;
@@ -242,7 +257,7 @@ export function deriveFactory(
 ): FactoryState {
   const s: Record<string, StationState> = {};
   for (const st of stations)
-    s[st.id] = { status: "waiting", task: null, outputs: [], checks: [], progress: 0 };
+    s[st.id] = { status: "waiting", task: null, outputs: [], checks: [], progress: 0, step: -1 };
   let current: StationId | null = null;
   let travelStart = 0;
   let workStart = Number.POSITIVE_INFINITY;
@@ -262,6 +277,10 @@ export function deriveFactory(
         workStart = e.at;
         break;
       case "task":
+        st.task = e.task;
+        break;
+      case "step":
+        st.step = e.step;
         st.task = e.task;
         break;
       case "output":

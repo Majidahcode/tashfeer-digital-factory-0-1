@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { forwardRef } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
@@ -13,10 +12,10 @@ import {
   type StationId,
   deriveFactory,
   openIssue,
-  responsible,
   simulationScript,
   stationsFor,
 } from "@/domain/factory";
+import { type StationStory, projectTitle, screenCopy, storyFor } from "@/domain/factory-story";
 import { PROTOTYPES, modelName } from "@/domain/prototypes";
 import { asset } from "@/lib/assets";
 import { cx } from "@/lib/cx";
@@ -25,6 +24,10 @@ import { transitionTo } from "@/lib/page-transition";
 import { approvalOf, designApprovalOf, useProject } from "@/lib/project-store";
 import { createCameraStore, useCamera } from "./camera-store";
 import styles from "./FactoryScreen.module.css";
+import { STATION_ICON, StepIcon } from "./studio/StepIcon";
+import { STATUS, StationDetails, StationWindow } from "./studio/StationWindow";
+import { Backdrop, JourneyLog, ResultCards, Sheet, useSwap } from "./studio/Studio";
+import studio from "./studio/Studio.module.css";
 
 /* the 3D scene is loaded in the browser only, and only on this screen */
 const FactoryScene = dynamic(() => import("./FactoryScene"), {
@@ -33,7 +36,6 @@ const FactoryScene = dynamic(() => import("./FactoryScene"), {
 });
 
 const noop = () => () => {};
-const STATUS: Record<string, string> = { waiting: "لم تبدأ", active: "قيد العمل", done: "مكتملة" };
 const WEIGHT: Record<StationId, number> = { setup: 0.15, interfaces: 0.5, services: 0.15, quality: 0.12, delivery: 0.08 };
 
 let webglCache: boolean | null = null;
@@ -93,7 +95,15 @@ export function FactoryScreen() {
   const ready = hydrated && approvalOf(project) === "approved" && designApprovalOf(project) === "approved" && !!design;
   const model = design?.model ?? "A";
   const stations = useMemo(() => stationsFor(team), [team]);
-  const events = useMemo(() => simulationScript(stations, model), [stations, model]);
+  const idea = design?.idea ?? project.idea;
+  const events = useMemo(() => simulationScript(stations, model, idea), [stations, model, idea]);
+  // what each station shows of *this* project (its steps, what they add, what waits)
+  const stories = useMemo(
+    () => Object.fromEntries(stations.map((s) => [s.id, storyFor(idea, model, s.id)])) as Record<string, StationStory>,
+    [stations, model, idea],
+  );
+  const copy = useMemo(() => screenCopy(idea), [idea]);
+  const [sheet, setSheet] = useState<{ kind: "details"; station: StationId } | { kind: "log" } | null>(null);
   const signature = design ? JSON.stringify([design.idea, [...design.team].sort(), design.model, design.at]) : "";
 
   const [speed] = useState(() => {
@@ -181,6 +191,11 @@ export function FactoryScreen() {
     };
   });
 
+  // the window in view, and the one leaving while the next comes in (kept a moment: no flash, no jump)
+  const viewId =
+    selected ?? state.current ?? (state.finished ? stations[stations.length - 1]?.id : stations[0]?.id) ?? "";
+  const swap = useSwap(viewId, stations.find((s) => s.id === viewId) ?? null, reducedMotion);
+
   if (!hydrated) return <section className={styles.screen} aria-busy="true" />;
 
   if (!ready) {
@@ -220,7 +235,7 @@ export function FactoryScreen() {
     icon: s.icon,
     status: state.stations[s.id]?.status ?? "waiting",
   }));
-  const message = guideLine(state, current ?? null, started, running);
+  const message = guideLine(state, current ?? null, started, running, current ? stories[current.id] : undefined);
 
   return (
     <section
@@ -236,6 +251,7 @@ export function FactoryScreen() {
       data-webgl={webgl ? "yes" : "no"}
     >
       <div className={styles.stage} ref={stageRef}>
+        {webgl && <Backdrop />}
         {webgl && !fonts ? (
           <div className={styles.loading}>يُجهَّز المصنع…</div>
         ) : webgl ? (
@@ -248,6 +264,7 @@ export function FactoryScreen() {
             checking={state.current === "quality" && state.stations.quality?.status === "active"}
             delivered={state.stations.delivery?.status === "done"}
             model={model}
+            copy={copy}
             camera={cameraStore}
             reducedMotion={reducedMotion}
             onSelect={select}
@@ -269,11 +286,23 @@ export function FactoryScreen() {
         )}
       </div>
 
+      {/* the step's result by the product (follows it on screen while the camera follows it) */}
+      {webgl && inView && stories[inView.id] && (
+        <ResultCards
+          station={inView.id}
+          state={state}
+          story={stories[inView.id]!}
+          follow={!chosen}
+          reducedMotion={reducedMotion}
+          freeRight={covered.start}
+        />
+      )}
+
       <div className={styles.hud}>
-        {/* the top: the project, Tashfeer's line, the production's control */}
-        <header className={styles.top} ref={topRef}>
-          <div className={styles.titleBlock}>
-            <h1 id="factory-title" className={styles.title}>
+        {/* the top: what this is (an illustration, labelled), whose project, the production's control; the history */}
+        <header className={cx(styles.top, studio.top)} ref={topRef}>
+          <div className={studio.topStart}>
+            <h1 id="factory-title" className={studio.factoryTitle}>
               مصنع تشفير
             </h1>
             <p className={styles.history} aria-label="سجل المشروع">
@@ -287,108 +316,161 @@ export function FactoryScreen() {
                 <Icon name="check" size={14} /> اعتماد {modelName(model)}
               </span>
             </p>
-            {/* Tashfeer: his mark and one line to the visitor, changed only when something meaningful changes */}
-            <p className={styles.guide} aria-live="polite" data-guide="">
-              <Image src={asset("brand-mark").src} width={28} height={28} alt="" className={styles.guideFace} />
-              <span key={message}>{message}</span>
-            </p>
           </div>
-          <div className={styles.control}>
-            <span className={styles.simTag} data-simulation-tag="">
-              محاكاة تفاعلية
-            </span>
-            <span className={styles.prodState} role="status" data-production-state="">
-              {state.finished
-                ? "اكتمل خط الإنتاج (محاكاة)"
-                : running
-                  ? `يعمل الآن: ${current?.name ?? "—"}`
-                  : started
-                    ? "الإنتاج متوقف مؤقتًا"
-                    : "الإنتاج لم يبدأ"}
-            </span>
-            {!state.finished && (
-              <button
-                type="button"
-                className={running ? styles.secondary : styles.primarySm}
-                onClick={() => (running ? source?.pause() : source?.start())}
-                aria-pressed={running}
-                data-production-toggle=""
-              >
-                <Icon name={running ? "pause" : "play"} size={16} />
-                {running ? "إيقاف مؤقت" : started ? "استئناف" : "ابدأ الإنتاج"}
-              </button>
-            )}
+          <div className={studio.topEnd}>
+            <p className={studio.project} data-project-title="">
+              مشروعك: <b>{projectTitle(design.idea)}</b>
+            </p>
+            <div className={styles.control}>
+              <span className={styles.simTag} data-simulation-tag="">
+                محاكاة تفاعلية
+              </span>
+              <span className={styles.prodState} role="status" data-production-state="">
+                {state.finished
+                  ? "اكتمل خط الإنتاج (محاكاة)"
+                  : running
+                    ? `يعمل الآن: ${current?.name ?? "—"}`
+                    : started
+                      ? "الإنتاج متوقف مؤقتًا"
+                      : "الإنتاج لم يبدأ"}
+              </span>
+              {!state.finished && (
+                <button
+                  type="button"
+                  className={running ? styles.secondary : styles.primarySm}
+                  onClick={() => (running ? source?.pause() : source?.start())}
+                  aria-pressed={running}
+                  data-production-toggle=""
+                >
+                  <Icon name={running ? "pause" : "play"} size={16} />
+                  {running ? "إيقاف مؤقت" : started ? "استئناف" : "ابدأ الإنتاج"}
+                </button>
+              )}
+            </div>
           </div>
         </header>
 
-        <div className={styles.middle}>
-          {inView && (
-            <StationCard
+        <div className={cx(styles.middle, studio.middle)}>
+          {inView && stories[inView.id] && (
+            <StationWindow
+              key={inView.id}
               ref={cardRef}
               station={inView}
               index={stations.indexOf(inView)}
               chosen={!!chosen}
               state={state}
+              story={stories[inView.id]!}
               team={team}
-              model={model}
               onBack={backToProduct}
-              events={events}
-              elapsed={snap?.elapsed ?? 0}
+              onDetails={() => setSheet({ kind: "details", station: inView.id })}
+              reducedMotion={reducedMotion}
+            />
+          )}
+          {swap.leaving && stories[swap.leaving.id] && (
+            <StationWindow
+              key={`leaving-${swap.leaving.id}`}
+              station={swap.leaving}
+              index={stations.indexOf(swap.leaving)}
+              chosen={false}
+              state={state}
+              story={stories[swap.leaving.id]!}
+              team={team}
+              onBack={backToProduct}
+              onDetails={() => {}}
+              leaving
               reducedMotion={reducedMotion}
             />
           )}
         </div>
 
-        {/* the stations, and the tour */}
-        <nav className={styles.bar} aria-label="محطات المصنع" ref={barRef}>
-          <ol className={styles.stations}>
+        {/* the bottom: Tashfeer's line (his mark), the stations' rail, the tour's controls and the journey's log */}
+        <nav className={cx(styles.bar, studio.bottom)} aria-label="محطات المصنع" ref={barRef}>
+          <div className={studio.tourBtns}>
+            <button type="button" className={studio.roundBtn} onClick={() => setSheet({ kind: "log" })} data-journey-btn="">
+              <Icon name="doc" size={16} /> سجل الرحلة
+            </button>
+            {webgl && (
+              <>
+                <button
+                  type="button"
+                  className={cx(studio.roundBtn, tourPaused && studio.roundOn)}
+                  onClick={() => setTourPaused((p) => !p)}
+                  aria-pressed={tourPaused}
+                  data-tour-toggle=""
+                >
+                  <Icon name={tourPaused ? "play" : "pause"} size={16} />
+                  {tourPaused ? "تشغيل الجولة" : "إيقاف الجولة"}
+                </button>
+                <button
+                  type="button"
+                  className={cx(studio.roundBtn, !selected && studio.roundOn)}
+                  onClick={backToProduct}
+                  aria-pressed={!selected}
+                  data-cam-follow=""
+                >
+                  <Icon name="target" size={16} /> متابعة المنتج
+                </button>
+              </>
+            )}
+          </div>
+          <ol className={studio.rail}>
             {stations.map((s, i) => {
               const st = state.stations[s.id];
+              const here = (current?.id ?? stations[0]?.id) === s.id;
               return (
-                <li key={s.id}>
+                <li key={s.id} className={cx(studio.railItem, st && studio[st.status])}>
                   <button
                     type="button"
-                    className={cx(styles.stationBtn, selected === s.id && styles.stationOn)}
+                    className={cx(studio.railBtn, (selected === s.id || (!selected && here)) && studio.railOn)}
                     onClick={() => select(s.id)}
                     aria-pressed={selected === s.id}
                     aria-keyshortcuts={String(i + 1)}
                     data-station-btn={s.id}
                     data-status={st?.status}
                   >
-                    <span className={cx(styles.dot, st && styles[st.status])} aria-hidden="true" />
-                    <span className={styles.stationNum}>{String(i + 1).padStart(2, "0")}</span>
-                    {s.name}
+                    <span className={studio.railLabel}>{s.name}</span>
+                    <span className={studio.railIcon}>
+                      {st?.status === "done" ? <StepIcon name="check" size={18} /> : <StepIcon name={STATION_ICON[s.id] ?? "layers"} size={18} />}
+                    </span>
                     <span className="sr-only"> — {STATUS[st?.status ?? "waiting"]}</span>
                   </button>
                 </li>
               );
             })}
           </ol>
-          {webgl && (
-            <div className={styles.camBtns}>
-              <button
-                type="button"
-                className={cx(styles.camBtn, !selected && styles.camOn)}
-                onClick={backToProduct}
-                aria-pressed={!selected}
-                data-cam-follow=""
-              >
-                <Icon name="target" size={16} /> متابعة المنتج
-              </button>
-              <button
-                type="button"
-                className={cx(styles.camBtn, tourPaused && styles.camOn)}
-                onClick={() => setTourPaused((p) => !p)}
-                aria-pressed={tourPaused}
-                data-tour-toggle=""
-              >
-                <Icon name={tourPaused ? "play" : "pause"} size={16} />
-                {tourPaused ? "تشغيل حركة الجولة" : "إيقاف حركة الجولة"}
-              </button>
-            </div>
-          )}
+          {/* Tashfeer: his mark and one line to the visitor, changed only when something meaningful changes */}
+          <button type="button" className={studio.tashfeer} onClick={() => setSheet({ kind: "log" })} aria-label={`${message} — افتح سجل الرحلة`}>
+            <Image src={asset("brand-mark").src} width={34} height={34} alt="" className={studio.tashfeerFace} />
+            <span aria-live="polite" data-guide="" key={message}>
+              {message}
+            </span>
+            <span aria-hidden="true" className={studio.tashfeerGo}>
+              ‹
+            </span>
+          </button>
         </nav>
       </div>
+
+      {sheet?.kind === "details" && (() => {
+        const s = stations.find((x) => x.id === sheet.station);
+        const st = s ? state.stations[s.id] : undefined;
+        return s && st ? (
+          <Sheet title={`تفاصيل ${s.name}`} label="details" onClose={() => setSheet(null)}>
+            <StationDetails
+              station={s}
+              st={st}
+              story={stories[s.id]!}
+              log={events.filter((e) => e.station === s.id && e.at <= (snap?.elapsed ?? 0) && e.type !== "travel")}
+              model={model}
+            />
+          </Sheet>
+        ) : null;
+      })()}
+      {sheet?.kind === "log" && (
+        <Sheet title="سجل الرحلة" label="log" onClose={() => setSheet(null)}>
+          <JourneyLog stations={stations} stories={stories} events={events} elapsed={snap?.elapsed ?? 0} state={state} />
+        </Sheet>
+      )}
     </section>
   );
 }
@@ -397,7 +479,13 @@ export function FactoryScreen() {
  * Tashfeer's line to the visitor: where their product is, in a sentence. It depends on the production's state only, so
  * it changes when something meaningful happens (a new stage, an issue, a pause, the end) — never on a timer.
  */
-function guideLine(state: FactoryState, current: Station | null, started: boolean, running: boolean): string {
+function guideLine(
+  state: FactoryState,
+  current: Station | null,
+  started: boolean,
+  running: boolean,
+  story?: StationStory,
+): string {
   if (state.finished) return "اكتمل خط الإنتاج في المحاكاة، ووصل منتجك إلى نهاية الخط.";
   if (!started) return "منتجك جاهز على خط الإنتاج. ابدأ الإنتاج متى شئت.";
   if (!current) return "منتجك على خط الإنتاج.";
@@ -405,184 +493,9 @@ function guideLine(state: FactoryState, current: Station | null, started: boolea
   const st = state.stations[current.id];
   if (st && st.checks.some(openIssue)) return "ظهرت مشكلة في الفحص، وتُعالج الآن.";
   if (st?.status !== "active") return `منتجك في طريقه إلى مرحلة ${current.name}.`;
+  const step = story?.steps[Math.max(0, st.step)];
+  if (step && current.id === "interfaces") return `شوف ${step.label} وهي تتكوّن في منتجك قدامك`;
+  if (step) return `منتجك الآن في مرحلة ${current.name}: ${step.headline}.`;
   return `منتجك الآن في مرحلة ${current.name}.`;
 }
 
-/**
- * The card beside the scene: the station in view — where the product is during the tour, or the one the visitor chose.
- * Up front: the station, its state, what is happening now on the product, and the output it has made (only what has
- * really been made — never a stage's result ahead of time). Everything else on request.
- */
-const StationCard = forwardRef<
-  HTMLElement,
-  {
-    station: Station;
-    index: number;
-    chosen: boolean;
-    state: FactoryState;
-    team: readonly string[];
-    model: "A" | "B";
-    onBack: () => void;
-    events: ReturnType<typeof simulationScript>;
-    elapsed: number;
-    reducedMotion: boolean;
-  }
->(function StationCard({ station, index, chosen, state, team, model, onBack, events, elapsed, reducedMotion }, ref) {
-  const st = state.stations[station.id];
-  if (!st) return null;
-  const prototype = PROTOTYPES.find((p) => p.id === model);
-  const log = events.filter((e) => e.station === station.id && e.at <= elapsed && e.type !== "travel");
-  const now =
-    st.status === "active"
-      ? (st.task ?? "يبدأ العمل الآن")
-      : st.status === "done"
-        ? "اكتملت هذه المرحلة"
-        : "بانتظار وصول منتجك إلى هذه المرحلة";
-  return (
-    <aside
-      ref={ref}
-      className={styles.panel}
-      aria-labelledby="station-title"
-      data-station-panel={station.id}
-      data-card-mode={chosen ? "station" : "follow"}
-    >
-      {/* a new station in view: its content comes in gently (at once with reduced motion) */}
-      <div key={station.id} className={cx(styles.cardBody, !reducedMotion && styles.cardIn)}>
-        <header className={styles.panelHead}>
-          <span className={styles.panelNum}>{String(index + 1).padStart(2, "0")}</span>
-          <h2 id="station-title">{station.name}</h2>
-          <span className={cx(styles.status, styles[st.status])} data-panel-status={st.status}>
-            {STATUS[st.status]}
-          </span>
-          {chosen && (
-            <button type="button" className={styles.close} onClick={onBack} aria-label="العودة لمتابعة المنتج" data-panel-close="">
-              ×
-            </button>
-          )}
-        </header>
-
-        <p className={styles.now} data-panel-task="">
-          {now}
-        </p>
-        {st.outputs.length > 0 && (
-          <p className={styles.outputNow} data-card-output="">
-            <Icon name="check" size={14} /> المخرج المتاح: {st.outputs.join("، ")}
-          </p>
-        )}
-
-        <dl className={styles.rows}>
-          <div>
-            <dt>الوكيل</dt>
-            <dd data-panel-agent="">{responsible(station, team)}</dd>
-          </div>
-        </dl>
-
-        <p className={styles.simNote}>
-          <Icon name="info" size={14} /> محاكاة تفاعلية — ليست نتائج عمل حقيقي.
-        </p>
-
-        {chosen && (
-          <button type="button" className={styles.backBtn} onClick={onBack} data-follow-return="">
-            <Icon name="target" size={16} /> العودة لمتابعة المنتج
-          </button>
-        )}
-
-      <details className={styles.more} data-panel-details="">
-        <summary>
-          المخرجات{station.id === "quality" ? " والفحوص" : ""}
-          {openCount(st) > 0 && <span className={styles.issueDot}>مشكلة مفتوحة</span>}
-        </summary>
-        <dl className={styles.rows}>
-          <div>
-            <dt>المخرج المتاح</dt>
-            <dd data-panel-output="">{st.outputs.length ? st.outputs.join("، ") : "لا يوجد مخرج بعد"}</dd>
-          </div>
-        </dl>
-
-        {station.id === "quality" && (
-          <section className={styles.checks} aria-label="الفحوص" data-panel-checks="">
-            <h3>الفحوص</h3>
-            {st.checks.length === 0 ? (
-              <p className={styles.muted}>لم يُجرَ أي فحص بعد.</p>
-            ) : (
-              <ul>
-                {st.checks.map((c) => (
-                  <li key={c.id} data-check={c.id} data-check-state={openIssue(c) ? "open" : "pass"}>
-                    <b>{c.label}</b>
-                    <ol>
-                      {c.runs.map((r, i) => (
-                        <li key={i} className={r.result === "fail" ? styles.fail : styles.pass}>
-                          {r.result === "fail" ? "مشكلة: " : i > 0 ? "إعادة الاختبار: نجح — " : "نجح — "}
-                          {r.detail}
-                          {r.result === "fail" && c.fix && i === 0 && (
-                            <span className={styles.fix} data-check-fix="">المعالجة: {c.fix}</span>
-                          )}
-                          {r.result === "fail" && !c.fix && <span className={styles.fixPending}>المعالجة جارية</span>}
-                        </li>
-                      ))}
-                    </ol>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        )}
-
-        {station.id === "delivery" && (
-          <section className={styles.delivery} data-panel-delivery="">
-            <h3>معاينة المنتج</h3>
-            {prototype && <PrototypePreview prototype={prototype} />}
-            <p className={styles.muted}>
-              {st.status === "done"
-                ? "اكتمل الخط في المحاكاة. لا يوجد ملف للتنزيل ولا رابط منشور: لم يُنتَج مخرج حقيقي بعد."
-                : "لا يوجد ملف للتنزيل ولا رابط منشور بعد."}
-            </p>
-          </section>
-        )}
-
-        {log.length > 0 && (
-          <div className={styles.tech}>
-            <h3>السجل</h3>
-            <ul>
-              {log.map((e, i) => (
-                <li key={i}>
-                  <time>{formatTime(e.at)}</time> {describe(e)}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </details>
-      </div>
-    </aside>
-  );
-});
-
-function openCount(st: FactoryState["stations"][string]) {
-  return st.checks.filter(openIssue).length;
-}
-
-function formatTime(s: number) {
-  const m = Math.floor(s / 60);
-  const r = Math.floor(s % 60);
-  return `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
-}
-
-function describe(e: ReturnType<typeof simulationScript>[number]): string {
-  switch (e.type) {
-    case "start":
-      return `بدأ: ${e.task}`;
-    case "task":
-      return `المهمة: ${e.task}`;
-    case "output":
-      return `مخرج: ${e.output}`;
-    case "check":
-      return `فحص «${e.label}»: ${e.result === "pass" ? "نجح" : "فشل"}`;
-    case "fix":
-      return `معالجة: ${e.detail}`;
-    case "done":
-      return "اكتملت المحطة";
-    default:
-      return "";
-  }
-}

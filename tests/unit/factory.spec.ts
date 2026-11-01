@@ -103,3 +103,29 @@ test("the simulation: paused when created, keeps its progress per approval, star
   expect(c.snapshot().elapsed).toBe(0);
   c.dispose();
 });
+
+test("each station's story is the project's own: a booking idea shows its booking page and its bookings, a store its cart and orders", async () => {
+  const { storyFor, screenCopy } = await import("../../src/domain/factory-story");
+  const clinic = "موقع عيادة النور لطب الأسنان يحجز فيه المرضى مواعيدهم";
+  const shop = "متجر إلكتروني لبيع العطور مع سلة ودفع";
+  expect(storyFor(clinic, "A", "interfaces").steps.map((s) => s.label)).toContain("صفحة الحجز");
+  expect(storyFor(clinic, "A", "services").steps[1]!.headline).toContain("لوحة إدارة العيادة");
+  expect(storyFor(shop, "A", "interfaces").steps.map((s) => s.label)).toContain("صفحة السلة");
+  expect(storyFor(shop, "B", "services").steps[0]!.visual).toMatchObject({ kind: "flow", to: "قائمة الطلبات" });
+  expect(screenCopy(clinic).name).toBe("عيادة النور");
+  // delivery names what is still waiting, honestly
+  expect(storyFor(clinic, "A", "delivery").pending.join(" ")).toContain("بانتظار");
+});
+
+test("a station's steps appear only with their events, in time order", async () => {
+  const { simulationScript, deriveFactory, stationsFor } = await import("../../src/domain/factory");
+  const team = ["front", "back", "qa", "ops"];
+  const st = stationsFor(team);
+  const ev = simulationScript(st, "A", "موقع عيادة يحجز فيه المرضى مواعيدهم");
+  const times = ev.map((e) => e.at);
+  expect([...times].sort((a, b) => a - b)).toEqual(times);
+  expect(deriveFactory(st, ev, 0).stations.setup!.step).toBe(-1);
+  const first = ev.find((e) => e.type === "step" && e.station === "interfaces" && e.step === 1)!;
+  expect(deriveFactory(st, ev, first.at - 0.01).stations.interfaces!.step).toBe(0);
+  expect(deriveFactory(st, ev, first.at).stations.interfaces!.step).toBe(1);
+});

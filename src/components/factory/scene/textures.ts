@@ -39,12 +39,39 @@ export const SCREEN = { w: 1024, h: 640 };
  * sections already built are filled in the model's colours; the rest are outlines of what is still to come.
  * `waiting` (production not started): the approved design whole and clear, with a waiting label on it.
  */
+/**
+ * What the product's screen says of *this* project (its name, its pages, its headline, its services) — drawn from the
+ * visitor's idea (factory-story.ts `screenCopy`); without it, the approved model's neutral placeholders.
+ */
+export type ScreenCopy = {
+  name: string;
+  nav: string[];
+  heroTitle: [string, string];
+  heroLine: string;
+  cta: string;
+  features: string[];
+  servicesTitle: string;
+  services: string[];
+};
+
+const PLACEHOLDER: ScreenCopy = {
+  name: "اسم مشروعك",
+  nav: ["الرئيسية", "الخدمات", "من نحن", "تواصل معنا"],
+  heroTitle: ["عنوان رئيسي يعرّف", "بمشروعك"],
+  heroLine: "وصف قصير لما يقدّمه مشروعك لعملائه.",
+  cta: "ابدأ الآن",
+  features: ["ميزة أولى", "ميزة ثانية", "ميزة ثالثة", "ميزة رابعة"],
+  servicesTitle: "خدماتنا",
+  services: ["خدمة أولى", "خدمة ثانية", "خدمة ثالثة", "خدمة رابعة", "خدمة خامسة", "خدمة سادسة"],
+};
+
 export function drawProductScreen(
   target: HTMLCanvasElement,
   model: ModelId,
   build: number,
   pal: ScenePalette,
   waiting = false,
+  copy: ScreenCopy = PLACEHOLDER,
 ) {
   const ctx = target.getContext("2d")!;
   // drawn in SCREEN units, at the canvas's own resolution (2× for the large, readable screen)
@@ -144,17 +171,17 @@ export function drawProductScreen(
         ctx.fillStyle = C.text;
         ctx.font = `800 26px ${FONT}`;
         ctx.textAlign = "right";
-        ctx.fillText("اسم مشروعك", W - pad - 48, s.y + 38);
+        ctx.fillText(copy.name, W - pad - 48, s.y + 38);
         ctx.font = `500 18px ${FONT}`;
         ctx.fillStyle = C.muted;
-        ["الرئيسية", "الخدمات", "من نحن", "تواصل معنا"].forEach((t, j) => ctx.fillText(t, W - 330 - j * 100, s.y + 36));
+        copy.nav.slice(0, 4).forEach((t, j) => ctx.fillText(t, W - 330 - j * 100, s.y + 36));
         ctx.fillStyle = C.accent;
         rr(ctx, pad, s.y + 8, 130, 40, 10);
         ctx.fill();
         ctx.fillStyle = C.ink;
         ctx.textAlign = "center";
         ctx.font = `800 18px ${FONT}`;
-        ctx.fillText("ابدأ الآن", pad + 65, s.y + 34);
+        ctx.fillText(copy.cta, pad + 65, s.y + 34);
         break;
       }
       case 1: {
@@ -167,18 +194,18 @@ export function drawProductScreen(
         ctx.textAlign = "right";
         ctx.fillStyle = C.text;
         ctx.font = `800 44px ${FONT}`;
-        ctx.fillText("عنوان رئيسي يعرّف", W - pad - 36, s.y + 74);
-        ctx.fillText("بمشروعك", W - pad - 36, s.y + 128);
+        ctx.fillText(copy.heroTitle[0], W - pad - 36, s.y + 74);
+        ctx.fillText(copy.heroTitle[1], W - pad - 36, s.y + 128);
         ctx.font = `500 19px ${FONT}`;
         ctx.fillStyle = C.muted;
-        ctx.fillText("وصف قصير لما يقدّمه مشروعك لعملائه.", W - pad - 36, s.y + 168);
+        ctx.fillText(copy.heroLine, W - pad - 36, s.y + 168);
         ctx.fillStyle = C.accent;
         rr(ctx, W - pad - 186, s.y + 186, 150, 36, 10);
         ctx.fill();
         ctx.fillStyle = C.ink;
         ctx.textAlign = "center";
         ctx.font = `800 17px ${FONT}`;
-        ctx.fillText("ابدأ الآن", W - pad - 111, s.y + 210);
+        ctx.fillText(copy.cta, W - pad - 111, s.y + 210);
         // the hero's abstract art: blocks, no implied subject
         ctx.globalAlpha = 0.9;
         ctx.fillStyle = C.bg;
@@ -205,7 +232,7 @@ export function drawProductScreen(
           ctx.textAlign = "right";
           ctx.fillStyle = C.text;
           ctx.font = `800 18px ${FONT}`;
-          ctx.fillText(["ميزة أولى", "ميزة ثانية", "ميزة ثالثة", "ميزة رابعة"][j]!, x + cw - 44, s.y + 26);
+          ctx.fillText(copy.features[j] ?? "", x + cw - 44, s.y + 26);
           ctx.fillStyle = C.muted;
           ctx.font = `500 15px ${FONT}`;
           ctx.fillText("وصف قصير للميزة", x + cw - 44, s.y + 50);
@@ -216,7 +243,7 @@ export function drawProductScreen(
         ctx.textAlign = "center";
         ctx.fillStyle = C.text;
         ctx.font = `800 22px ${FONT}`;
-        ctx.fillText("خدماتنا", W / 2, s.y + 20);
+        ctx.fillText(copy.servicesTitle, W / 2, s.y + 20);
         const cw = (W - pad * 2 - 5 * 14) / 6;
         for (let j = 0; j < 6; j++) {
           const x = W - pad - cw - j * (cw + 14);
@@ -231,7 +258,7 @@ export function drawProductScreen(
           ctx.fill();
           ctx.fillStyle = C.text;
           ctx.font = `600 15px ${FONT}`;
-          ctx.fillText(`خدمة ${["أولى", "ثانية", "ثالثة", "رابعة", "خامسة", "سادسة"][j]}`, x + cw / 2, s.y + 108);
+          ctx.fillText(copy.services[j] ?? "", x + cw / 2, s.y + 108);
         }
         break;
       }
@@ -244,7 +271,7 @@ export function drawProductScreen(
         ctx.textAlign = "right";
         ctx.fillStyle = C.text;
         ctx.font = `800 17px ${FONT}`;
-        ctx.fillText("اسم مشروعك", W - pad - 20, s.y + 29);
+        ctx.fillText(copy.name, W - pad - 20, s.y + 29);
         ctx.textAlign = "left";
         ctx.fillStyle = C.muted;
         ctx.font = `500 15px ${FONT}`;
@@ -255,9 +282,9 @@ export function drawProductScreen(
   }
 }
 
-export function productScreenTexture(model: ModelId, build: number, pal: ScenePalette, scale = 1, waiting = false) {
+export function productScreenTexture(model: ModelId, build: number, pal: ScenePalette, scale = 1, waiting = false, copy?: ScreenCopy) {
   const { c } = canvas(SCREEN.w * scale, SCREEN.h * scale);
-  drawProductScreen(c, model, build, pal, waiting);
+  drawProductScreen(c, model, build, pal, waiting, copy);
   return { canvas: c, texture: texture(c) };
 }
 

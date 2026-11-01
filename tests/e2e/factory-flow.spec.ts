@@ -372,16 +372,21 @@ test.describe("factory", () => {
 
     await page.locator("[data-production-toggle]").click();
     await page.locator("[data-station-btn=quality]").click();
+    // the checks are in the station's details («شاهد التفاصيل»): opening them changes nothing in production
+    await page.locator("[data-station-panel=quality] [data-panel-details]").click();
     const mobile = page.locator("[data-check=mobile]");
     await expect(mobile).toContainText("مشكلة", { timeout: 30_000 });
     await expect(mobile).toHaveAttribute("data-check-state", "pass", { timeout: 30_000 });
     await expect(mobile.locator("[data-check-fix]")).toContainText("المعالجة");
     await expect(mobile).toContainText("إعادة الاختبار: نجح");
     await expect(screen(page)).toHaveAttribute("data-production", "finished", { timeout: 30_000 });
+    await page.locator("[data-sheet-close]").click();
     await page.locator("[data-station-btn=delivery]").click();
+    await page.locator("[data-station-panel=delivery] [data-panel-details]").click();
     const delivery = page.locator("[data-panel-delivery]");
     await expect(delivery).toContainText("لا يوجد ملف للتنزيل ولا رابط منشور");
     await expect(delivery.locator("a[download], a[href]")).toHaveCount(0);
+    await page.locator("[data-sheet-close]").click();
     await expect(page.locator("[data-station-panel=delivery] [data-panel-status]")).toHaveText("مكتملة");
   });
 
@@ -437,7 +442,7 @@ test.describe("factory", () => {
     await expect(page.locator("[data-station-panel=quality]")).toBeVisible();
   });
 
-  test("the station panel: name, agent, status and task up front; outputs and checks on request; the simulation labelled", async ({
+  test("the station window: name, agent, status, the station's steps and what is done/next up front; details on request; the simulation labelled", async ({
     page,
   }) => {
     await seedApproved(page);
@@ -449,14 +454,48 @@ test.describe("factory", () => {
     await expect(panel.locator("[data-panel-agent]")).toHaveText("اختبار الجودة");
     await expect(panel.locator("[data-panel-task]")).toBeVisible();
     await expect(panel).toContainText("محاكاة تفاعلية");
+    // the station's three steps, none begun (a future station shows nothing as made)
+    await expect(panel.locator("[data-step]")).toHaveCount(3);
+    await expect(panel.locator("[data-step-state=next]")).toHaveCount(3);
     // the rest is closed until asked for
-    const details = panel.locator("[data-panel-details]");
-    await expect(details).not.toHaveAttribute("open", "");
-    await expect(panel.locator("[data-panel-output]")).toBeHidden();
-    await expect(panel.locator("[data-panel-checks]")).toBeHidden();
-    await details.locator("summary").click();
-    await expect(panel.locator("[data-panel-output]")).toBeVisible();
-    await expect(panel.locator("[data-panel-checks]")).toBeVisible();
+    await expect(page.locator("[data-panel-output]")).toHaveCount(0);
+    await expect(page.locator("[data-panel-checks]")).toHaveCount(0);
+    await panel.locator("[data-panel-details]").click();
+    await expect(page.locator("[data-sheet=details]")).toBeVisible();
+    await expect(page.locator("[data-panel-output]")).toBeVisible();
+    await expect(page.locator("[data-panel-checks]")).toBeVisible();
+    // closing returns to the same place; production untouched
+    await page.keyboard.press("Escape");
+    await expect(page.locator("[data-sheet]")).toHaveCount(0);
+    await expect(page.locator("[data-production-state]")).toHaveText("الإنتاج لم يبدأ");
+    await expect(screen(page)).toHaveAttribute("data-camera-station", "quality");
+  });
+
+  test("the journey: each update arrives with its event, explained for this project; the log keeps them all in order", async ({
+    page,
+  }) => {
+    await seedApproved(page);
+    await openFactory(page, "?speed=6");
+    const panel = page.locator("[data-station-panel]");
+    // before production nothing is shown as done
+    await expect(page.locator("[data-item-state=done]")).toHaveCount(0);
+    await page.locator("[data-production-toggle]").click();
+    // the first station's steps come one by one; each done step says what it added to this project
+    await expect(page.locator("[data-station-panel=setup] [data-step-state=current]")).toHaveCount(1, { timeout: 20_000 });
+    await expect(page.locator("[data-station-panel=setup] [data-item-state=done]").first()).toBeVisible({ timeout: 30_000 });
+    // (this project books appointments: its story speaks of its own pages, ending with the booking page)
+    await expect(panel).toContainText(/صفحات مشروعك|صفحاته: الرئيسية، الخدمات، الحجز/);
+    await page.evaluate(() => document.querySelector<HTMLElement>("[data-production-toggle]")?.click());
+    // the log: every update so far, by station and in time order
+    await page.locator("[data-journey-btn]").click();
+    const log = page.locator("[data-journey-log]");
+    await expect(log).toBeVisible();
+    await expect(log.locator("[data-log-station=setup]")).toBeVisible();
+    const times = await log.locator("time").allTextContents();
+    expect(times.length).toBeGreaterThan(2);
+    expect([...times].sort()).toEqual(times);
+    await page.keyboard.press("Escape");
+    await expect(screen(page)).toHaveAttribute("data-production", "paused");
   });
 
   test("no console errors on the factory", async ({ page }) => {
