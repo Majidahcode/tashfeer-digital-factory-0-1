@@ -251,20 +251,24 @@ export class TashfeerStage {
   }
 
   /**
-   * Look at the seated visitor's face: `x` is where the face is on this canvas (CSS px). The visitor sits in front of
-   * him and to the side, so his face is found by its direction across the screen and by a seated person's height —
-   * not by how far down the page the picture is (that is the picture's place, nearer to us, not a face on the
-   * floor). The head and neck turn to it; they bend down only as much as a seated face asks (never more than ~16°).
+   * Look at the seated visitor's face, at `x`, `y` on this canvas (CSS px). The visitor sits in front of him (nearer to
+   * us, his picture drawn larger and lower on the page): the face is the point a little in front of him that the page's
+   * camera draws exactly there — so seen from the page his gaze meets the face, whatever the screen's size and
+   * wherever the picture sits (not the floor under it, not over the head). The head and neck turn to it (poses.ts),
+   * the chest a little when it is far to one side or low.
    */
-  lookAtFace(x: number) {
-    const m = this.metresPerPx();
-    const b = this.box;
-    const dx = (x - (b.x + b.width / 2)) * m - this.root.position.x;
-    const dz = 1.4; // the visitor sits about this far in front of him
-    const EYES = HEIGHT * 0.9;
-    const SEATED_FACE = 1.2;
-    const yaw = MathUtils.clamp(Math.atan2(dx, dz), -1.0, 1.0);
-    const pitch = MathUtils.clamp(Math.atan2(EYES - SEATED_FACE, Math.hypot(dx, dz)), 0, 0.28);
+  lookAtFace(x: number, y: number) {
+    const { w, h } = this.size;
+    const p = new Vector3((x / w) * 2 - 1, 1 - (y / h) * 2, 0.5).unproject(this.camera);
+    const c = this.camera.position;
+    const FACE_Z = 1.6; // how far in front of him the visitor's face is (metres)
+    const k = (FACE_Z - c.z) / (p.z - c.z);
+    const face = new Vector3(c.x + (p.x - c.x) * k, c.y + (p.y - c.y) * k, FACE_Z);
+    const eyes = new Vector3(this.root.position.x, HEIGHT * 0.9, this.root.position.z);
+    const dx = face.x - eyes.x;
+    const dz = face.z - eyes.z;
+    const yaw = MathUtils.clamp(Math.atan2(dx, dz), -1.1, 1.1);
+    const pitch = MathUtils.clamp(Math.atan2(eyes.y - face.y, Math.hypot(dx, dz)), -0.2, 0.5);
     this.look = { yaw, pitch };
   }
 

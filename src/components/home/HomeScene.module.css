@@ -157,6 +157,26 @@
   }
 }
 
+/* ≥1280, the visitor brought forward (owner's correction of 2026-11-01): the customer and his chair ≈12 % larger and
+   a little lower — he is the centre of the experience. Where the copy column is narrower than that (1280–1920, where
+   the portal takes the width), he grows into the screen's side margin (the chair stays whole, ≥ 6 px inside the
+   screen) and toward Tashfeer only up to 8 px short of his box: there he is as large as the room between them
+   allows, centred under the copy where it is wider. He comes down by ≈6 % of the ring's height, never closer than
+   6 px to the screen's bottom edge (the chair's base is whole: it dissolves into the floor). Everything is a share
+   of the ring or the column — no fixed shift. */
+@media (min-width: 1280px) {
+  .customer {
+    --cust-w: min(calc(var(--ring-h) * 0.672), calc(100% + var(--pad-x) + var(--gap-x) - 14px));
+    inline-size: var(--cust-w);
+    justify-self: start; /* (the column is RTL: its right side) */
+    margin-right: max(calc(8px - var(--gap-x)), calc((100% - var(--cust-w)) / 2));
+    margin-bottom: max(
+      calc(var(--ring-h) * 0.008),
+      calc(var(--air-bottom) + var(--ring-h) * 0.02 - 6px - var(--ring-h) * 0.06)
+    );
+  }
+}
+
 .customerImg {
   display: block;
   inline-size: 100%;
@@ -221,6 +241,21 @@
   box-shadow: 0 0 0 1px var(--brand-glass-edge);
   /* a status line only: on a phone it overlaps the button, and a tap on «إيقاف» must still reach it */
   pointer-events: none;
+}
+
+/* ≥1280 (owner's correction of 2026-11-01): the voice pill on the chair's base, its note just above it over the
+   chair — narrow, so it stays off the visitor (his face is the image's top band, his body its middle and right) */
+@media (min-width: 1280px) {
+  .mic {
+    left: 0;
+    bottom: 3%;
+  }
+
+  .micNote {
+    left: 0;
+    bottom: calc(3% + 64px);
+    max-inline-size: min(210px, 42%);
+  }
 }
 
 .micText {
@@ -372,8 +407,10 @@
     padding-top: calc(var(--phrase-row-h) + 24px);
   }
 
+  /* ≈12 % larger than before (clamp(220px, ring × 0.42, 400px)), and a little lower, into the air above the steps */
   .customer {
-    inline-size: clamp(220px, calc(var(--ring-h) * 0.42), 400px);
+    inline-size: clamp(246px, calc(var(--ring-h) * 0.47), 448px);
+    translate: 0 calc(var(--ring-h) * 0.02);
   }
 
   /* the portal sits by the screen's edge here: its glow fades off that edge. The stage reaches the edge (bleeding
@@ -414,7 +451,7 @@
     --pad-x: 12px;
     --band-w: min(calc(100vw - 2 * var(--pad-x)), 430px);
     --ring-h: calc(var(--band-w) / var(--ring-aspect));
-    --cust-w: min(46vw, 200px);
+    --cust-w: min(51.5vw, 224px); /* ≈12 % larger than before (min(46vw, 200px)) */
     --pill-h: 44px;
     /* characters' band under the ring: Tashfeer's height follows the screen's width, not the ring's shape (0.515 of
        the band's width — his size under the previous, taller ring — so the portal, Tashfeer and the customer still
@@ -489,6 +526,21 @@
 
   .wave {
     inline-size: 56px;
+  }
+
+  /* a little lower than Tashfeer's floor line (a share of his own width: the copy below keeps its air) */
+  .customer {
+    translate: 0 calc(var(--cust-w) * 0.06);
+  }
+
+  /* the note goes under the visitor (in the air above the copy), never over him or the ring */
+  .micNote {
+    left: auto;
+    right: calc(var(--pad-x) + 2px);
+    top: calc(100% + 6px);
+    bottom: auto;
+    inline-size: min(300px, calc(100vw - 2 * var(--pad-x) - 4px));
+    max-inline-size: none;
   }
 
   /* the customer's image faces right; here he sits right of the portal, so he is mirrored to face it and
@@ -588,7 +640,7 @@
     /* set by the width, as on phones: 0.6 of the band's width — his size beside the previous, taller ring, less 3 %,
        so that he still stands beside the lower half of the owner's wider, shorter reference portal */
     --robot-h: calc(var(--band-w) * 0.6);
-    --cust-w: min(26vw, 200px); /* narrow enough that the chair clears the ring's lower-right curve */
+    --cust-w: min(29vw, 224px); /* ≈12 % larger than before; the chair still clears the ring's lower-right curve */
     --chars-h: 0px;
     --cust-end: calc(-1 * var(--pad-x)); /* the customer at the screen's edge, beside the ring */
   }

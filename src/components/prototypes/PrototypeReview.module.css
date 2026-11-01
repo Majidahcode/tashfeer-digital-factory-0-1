@@ -82,10 +82,10 @@
 .tashfeer {
   align-self: end;
   justify-self: center;
-  /* ≈18 % smaller than before (min(100%, 680px)). His box keeps his proportions (no max width): his column is
-     narrower than he is wide, and a box squeezed to it cut off his arms and legs — the box may overhang the column
-     a little (it is transparent and takes no clicks) */
-  block-size: min(82%, 558px);
+  /* ≈15 % smaller again (owner's correction of 2026-11-01; it was min(82%, 558px)): the two models are the focus.
+     His box keeps his proportions (no max width): his column is narrower than he is wide, and a box squeezed to it
+     cut off his arms and legs — the box may overhang the column a little (it is transparent and takes no clicks) */
+  block-size: min(70%, 474px);
   inline-size: auto;
   max-inline-size: none;
   filter: drop-shadow(0 0 16px var(--brand-glow-soft));
@@ -760,7 +760,7 @@
 
   .tashfeer {
     order: 2;
-    block-size: 246px; /* ≈18 % smaller than 300px */
+    block-size: 209px; /* ≈15 % smaller than 246px */
   }
 
   /* one model under the other, each the full width (up to a comfortable size): readable, not shrunk to fit two */

@@ -71,22 +71,30 @@ function listening(s: number, seed: number) {
 }
 
 /**
- * Folded arms, `c` from 0 (at ease) to 1 (folded): the upper arms come forward first, then the forearms cross (and
- * open first on the way back) — so the hands never pass through the chest. Checked on the model from the front, the
- * side and three-quarters: no hand or forearm inside the chest, the shoulder plates apart (scratch check: clip.mjs).
+ * Folded arms, `c` from 0 (at ease) to 1 (folded), after the owner's reference (2026-11-01): the forearms crossed in
+ * front of the lower chest under his name, the left one in front of the right, the elbows level by his sides, the
+ * shoulders at ease, each hand toward the opposite arm. Solved on the model itself (its arms are short for its broad
+ * chest: the hands reach the opposite arm by its elbow, not the middle of the upper arm — as far as they go without
+ * passing through anything). The way in is staged so nothing passes through anything at any moment: the upper arms
+ * come forward, the front forearm crosses first, the other slides under it, the hands settle last — and the way back
+ * is the same in reverse. Checked on the model at every 5 % of the way: no vertex of a hand or forearm inside the
+ * chest, the other arm or the other forearm; rigid plates, nothing stretched (scratch checks: pathcheck.mjs).
  */
 function folded(r: Pose["rot"], c: number) {
   if (c <= 0) return;
   const u = ease(Math.min(1, c * 1.35));
-  const f = ease((c - 0.25) / 0.75);
-  r.upper_arm_L = add(r.upper_arm_L, [deg(-54) * u, 0, deg(6) * u]);
-  r.forearm_L = add(r.forearm_L, [deg(-18) * f, deg(-100) * f, 0]);
-  r.hand_L = add(r.hand_L, [deg(-10) * f, deg(-30) * f, 0]);
-  r.upper_arm_R = add(r.upper_arm_R, [deg(-48) * u, 0, deg(-6) * u]);
-  r.forearm_R = add(r.forearm_R, [deg(-6) * f, deg(104) * f, 0]);
-  r.hand_R = add(r.hand_R, [deg(-16) * f, deg(30) * f, 0]);
-  // settled back a touch, as one who weighs what he hears
+  const fl = ease((c - 0.2) / 0.55);
+  const fr = ease((c - 0.45) / 0.55);
+  const h = ease((c - 0.75) / 0.25);
+  r.upper_arm_L = add(r.upper_arm_L, [deg(-34.5) * u, deg(-48) * u, deg(28.5) * u]);
+  r.forearm_L = add(r.forearm_L, [deg(29) * fl, deg(-75) * fl, 0]);
+  r.hand_L = add(r.hand_L, [deg(-15.5) * h, deg(-21.5) * h, deg(35.5) * h]);
+  r.upper_arm_R = add(r.upper_arm_R, [deg(-35) * u, deg(42) * u, deg(-28.5) * u]);
+  r.forearm_R = add(r.forearm_R, [deg(-16) * fr, deg(69.5) * fr, 0]);
+  r.hand_R = add(r.hand_R, [deg(6) * h, deg(-4.5) * h, deg(-4.5) * h]);
+  // settled back a touch, as one who weighs what he hears (the head keeps its aim on the visitor's face)
   r.chest = add(r.chest, [deg(-1.5) * c, 0, 0]);
+  r.head = add(r.head, [deg(1.5) * c, 0, 0]);
 }
 
 /**
@@ -152,9 +160,10 @@ export function pose(p: PoseInput): Pose {
   // where he looks: shared by head, neck and a little of the chest (more of it when someone speaks to him)
   const look = p.look ?? { yaw: 0, pitch: 0 };
   const body = p.mode === "listening" || p.mode === "replying" ? 0.22 : 0.12;
-  r.head = add(r.head, [look.pitch * 0.6, look.yaw * (0.62 - body / 2), 0]);
-  r.neck = add(r.neck, [look.pitch * 0.4, look.yaw * 0.28, 0]);
-  r.chest = add(r.chest, [0, look.yaw * body, 0]);
+  // (down: mostly the head and neck, the chest leans a little — the three add up to the whole look)
+  r.head = add(r.head, [look.pitch * 0.5, look.yaw * (0.62 - body / 2), 0]);
+  r.neck = add(r.neck, [look.pitch * 0.35, look.yaw * 0.28, 0]);
+  r.chest = add(r.chest, [look.pitch * 0.15, look.yaw * body, 0]);
   if (p.mode === "idle") r.head = add(r.head, idleHead);
   else r.head = add(r.head, [idleHead[0] * 0.4, idleHead[1] * 0.3, idleHead[2] * 0.4]);
 

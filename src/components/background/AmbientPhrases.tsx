@@ -52,6 +52,7 @@ const OBSTACLES = [
   "[data-tashfeer]",
   "[data-seated-customer]",
   "[data-scene-part=customer] button",
+  "[data-mic-note]",
   "[data-feature-card]",
   "button",
   "a[href]",

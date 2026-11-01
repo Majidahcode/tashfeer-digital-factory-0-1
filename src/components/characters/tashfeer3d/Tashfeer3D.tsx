@@ -197,10 +197,12 @@ export function Tashfeer3D({ className, style, attend }: { className?: string; s
         const t = target.getBoundingClientRect();
         const me = el.getBoundingClientRect();
         if (focus === "customer") {
-          // the visitor's face: where it is in their picture (data-face-x, a share of its width), mirrored with it
+          // the visitor's face: where it is in their picture (data-face-x/-y, shares of its size), mirrored with it
           const fx = Number(target.dataset.faceX ?? 0.5);
-          const flipped = new DOMMatrixReadOnly(getComputedStyle(target).transform === "none" ? undefined : getComputedStyle(target).transform).a < 0;
-          s.lookAtFace(t.left + t.width * (flipped ? 1 - fx : fx) - me.left);
+          const fy = Number(target.dataset.faceY ?? 0.15);
+          const tf = getComputedStyle(target).transform;
+          const flipped = tf !== "none" && new DOMMatrixReadOnly(tf).a < 0;
+          s.lookAtFace(t.left + t.width * (flipped ? 1 - fx : fx) - me.left, t.top + t.height * fy - me.top);
         } else s.lookAtScreen(t.left + t.width / 2 - me.left, t.top + t.height * 0.5 - me.top);
       } else s.lookAtScreen(null);
     };
