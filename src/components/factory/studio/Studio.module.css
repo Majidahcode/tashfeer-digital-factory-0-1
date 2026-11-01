@@ -1386,46 +1386,148 @@
 }
 
 /* ── narrow screens: the window is a sheet above the rail ── */
-@media (max-width: 899px) {
+/* ── compact: phones, small tablets and short screens — the scene keeps most of the screen. The window keeps its
+   head, its headline and its three steps (the rest is in «شاهد التفاصيل»); the bottom is one row of controls and the
+   rail; Tashfeer's line is one line ── */
+@media (max-width: 899px), (max-height: 620px) {
   .middle {
     align-items: flex-end;
   }
 
-  .tashfeer {
-    font-size: 13px;
-  }
-
-  .railBtn {
-    min-inline-size: 76px;
-  }
-
-  .project {
-    font-size: 14px;
-  }
-
   .window {
-    inline-size: 100%;
-    max-block-size: 40svh;
-    gap: 10px;
-    padding: 14px 16px;
-    border-radius: 22px;
+    inline-size: min(100%, 460px);
+    max-block-size: none;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 20px;
+  }
+
+  .why,
+  .list,
+  .output,
+  .agent,
+  .winFoot > .simLine {
+    display: none;
+  }
+
+  .winFoot {
+    padding-block-start: 6px;
   }
 
   .headline {
-    font-size: 22px;
+    font-size: 17px;
   }
 
   .stepRing {
-    inline-size: 48px;
-    block-size: 48px;
+    inline-size: 36px;
+    block-size: 36px;
+  }
+
+  .stepRing svg {
+    inline-size: 18px;
+    block-size: 18px;
   }
 
   .steps::before {
-    inset-block-start: 24px;
+    inset-block-start: 18px;
+  }
+
+  .stepLabel {
+    font-size: 11.5px;
+  }
+
+  .pill {
+    padding: 3px 10px;
+    font-size: 12px;
+  }
+
+  .detailsBtn,
+  .backBtn {
+    padding: 5px 12px;
+    font-size: 13px;
   }
 
   .result {
     display: none;
+  }
+
+  .factoryTitle,
+  .topStart {
+    display: none;
+  }
+
+  .project {
+    padding: 4px 10px;
+    font-size: 13px;
+    max-inline-size: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .bottom {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .tourBtns {
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 6px;
+    order: 1;
+  }
+
+  .roundBtn {
+    padding: 6px 10px;
+    font-size: 12px;
+    gap: 5px;
+  }
+
+  .rail {
+    justify-self: stretch;
+    padding: 4px 6px;
+    border-radius: 16px;
+  }
+
+  .railBtn {
+    min-inline-size: 72px;
+    gap: 2px;
+    padding: 3px 6px 4px;
+  }
+
+  .railLabel {
+    font-size: 11.5px;
+  }
+
+  .railIcon {
+    inline-size: 24px;
+    block-size: 24px;
+  }
+
+  .railItem + .railItem::before {
+    inset-block-end: 14px;
+    inline-size: 20px;
+  }
+
+  .tashfeer {
+    order: -1;
+    justify-self: stretch;
+    max-inline-size: none;
+    gap: 8px;
+    padding: 4px 6px 4px 12px;
+    font-size: 12.5px;
+  }
+
+  .tashfeer > span[data-guide] {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tashfeerFace {
+    inline-size: 30px;
+    block-size: 30px;
+    padding: 3px;
   }
 }
 

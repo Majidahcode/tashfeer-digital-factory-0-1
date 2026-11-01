@@ -16,12 +16,21 @@ import styles from "./Studio.module.css";
  */
 export function Sheet({ title, onClose, children, label }: { title: string; onClose: () => void; children: ReactNode; label: string }) {
   const box = useRef<HTMLDivElement>(null);
+  const close = useRef(onClose);
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
+    close.current = onClose;
+  });
+  // Escape closes the sheet only (caught first: the page's own Escape — back to the product — is not triggered)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.stopImmediatePropagation();
+      close.current();
+    };
+    window.addEventListener("keydown", onKey, true);
     box.current?.focus();
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, []);
   return createPortal(
     <div className={styles.sheetScrim} onClick={(e) => e.target === e.currentTarget && onClose()} data-sheet={label}>
       <div ref={box} className={styles.sheet} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1}>
